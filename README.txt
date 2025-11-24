@@ -8,3 +8,5 @@
 
 ** Todo [0/1]
    - [ ] Implement determining difference between lines
+
+--MAKE SURE TO ALWAYS git pull BEFORE git push
