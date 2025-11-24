@@ -7,4 +7,5 @@
   3. How can you visualize line mapping information?
 
 ** Todo [0/1]
+   - [ ] File Handling, handling 2 files at the same time
    - [ ] Implement determining difference between lines
