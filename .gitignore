@@ -1,1 +1,4 @@
-src/main/java/script.sh
+src/main/java/makefile
+/bin/
+.classpath
+.project
