@@ -9,3 +9,97 @@
 ** Todo [0/1]
    - [ ] File Handling, handling 2 files at the same time
    - [ ] Implement determining difference between lines
+
+** Report
+   #+begin_quote
+   Please download the template  from the following link:
+   [[https://www.ieee.org/content/dam/ieee-org/ieee/web/org/conferences/conference-template-a4.docx]]
+
+   Your report must include the following sections:
+
+   Title
+   Provide a clear and concise title that accurately reflects the work you have done.
+
+   Authors
+   List the details of all team members, including:
+
+   Full name
+
+   Student ID
+
+   Department name
+
+   University name
+
+   Email address
+
+   Abstract
+   Write a brief paragraph summarizing the goal of your work, the approach you used, and the main findings.
+
+   Keywords
+   Provide a list of relevant keywords related to your work.
+
+   Introduction
+   Introduce the problem you are addressing, explain why it is important, and briefly describe:
+
+   How you approached or solved the problem
+
+   The key results or findings
+
+   Data Collection
+   Describe how you collected the line-tracking information for the 25 pairs of files. In this section, explain:
+
+   How you selected these file pairs
+
+   How you determined the line mappings between the two versions of each file
+
+   Technique Description and Evaluation
+   Explain in detail how your technique determines the mapping of lines between different versions of files. Include:
+
+   A clear description of your method
+
+   Any experiments you conducted to evaluate its performance
+
+   How many of the 500 line mappings (collected from 25 pairs of files) your technique correctly identified
+
+   You may use figures and tables to illustrate your process and present your evaluation results. For evaluation, you may use:
+
+   The line mapping information from the 25 file pairs you collected
+
+   The dataset I provided to you
+
+   A combination of both
+
+   Presentation of Line Mapping Information
+   Describe how you plan to visualize the line mapping information for users or developers. This section must include:
+
+   At least one image showing your visualization
+
+   A written explanation of the visualization and how it should be interpreted
+
+   Identifying Bug-Introducing Changes (Optional. This is for the bonus mark)
+   If you attempted to identify bug-introducing changes, describe:
+
+   How you detected these changes
+
+   Whether you performed any evaluation of your approach
+
+   The results of that evaluation, if applicable
+
+   You may use figures and tables to illustrate your method and findings.
+
+   References (Optional)
+   If you used any additional sources of information (e.g., research papers, documentation, online resources), list them in this section using an appropriate citation style.
+
+   Additional Notes
+   The length of the report should be 3 to 4 pages. There is no penalty in finishing the report within 3 pages. You can write more if you needed. However, you will not get any marks for writing more.
+
+   Explain your work in as much detail as possible within the page limit.
+
+   You are responsible for deciding how to organize and present the content of each section.
+
+   The evaluation will consider the quality of the presentation, effectiveness of your technique and the degree of effort you put on designing the technique and evaluation.
+   I am adding a sample paper: https://arxiv.org/pdf/2501.08774 
+
+   Original paper on line tracking (if you are interested, you can read it): https://www.cs.usask.ca/~croy/papers/2013/LHDiffFullPaper-preprint.pdf
+   #+end_quote
