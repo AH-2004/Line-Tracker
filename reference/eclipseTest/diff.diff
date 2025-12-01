@@ -1,0 +1,692 @@
+13a14
+> import java.util.*;
+75c76
+< 	/* A table from IPath (from a classpath entry) to IJavaProject */
+---
+> 	/* A table from IPath (from a classpath entry) to RootInfo */
+78c79
+< 	/* A table from IPath (from a classpath entry) to HashSet of IJavaProject
+---
+> 	/* A table from IPath (from a classpath entry) to ArrayList of RootInfo
+82,84d82
+< 	/* A table from IPath (from a classpath entry) to char[][] */
+< 	Map exclusionPatterns;
+< 	
+98,102d95
+< 	/*
+< 	 * The exclusion patterns of the package fragment root that is being visites.
+< 	 */
+< 	char[][] currentExclusionPatterns;
+< 	
+117a111,170
+> 	
+> 	class OutputInfo {
+> 		IPath path;
+> 		int traverseMode;
+> 		OutputInfo(IPath path, int traverseMode) {
+> 			this.path = path;
+> 			this.traverseMode = traverseMode;
+> 		}
+> 		public String toString() {
+> 			StringBuffer buffer = new StringBuffer("path="); //$NON-NLS-1$
+> 			if (this.path == null) {
+> 				buffer.append("null"); //$NON-NLS-1$
+> 			} else {
+> 				buffer.append(this.path.toString());
+> 			}
+> 			buffer.append("\ntraverse="); //$NON-NLS-1$
+> 			switch (this.traverseMode) {
+> 				case BINARY:
+> 					buffer.append("BINARY"); //$NON-NLS-1$
+> 					break;
+> 				case IGNORE:
+> 					buffer.append("IGNORE"); //$NON-NLS-1$
+> 					break;
+> 				case SOURCE:
+> 					buffer.append("SOURCE"); //$NON-NLS-1$
+> 					break;
+> 				default:
+> 					buffer.append("<unknown>"); //$NON-NLS-1$
+> 			}
+> 			return buffer.toString();
+> 		}
+> 	}
+> 	class RootInfo {
+> 		IJavaProject project;
+> 		char[][] exclusionPatterns;
+> 		RootInfo(IJavaProject project, char[][] exclusionPatterns) {
+> 			this.project = project;
+> 			this.exclusionPatterns = exclusionPatterns;
+> 		}
+> 		public String toString() {
+> 			StringBuffer buffer = new StringBuffer("project="); //$NON-NLS-1$
+> 			if (this.project == null) {
+> 				buffer.append("null"); //$NON-NLS-1$
+> 			} else {
+> 				buffer.append(this.project.toString());
+> 			}
+> 			buffer.append("\nexcluding="); //$NON-NLS-1$
+> 			if (this.exclusionPatterns == null) {
+> 				buffer.append("null"); //$NON-NLS-1$
+> 			} else {
+> 				for (int i = 0, length = this.exclusionPatterns.length; i < length; i++) {
+> 					buffer.append(new String(this.exclusionPatterns[i]));
+> 					if (i < length-1) {
+> 						buffer.append("|"); //$NON-NLS-1$
+> 					}
+> 				}
+> 			}
+> 			return buffer.toString();
+> 		}
+> 	}
+287c340
+< 								elementAdded(root, null);
+---
+> 								elementAdded(root, null, null);
+303c356
+< 								elementRemoved(root, null);
+---
+> 								elementRemoved(root, null, null);
+430,431c483,485
+< 			IJavaProject projectOfRoot = (IJavaProject)this.roots.get(rootPath);
+< 			if (projectOfRoot != null) {
+---
+> 			RootInfo rootInfo = (RootInfo)this.roots.get(rootPath);
+> 			if (rootInfo != null) {
+> 				IJavaProject projectOfRoot = rootInfo.project;
+514c568
+< 	protected Openable createElement(IResource resource, int elementType, IJavaProject project) {
+---
+> 	protected Openable createElement(IResource resource, int elementType, RootInfo rootInfo) {
+534,535c588,589
+< 					if  (project != null && project.getProject().equals(resource)){
+< 						element = (Openable)project;
+---
+> 					if  (rootInfo != null && rootInfo.project.getProject().equals(resource)){
+> 						element = (Openable)rootInfo.project;
+550c604
+< 				element = project == null ? JavaCore.create(resource) : project.getPackageFragmentRoot(resource);
+---
+> 				element = rootInfo == null ? JavaCore.create(resource) : rootInfo.project.getPackageFragmentRoot(resource);
+557c611
+< 					element = JavaModelManager.create(resource, project);
+---
+> 					element = rootInfo == null ? JavaCore.create(resource) : JavaModelManager.create(resource, rootInfo.project);
+562c616
+< 						element = JavaModelManager.create(resource, project);
+---
+> 						element =  rootInfo == null ? JavaCore.create(resource) : JavaModelManager.create(resource, rootInfo.project);
+578c632
+< 					element = element = JavaModelManager.create(resource, project);
+---
+> 					element =  rootInfo == null ? JavaCore.create(resource) : JavaModelManager.create(resource, rootInfo.project);
+604c658
+< 						element = JavaModelManager.create(resource, project);
+---
+> 						element =  rootInfo == null ? JavaCore.create(resource) : JavaModelManager.create(resource, rootInfo.project);
+680c734
+< 	protected void elementAdded(Openable element, IResourceDelta delta) {
+---
+> 	protected void elementAdded(Openable element, IResourceDelta delta, RootInfo rootInfo) {
+722,725d775
+< 				IJavaProject projectOfRoot = (IJavaProject)this.roots.get(movedFromPath);
+< 				boolean isPkgFragmentRoot = 
+< 					projectOfRoot != null 
+< 					&& (projectOfRoot.getProject().getFullPath().isPrefixOf(movedFromPath));
+732c782
+< 						isPkgFragmentRoot);
+---
+> 						null/* root info must be retrieved as it can be different from the current one (move from one root to another*/);
+739c789
+< 				if (movedFromElement == null || Util.isExcluded(movedFromElement)) {
+---
+> 				if (movedFromElement == null) {
+780c830
+< 								this.elementAdded(subpkg, child);
+---
+> 								this.elementAdded(subpkg, child, rootInfo);
+797c847
+< 	protected void elementRemoved(Openable element, IResourceDelta delta) {
+---
+> 	protected void elementRemoved(Openable element, IResourceDelta delta, RootInfo rootInfo) {
+823,826d872
+< 			IJavaProject projectOfRoot = (IJavaProject)this.roots.get(movedToPath);
+< 			boolean isPkgFragmentRoot = 
+< 				projectOfRoot != null 
+< 				&& (projectOfRoot.getProject().getFullPath().isPrefixOf(movedToPath));
+833c879
+< 					isPkgFragmentRoot);
+---
+> 					null/* root info must be retrieved as it can be different from the current one (move from one root to another*/);
+840c886
+< 			if (movedToElement == null || Util.isExcluded(movedToElement)) {
+---
+> 			if (movedToElement == null) {
+887c933
+< 							this.elementRemoved(subpkg, child);
+---
+> 							this.elementRemoved(subpkg, child, rootInfo);
+897c943
+< 	 * Returns -1 if unknown (e.g. a non-java resource.)
+---
+> 	 * Returns -1 if unknown (e.g. a non-java resource or excluded .java file)
+899c945
+< 	private int elementType(IResource res, int kind, int flags, int parentType, boolean isPkgFragmentRoot) {
+---
+> 	private int elementType(IResource res, int kind, int flags, int parentType, RootInfo rootInfo) {
+918c964,967
+< 				if (isPkgFragmentRoot) {
+---
+> 				if (rootInfo == null) {
+> 					rootInfo = this.rootInfo(res.getFullPath());
+> 				}
+> 				if (rootInfo != null && (rootInfo.project.getProject().getFullPath().isPrefixOf(res.getFullPath()))) {
+925c974,977
+< 				if (Util.isExcluded(res, this.currentExclusionPatterns)) {
+---
+> 				if (rootInfo == null) {
+> 					rootInfo = this.rootInfo(res.getFullPath());
+> 				}
+> 				if (Util.isExcluded(res, rootInfo == null ? null : rootInfo.exclusionPatterns)) {
+1017d1068
+< 		this.exclusionPatterns = new HashMap();
+1042,1043c1093
+< 					this.roots.put(path, project);
+< 					this.exclusionPatterns.put(path, ((ClasspathEntry)entry).fullExclusionPatternChars());
+---
+> 					this.roots.put(path, new RootInfo(project, ((ClasspathEntry)entry).fullExclusionPatternChars()));
+1045,1048c1095,1098
+< 					HashSet set = (HashSet)this.otherRoots.get(path);
+< 					if (set == null) {
+< 						set = new HashSet();
+< 						this.otherRoots.put(path, set);
+---
+> 					ArrayList rootList = (ArrayList)this.otherRoots.get(path);
+> 					if (rootList == null) {
+> 						rootList = new ArrayList();
+> 						this.otherRoots.put(path, rootList);
+1050c1100
+< 					set.add(project);
+---
+> 					rootList.add(new RootInfo(project, ((ClasspathEntry)entry).fullExclusionPatternChars()));
+1076,1078c1126,1152
+< private JavaModelException newInvalidElementType() {
+< 	return new JavaModelException(new JavaModelStatus(IJavaModelStatusConstants.INVALID_ELEMENT_TYPES));
+< }
+---
+> 	private boolean isOutputFiltered(OutputInfo info, IResource childRes, int childType) {
+> 		boolean outputIsFiltered = false;
+> 		if (info != null && info.path.isPrefixOf(childRes.getFullPath())) {
+> 			if (info.traverseMode != IGNORE) {
+> 				// case of bin=src
+> 				if (info.traverseMode == SOURCE && childType == IJavaElement.CLASS_FILE) {
+> 					outputIsFiltered = true;
+> 				} else {
+> 					// case of .class file under project and no source folder
+> 					// proj=bin
+> 					if (childType == IJavaElement.JAVA_PROJECT 
+> 							&& childRes instanceof IFile 
+> 							&& Util.isValidClassFileName(childRes.getName())) {
+> 						outputIsFiltered = true;
+> 					}
+> 				}
+> 			} else {
+> 				outputIsFiltered = true;
+> 			}
+> 		}
+> 		return outputIsFiltered;
+> 	}
+> 
+> 	private JavaModelException newInvalidElementType() {
+> 		return new JavaModelException(new JavaModelStatus(IJavaModelStatusConstants.INVALID_ELEMENT_TYPES));
+> 	}
+> 	
+1119a1194,1221
+> 	private OutputInfo outputInfo(RootInfo rootInfo, IResource res) {
+> 		try {
+> 			IJavaProject proj =
+> 				rootInfo == null ?
+> 					(IJavaProject)this.createElement(res.getProject(), IJavaElement.JAVA_PROJECT, null) :
+> 					rootInfo.project;
+> 			if (proj != null) {
+> 				IPath output = proj.getOutputLocation();
+> 				int traverseMode = IGNORE;
+> 				if (proj.getProject().getFullPath().equals(output)){ // case of proj==bin==src
+> 					traverseMode = SOURCE;
+> 				} else {
+> 					// check case of src==bin
+> 					IClasspathEntry[] classpath = proj.getResolvedClasspath(true);
+> 					for (int i = 0, length = classpath.length; i < length; i++) {
+> 						IClasspathEntry entry = classpath[i];
+> 						if (entry.getPath().equals(output)) {
+> 							traverseMode = (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) ? SOURCE : BINARY;
+> 							break;
+> 						}
+> 					}
+> 				}
+> 				return new OutputInfo(output, traverseMode);
+> 			}
+> 		} catch (JavaModelException e) {
+> 		}
+> 		return null;
+> 	}
+1233,1236c1335,1336
+< 				// find out whether the delta is a package fragment root
+< 				IPath fullPath = res.getFullPath();
+< 				IJavaProject projectOfRoot = (IJavaProject)this.roots.get(fullPath);
+< 				boolean isPkgFragmentRoot = projectOfRoot != null;
+---
+> 				// find out the element type
+> 				RootInfo rootInfo = (RootInfo)this.roots.get(res.getFullPath());
+1243,1248c1343
+< 						isPkgFragmentRoot);
+< 				if (isPkgFragmentRoot) {
+< 					this.currentExclusionPatterns = (char[][])this.exclusionPatterns.get(fullPath);
+< 				} else {
+< 					this.currentExclusionPatterns = null;
+< 				}
+---
+> 						rootInfo);
+1250c1345
+< 				this.traverseDelta(delta, elementType, projectOfRoot, null, IGNORE); // traverse delta
+---
+> 				this.traverseDelta(delta, elementType, rootInfo, null); // traverse delta
+1516a1612,1623
+> 	/*
+> 	 * Finds the root info this path is included in.
+> 	 * Returns null if not found.
+> 	 */
+> 	RootInfo rootInfo(IPath path) {
+> 		while (path != null && path.segmentCount() > 0) {
+> 			RootInfo rootInfo =  (RootInfo)this.roots.get(path);
+> 			if (rootInfo != null) return rootInfo;
+> 			path = path.removeLastSegments(1);
+> 		}
+> 		return null;
+> 	}
+1528,1530c1635,1636
+< 		IJavaProject currentProject,
+< 		IPath currentOutput,
+< 		int outputTraverseMode) {
+---
+> 		RootInfo rootInfo,
+> 		OutputInfo outputInfo) {
+1532a1639,1643
+> 	
+> 		// set stack of elements
+> 		if (this.currentElement == null && rootInfo != null) {
+> 			this.currentElement = (Openable)rootInfo.project;
+> 		}
+1536,1546c1647,1648
+< 		if (currentProject != null || res instanceof IProject) {
+< 			if (this.currentElement == null || !this.currentElement.getJavaProject().equals(currentProject)) {
+< 				// force the currentProject to be used
+< 				this.currentElement = (Openable)currentProject;
+< 			}
+< 			try {
+< 				processChildren = this.updateCurrentDeltaAndIndex(delta, elementType, currentProject);
+< 			} catch (JavaModelException e) {
+< 				// non java resource or invalid project
+< 				return false;
+< 			}
+---
+> 		if (rootInfo != null || res instanceof IProject) {
+> 			processChildren = this.updateCurrentDeltaAndIndex(delta, elementType, rootInfo);
+1552,1578c1654,1656
+< 		// get the project's output location
+< 		if (currentOutput == null) {
+< 			try {
+< 				IJavaProject proj =
+< 					currentProject == null ?
+< 						(IJavaProject)this.createElement(res.getProject(), IJavaElement.JAVA_PROJECT, null) :
+< 						currentProject;
+< 				if (proj != null) {
+< 					currentOutput = proj.getOutputLocation();
+< 					if (proj.getProject().getFullPath().equals(currentOutput)){ // case of proj==bin==src
+< 						outputTraverseMode = SOURCE;
+< 					} else {
+< 						// check case of src==bin
+< 						IClasspathEntry[] classpath = proj.getResolvedClasspath(true);
+< 						for (int i = 0, length = classpath.length; i < length; i++) {
+< 							IClasspathEntry entry = classpath[i];
+< 							if (entry.getPath().equals(currentOutput)) {
+< 								outputTraverseMode = (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) ? SOURCE : BINARY;
+< 								break;
+< 							}
+< 						}
+< 					}
+< 				}
+< 			} catch (JavaModelException e) {
+< 			}
+< 		}
+< 
+---
+> 		// get the project's output location and traverse mode
+> 		if (outputInfo == null) outputInfo = this.outputInfo(rootInfo, res);
+> 	
+1590c1668
+< 
+---
+> 	
+1596,1599c1674,1680
+< 				IJavaProject projectOfRoot = (IJavaProject)this.roots.get(childPath);
+< 				boolean isPkgFragmentRoot = 
+< 					projectOfRoot != null 
+< 					&& (projectOfRoot.getProject().getFullPath().isPrefixOf(childPath));
+---
+> 				RootInfo childInfo = rootInfo == null ? (RootInfo)this.roots.get(childPath) : null;
+> 				if (childInfo != null && !childInfo.project.getProject().getFullPath().isPrefixOf(childPath)) {
+> 					// package fragment root of another project (dealt with later)
+> 					childInfo = null;
+> 				}
+> 				
+> 				// compute child type
+1606c1687,1688
+< 						isPkgFragmentRoot);
+---
+> 						rootInfo == null ? childInfo : rootInfo
+> 					);
+1608,1631c1690,1691
+< 				if (isPkgFragmentRoot) {
+< 					this.currentExclusionPatterns = (char[][])this.exclusionPatterns.get(childPath);
+< 				}
+< 				
+< 				// filter out changes in output location
+< 				boolean outputIsFiltered = false;
+< 				if (currentOutput != null && currentOutput.isPrefixOf(childPath)) {
+< 					if (outputTraverseMode != IGNORE) {
+< 						// case of bin=src
+< 						if (outputTraverseMode == SOURCE && childType == IJavaElement.CLASS_FILE) {
+< 							outputIsFiltered = true;
+< 						} else {
+< 							// case of .class file under project and no source folder
+< 							// proj=bin
+< 							if (childType == IJavaElement.JAVA_PROJECT 
+< 									&& childRes instanceof IFile 
+< 									&& Util.isValidClassFileName(childRes.getName())) {
+< 								outputIsFiltered = true;
+< 							}
+< 						}
+< 					} else {
+< 						outputIsFiltered = true;
+< 					}
+< 				}
+---
+> 				// are changes in output location filtered out ?
+> 				boolean outputIsFiltered = this.isOutputFiltered(outputInfo, childRes, childType);
+1636c1696
+< 						|| !this.traverseDelta(child, childType, (currentProject == null && isPkgFragmentRoot) ? projectOfRoot : currentProject, currentOutput, outputTraverseMode)) {
+---
+> 						|| !this.traverseDelta(child, childType, rootInfo == null ? childInfo : rootInfo, outputInfo)) {
+1638c1698
+< 							if (currentProject != null) {
+---
+> 							if (rootInfo != null) {
+1641c1701,1702
+< 									if (this.currentElement == null || !this.currentElement.getJavaProject().equals(currentProject)) {
+---
+> 									if (this.currentElement == null 
+> 											|| !this.currentElement.getJavaProject().equals(rootInfo.project)) {
+1643c1704
+< 										this.currentElement = (Openable)currentProject;
+---
+> 										this.currentElement = (Openable)rootInfo.project;
+1646c1707,1708
+< 										|| (elementType == IJavaElement.PACKAGE_FRAGMENT_ROOT && res instanceof IProject)) { 
+---
+> 										|| (elementType == IJavaElement.PACKAGE_FRAGMENT_ROOT 
+> 											&& res instanceof IProject)) { 
+1648c1710
+< 										parent = (Openable)currentProject;
+---
+> 										parent = (Openable)rootInfo.project;
+1650c1712
+< 										parent = this.createElement(res, elementType, currentProject);
+---
+> 										parent = this.createElement(res, elementType, rootInfo);
+1669,1671c1731,1734
+< 				// if child is a package fragment root of another project, traverse delta too
+< 				if (projectOfRoot != null && !isPkgFragmentRoot) {
+< 					this.traverseDelta(child, IJavaElement.PACKAGE_FRAGMENT_ROOT, projectOfRoot, null, IGNORE); // binary output of projectOfRoot cannot be this root
+---
+> 				// if child was not a package fragment root of the current project
+> 				// but it is a package fragment root of another project, traverse delta too
+> 				if (childInfo == null && (childInfo = (RootInfo)this.roots.get(childPath)) != null) {
+> 					this.traverseDelta(child, IJavaElement.PACKAGE_FRAGMENT_ROOT, childInfo, null); // binary output of childInfo.project cannot be this root
+1674c1737
+< 				
+---
+> 	
+1676,1682c1739,1741
+< 				HashSet set;
+< 				if ((set = (HashSet)this.otherRoots.get(childPath)) != null) {
+< 					IPackageFragmentRoot currentRoot = 
+< 						(currentProject == null ? 
+< 							projectOfRoot : 
+< 							currentProject).getPackageFragmentRoot(childRes);
+< 					Iterator iterator = set.iterator();
+---
+> 				ArrayList rootList;
+> 				if ((rootList = (ArrayList)this.otherRoots.get(childPath)) != null) {
+> 					Iterator iterator = rootList.iterator();
+1684,1685c1743,1744
+< 						IJavaProject project = (IJavaProject) iterator.next();
+< 						this.cloneCurrentDelta(project, currentRoot);
+---
+> 						childInfo = (RootInfo) iterator.next();
+> 						this.traverseDelta(child, IJavaElement.PACKAGE_FRAGMENT_ROOT, childInfo, null); // binary output of childInfo.project cannot be this root
+1705c1764
+< 			return isValidParent && (currentProject != null || oneChildOnClasspath);
+---
+> 			return isValidParent && (rootInfo != null || oneChildOnClasspath);
+1709c1768
+< 			return currentProject != null && elementType != -1;
+---
+> 			return rootInfo != null && elementType != -1;
+1750,1785c1809,1820
+< 	private boolean updateCurrentDeltaAndIndex(IResourceDelta delta, int elementType, IJavaProject project) throws JavaModelException {
+< 		Openable element;
+< 		switch (delta.getKind()) {
+< 			case IResourceDelta.ADDED :
+< 				IResource deltaRes = delta.getResource();
+< 				element = this.createElement(deltaRes, elementType, project);
+< 				if (element == null) {
+< 					// resource might be containing shared roots (see bug 19058)
+< 					this.updateRoots(deltaRes.getFullPath(), delta);
+< 					throw newInvalidElementType();
+< 				}
+< 				this.updateIndex(element, delta);
+< 				this.elementAdded(element, delta);
+< 				return false;
+< 			case IResourceDelta.REMOVED :
+< 				deltaRes = delta.getResource();
+< 				element = this.createElement(deltaRes, elementType, project);
+< 				if (element == null) {
+< 					// resource might be containing shared roots (see bug 19058)
+< 					this.updateRoots(deltaRes.getFullPath(), delta);
+< 					throw newInvalidElementType();
+< 				}
+< 				this.updateIndex(element, delta);
+< 				this.elementRemoved(element, delta);
+< 	
+< 				if (deltaRes.getType() == IResource.PROJECT){			
+< 					// reset the corresponding project built state, since cannot reuse if added back
+< 					this.manager.setLastBuiltState((IProject)deltaRes, null /*no state*/);
+< 				}
+< 				return false;
+< 			case IResourceDelta.CHANGED :
+< 				int flags = delta.getFlags();
+< 				if ((flags & IResourceDelta.CONTENT) != 0) {
+< 					// content has changed
+< 					element = this.createElement(delta.getResource(), elementType, project);
+< 					if (element == null) throw newInvalidElementType();
+---
+> 	private boolean updateCurrentDeltaAndIndex(IResourceDelta delta, int elementType, RootInfo rootInfo) {
+> 		try {
+> 			Openable element;
+> 			switch (delta.getKind()) {
+> 				case IResourceDelta.ADDED :
+> 					IResource deltaRes = delta.getResource();
+> 					element = this.createElement(deltaRes, elementType, rootInfo);
+> 					if (element == null) {
+> 						// resource might be containing shared roots (see bug 19058)
+> 						this.updateRoots(deltaRes.getFullPath(), delta);
+> 						throw newInvalidElementType();
+> 					}
+1787,1801c1822,1871
+< 					this.contentChanged(element, delta);
+< 				} else if (elementType == IJavaElement.JAVA_PROJECT) {
+< 					if ((flags & IResourceDelta.OPEN) != 0) {
+< 						// project has been opened or closed
+< 						IProject res = (IProject)delta.getResource();
+< 						element = this.createElement(res, elementType, project);
+< 						if (element == null) {
+< 							// resource might be containing shared roots (see bug 19058)
+< 							this.updateRoots(res.getFullPath(), delta);
+< 							throw newInvalidElementType();
+< 						}
+< 						if (res.isOpen()) {
+< 							if (this.hasJavaNature(res)) {
+< 								this.elementAdded(element, delta);
+< 								this.indexManager.indexAll(res);
+---
+> 					this.elementAdded(element, delta, rootInfo);
+> 					return false;
+> 				case IResourceDelta.REMOVED :
+> 					deltaRes = delta.getResource();
+> 					element = this.createElement(deltaRes, elementType, rootInfo);
+> 					if (element == null) {
+> 						// resource might be containing shared roots (see bug 19058)
+> 						this.updateRoots(deltaRes.getFullPath(), delta);
+> 						throw newInvalidElementType();
+> 					}
+> 					this.updateIndex(element, delta);
+> 					this.elementRemoved(element, delta, rootInfo);
+> 		
+> 					if (deltaRes.getType() == IResource.PROJECT){			
+> 						// reset the corresponding project built state, since cannot reuse if added back
+> 						this.manager.setLastBuiltState((IProject)deltaRes, null /*no state*/);
+> 					}
+> 					return false;
+> 				case IResourceDelta.CHANGED :
+> 					int flags = delta.getFlags();
+> 					if ((flags & IResourceDelta.CONTENT) != 0) {
+> 						// content has changed
+> 						element = this.createElement(delta.getResource(), elementType, rootInfo);
+> 						if (element == null) throw newInvalidElementType();
+> 						this.updateIndex(element, delta);
+> 						this.contentChanged(element, delta);
+> 					} else if (elementType == IJavaElement.JAVA_PROJECT) {
+> 						if ((flags & IResourceDelta.OPEN) != 0) {
+> 							// project has been opened or closed
+> 							IProject res = (IProject)delta.getResource();
+> 							element = this.createElement(res, elementType, rootInfo);
+> 							if (element == null) {
+> 								// resource might be containing shared roots (see bug 19058)
+> 								this.updateRoots(res.getFullPath(), delta);
+> 								throw newInvalidElementType();
+> 							}
+> 							if (res.isOpen()) {
+> 								if (this.hasJavaNature(res)) {
+> 									this.elementAdded(element, delta, rootInfo);
+> 									this.indexManager.indexAll(res);
+> 								}
+> 							} else {
+> 								JavaModel javaModel = JavaModelManager.getJavaModelManager().getJavaModel();
+> 								boolean wasJavaProject = javaModel.findJavaProject(res) != null;
+> 								if (wasJavaProject) {
+> 									this.elementRemoved(element, delta, rootInfo);
+> 									this.indexManager.discardJobs(element.getElementName());
+> 									this.indexManager.removeIndexFamily(res.getFullPath());
+> 									
+> 								}
+1803c1873,1876
+< 						} else {
+---
+> 							return false; // when a project is open/closed don't process children
+> 						}
+> 						if ((flags & IResourceDelta.DESCRIPTION) != 0) {
+> 							IProject res = (IProject)delta.getResource();
+1806,1832c1879,1894
+< 							if (wasJavaProject) {
+< 								this.elementRemoved(element, delta);
+< 								this.indexManager.discardJobs(element.getElementName());
+< 								this.indexManager.removeIndexFamily(res.getFullPath());
+< 								
+< 							}
+< 						}
+< 						return false; // when a project is open/closed don't process children
+< 					}
+< 					if ((flags & IResourceDelta.DESCRIPTION) != 0) {
+< 						IProject res = (IProject)delta.getResource();
+< 						JavaModel javaModel = JavaModelManager.getJavaModelManager().getJavaModel();
+< 						boolean wasJavaProject = javaModel.findJavaProject(res) != null;
+< 						boolean isJavaProject = this.hasJavaNature(res);
+< 						if (wasJavaProject != isJavaProject) {
+< 							// project's nature has been added or removed
+< 							element = this.createElement(res, elementType, project);
+< 							if (element == null) throw newInvalidElementType(); // note its resources are still visible as roots to other projects
+< 							if (isJavaProject) {
+< 								this.elementAdded(element, delta);
+< 								this.indexManager.indexAll(res);
+< 							} else {
+< 								this.elementRemoved(element, delta);
+< 								this.indexManager.discardJobs(element.getElementName());
+< 								this.indexManager.removeIndexFamily(res.getFullPath());
+< 								// reset the corresponding project built state, since cannot reuse if added back
+< 								this.manager.setLastBuiltState(res, null /*no state*/);
+---
+> 							boolean isJavaProject = this.hasJavaNature(res);
+> 							if (wasJavaProject != isJavaProject) {
+> 								// project's nature has been added or removed
+> 								element = this.createElement(res, elementType, rootInfo);
+> 								if (element == null) throw newInvalidElementType(); // note its resources are still visible as roots to other projects
+> 								if (isJavaProject) {
+> 									this.elementAdded(element, delta, rootInfo);
+> 									this.indexManager.indexAll(res);
+> 								} else {
+> 									this.elementRemoved(element, delta, rootInfo);
+> 									this.indexManager.discardJobs(element.getElementName());
+> 									this.indexManager.removeIndexFamily(res.getFullPath());
+> 									// reset the corresponding project built state, since cannot reuse if added back
+> 									this.manager.setLastBuiltState(res, null /*no state*/);
+> 								}
+> 								return false; // when a project's nature is added/removed don't process children
+1834d1895
+< 							return false; // when a project's nature is added/removed don't process children
+1837,1838c1898,1903
+< 				}
+< 				return true;
+---
+> 					return true;
+> 			}
+> 			return true;
+> 		} catch (JavaModelException e) {
+> 			// non java resource or invalid project
+> 			return false;
+1840d1904
+< 		return true;
+2019,2026c2083,2087
+< 			IJavaProject rootProject = (IJavaProject)this.roots.get(path);
+< 			try {
+< 				this.updateCurrentDeltaAndIndex(rootDelta, IJavaElement.PACKAGE_FRAGMENT_ROOT, rootProject);
+< 			} catch (JavaModelException e) {
+< 			}
+< 			HashSet set = (HashSet)this.otherRoots.get(path);
+< 			if (set != null) {
+< 				Iterator otherProjects = set.iterator();
+---
+> 			RootInfo rootInfo = (RootInfo)this.roots.get(path);
+> 			this.updateCurrentDeltaAndIndex(rootDelta, IJavaElement.PACKAGE_FRAGMENT_ROOT, rootInfo);
+> 			ArrayList rootList = (ArrayList)this.otherRoots.get(path);
+> 			if (rootList != null) {
+> 				Iterator otherProjects = rootList.iterator();
+2028,2032c2089,2090
+< 					rootProject = (IJavaProject)otherProjects.next();
+< 					try {
+< 						this.updateCurrentDeltaAndIndex(rootDelta, IJavaElement.PACKAGE_FRAGMENT_ROOT, rootProject);
+< 					} catch (JavaModelException e) {
+< 					}
+---
+> 					rootInfo = (RootInfo)otherProjects.next();
+> 					this.updateCurrentDeltaAndIndex(rootDelta, IJavaElement.PACKAGE_FRAGMENT_ROOT, rootInfo);
