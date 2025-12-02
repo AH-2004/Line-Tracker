@@ -6,6 +6,8 @@
   2. Evaluate the tool you developed in (1) using a new dataset (Contribute a new dataset and evaluate your tool using your dataset and the dataset provided to you). The new dataset should contain the line tracking information of 25 different files. The dataset should contain the mapping of 500 lines across these 25 pairs of files. The files can be selected from a single project or from different projects.
   3. How can you visualize line mapping information?
 
+** NOTE: Make sure to always src_bash{git pull} before src_bash{git push}
+
 ** Todo [1/2]
    - [X] File Handling, handling 2 files at the same time
    - [ ] Implement determining difference between lines
