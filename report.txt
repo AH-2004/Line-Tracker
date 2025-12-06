@@ -1,0 +1,73 @@
+Title 
+title 
+
+Authors 
+
+Elliot Adams 
+110142940 
+Department of Computer Science 
+University of Windsor 
+adams1x@uwindsor.ca 
+
+Ahmed Shuaib 
+110184126 
+Department of Computer Science 
+University of Windsor 
+shuaib1@uwindsor.ca 
+
+
+Abstract 
+This project investigates the problem of tracking source code lines across different versions of a file. Using concepts from language independent diffing techniques presented in prior work, this project provides an approach using techniques such as preprocessing, similarity-based candidate selection, and unchanged line detection. A dataset of 25 file pairs with 500 total line mappings was used. The method identified most mappings and demonstrated pros and cons of hybrid strategies. 
+
+Keywords 
+line tracking; diff; file comparison; source code; simhash;
+
+Introduction 
+In order to properly advance a software through development phases, tracking the evolution of source code is critical. It can be tough for developers to know what specific lines or sections of code has been altered. Traditional tools such as Unix diff can fail in cases of reordered lines or small text modifications. Using a language independent hybrid diff can improve accuracy with strategies like context similarity. 
+In this project, we attack the same problem. We decided to design a method modeled after the LHDiff workflow, making use of strategies such as preprocessing, unchanged line detection, simhash, and similarity scoring.
+Our results show that a hybrid technique such as this can correctly determine most line mappings properly. The technique successfully identified the majority of line changes.
+
+Data Collection 
+To evaluate our approach, we used a dataset containing 25 pairs of source code files, each consisting of an original version and a modified version. The files were chosen:
+- regardless of language
+- with differed typical developer edits 
+- with diversity among file size and change complexity
+
+
+Technique Description and Evaluation 
+The technique description for our method is as follows:
+Step 1: Preprocessing:
+Each line is normalized by
+- Removing excessive whitespace
+- Lowercasing for language independent comparison
+- Removing comments when easily identifiable
+This ensures a way to compare lines with formatting differences
+Step 2: Detecting Unchanged Lines:
+A Unix diff algorithm is applied to identify
+- Lines that appear unchanged
+- Lines that are inserted or deleted
+Unchanged lines are matched and excluded
+Step 3: Candidate Generation Using Hybrid Similarity
+For remaining unmapped lines, we compute
+- Content Similarity
+- Context Similarity
+Using this criteria, the highest scoring candidate is selected as the match to a line.
+
+Presentation of Line Mapping Information 
+section to be filled once tests are completed
+
+Identifying Bug-Introducing Changes (Optional. This is for the bonus mark) 
+If you attempted to identify bug-introducing changes, describe: 
+
+How you detected these changes 
+
+Whether you performed any evaluation of your approach 
+
+The results of that evaluation, if applicable 
+
+You may use figures and tables to illustrate your method and findings. 
+
+References (Optional) 
+If you used any additional sources of information (e.g., research papers, documentation, online resources), list them in this section using an appropriate citation style. 
+
+ 
