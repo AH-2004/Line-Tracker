@@ -3,7 +3,7 @@ src = ./src/main/java
 reportName = main
 report = main.tex
 reportSrc = ./src/report
-dist = ./bin
+dist = ./dist
 file = Main.java FileHandler.java Hash.java
 file := $(patsubst %, $(src)/%, $(file))
 
