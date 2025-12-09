@@ -1,4 +1,4 @@
-\documentclass[10pt,twocolumn]{article}
+\documentclass[9pt,twocolumn]{extarticle}
 
 \usepackage{lmodern}
 \usepackage[margin=1in]{geometry}
@@ -7,27 +7,26 @@
 \usepackage{svg}
 
 \title{\vspace{-0.6in}\huge{Line Tracker -- Tracking Source Code Lines}}
-\author{Ahmed Shuaib (110184126), Elliot Adams ()}
+\author{Ahmed Shuaib (110184126), Elliot Adams (110142940)\\Department of Computer Science\\University of Windsor}
 \date{\today}
 \captionsetup[figure]{labelformat=empty}
 
 \begin{document}
 \maketitle
-Department of Computer Science
-\\
-University of Windsor, Canada
-\vspace{-0.4in}
 
-\section*{}
-Abstract-Nullam eu ante vel est convallis dignissim. Fusce suscipit, wisi nec facilisis facilisis, est dui fermentum leo, quis tempor ligula erat quis odio. Nunc porta vulputate tellus. Nunc rutrum turpis sed pede. Sed bibendum. Aliquam posuere. Nunc aliquet, augue nec adipiscing interdum, lacus tellus malesuada massa, quis varius mi purus non odio. Pellentesque condimentum, magna ut suscipit hendrerit, ipsum augue ornare nulla, non luctus diam neque sit amet urna. Curabitur vulputate vestibulum lorem. Fusce sagittis, libero non molestie mollis, magna orci ultrices dolor, at vulputate neque nulla lacinia eros. Sed id ligula quis est convallis tempor. Curabitur lacinia pulvinar nibh. Nam a sapien.
+% \section*{}
+\textbf{Abstract} - This project investigates the problem of tracking source code lines across different versions of a file. Using concepts from language independent diffing techniques presented in prior work, this project provides an approach using techniques such as preprocessing, similarity-based candidate selection, and unchanged line detection. A dataset of 25 file pairs with 500 total line mappings was used. The method identified most mappings and demonstrated pros and cons of hybrid strategies.
 \\\\
-Keywords-Foo, Bar, Var
+\textbf{Keywords} - line tracking; diff; file comparison; source code; simhash.
 
 \section*{Introduction}
-Automata Theory is the study of abstract machines. With the help of this branch of theoretical computer science, many methods and tools have been developed that are widely used to analyze systems, design compilers, and programming languages. As software continues to grow in complexity many modern development tools are developed to optimize the development experience. This paper aims to explore the use of methods and tools of automata to achieve an optimized development experience in the context of 2D game design and outline that can be modified and/or built upon.
+In order to properly advance a software through development phases, tracking the evolution of source code is critical. It can be tough for developers to know what specific lines or sections of code has been altered. Traditional tools such as Unix diff can fail in cases of reordered lines or small text modifications. Using a language independent hybrid diff can improve accuracy with strategies like context similarity.
+\\\\
+In this project, we attack the same problem. We decided to design a method modeled after the LHDiff workflow, making use of strategies such as preprocessing, unchanged line detection, simhash, and similarity scoring.
+Our results show that a hybrid technique such as this can correctly determine most line mappings properly. The technique successfully identified the majority of line changes.
 
 \section*{Data Collection}
-Nullam eu ante vel est convallis dignissim. Fusce suscipit, wisi nec facilisis facilisis, est dui fermentum leo, quis tempor ligula erat quis odio. Nunc porta vulputate tellus. Nunc rutrum turpis sed pede. Sed bibendum. Aliquam posuere. Nunc aliquet, augue nec adipiscing interdum, lacus tellus malesuada massa, quis varius mi purus non odio. Pellentesque condimentum, magna ut suscipit hendrerit, ipsum augue ornare nulla, non luctus diam neque sit amet urna. Curabitur vulputate vestibulum lorem. Fusce sagittis, libero non molestie mollis, magna orci ultrices dolor, at vulputate neque nulla lacinia eros. Sed id ligula quis est convallis tempor. Curabitur lacinia pulvinar nibh. Nam a sapien.
+To evaluate our approach, we used a dataset containing 25 pairs of source code files, each consisting of an original version and a modified version. The files were chosen regardless of language, with differed typical developer edits, and with diversity among file size and change complexity.
 
 \section*{Technique Description and Evaluation}
 Nullam eu ante vel est convallis dignissim. Fusce suscipit, wisi nec facilisis facilisis, est dui fermentum leo, quis tempor ligula erat quis odio. Nunc porta vulputate tellus. Nunc rutrum turpis sed pede. Sed bibendum. Aliquam posuere. Nunc aliquet, augue nec adipiscing interdum, lacus tellus malesuada massa, quis varius mi purus non odio. Pellentesque condimentum, magna ut suscipit hendrerit, ipsum augue ornare nulla, non luctus diam neque sit amet urna. Curabitur vulputate vestibulum lorem. Fusce sagittis, libero non molestie mollis, magna orci ultrices dolor, at vulputate neque nulla lacinia eros. Sed id ligula quis est convallis tempor. Curabitur lacinia pulvinar nibh. Nam a sapien.
@@ -35,30 +34,30 @@ Nullam eu ante vel est convallis dignissim. Fusce suscipit, wisi nec facilisis f
 \section*{Presentation of Line Mapping Information}
 Nullam eu ante vel est convallis dignissim. Fusce suscipit, wisi nec facilisis facilisis, est dui fermentum leo, quis tempor ligula erat quis odio. Nunc porta vulputate tellus. Nunc rutrum turpis sed pede. Sed bibendum. Aliquam posuere. Nunc aliquet, augue nec adipiscing interdum, lacus tellus malesuada massa, quis varius mi purus non odio. Pellentesque condimentum, magna ut suscipit hendrerit, ipsum augue ornare nulla, non luctus diam neque sit amet urna. Curabitur vulputate vestibulum lorem. Fusce sagittis, libero non molestie mollis, magna orci ultrices dolor, at vulputate neque nulla lacinia eros. Sed id ligula quis est convallis tempor. Curabitur lacinia pulvinar nibh. Nam a sapien.
 
-\begin{onecolumn}
-  \section*{A Picture...}
-  \subsection*{Description of Picture}
-  Nullam eu ante vel est convallis dignissim. Fusce suscipit, wisi nec facilisis facilisis, est dui fermentum leo, quis tempor ligula erat quis odio. Nunc porta vulputate tellus. Nunc rutrum turpis sed pede.
+% \begin{onecolumn}
+%   \section*{A Picture...}
+%   \subsection*{Description of Picture}
+%   Nullam eu ante vel est convallis dignissim. Fusce suscipit, wisi nec facilisis facilisis, est dui fermentum leo, quis tempor ligula erat quis odio. Nunc porta vulputate tellus. Nunc rutrum turpis sed pede.
   
-  % \begin{figure*}[h]
-  %   \centering
-  %   \includesvg[width=\textwidth]{bongo.svg}
-  %   \caption{A Caption...}
-  % \end{figure*}
+%   % \begin{figure*}[h]
+%   %   \centering
+%   %   \includesvg[width=\textwidth]{bongo.svg}
+%   %   \caption{A Caption...}
+%   % \end{figure*}
 
-  % \pagebreak
-\end{onecolumn}
+%   % \pagebreak
+% \end{onecolumn}
 
-\begin{twocolumn}
+% \begin{twocolumn}
 \section*{Conclusion}
 Nullam eu ante vel est convallis dignissim. Fusce suscipit, wisi nec facilisis facilisis, est dui fermentum leo, quis tempor ligula erat quis odio. Nunc porta vulputate tellus. Nunc rutrum turpis sed pede. Sed bibendum. Aliquam posuere. Nunc aliquet, augue nec adipiscing interdum, lacus tellus malesuada massa, quis varius mi purus non odio. Pellentesque condimentum, magna ut suscipit hendrerit, ipsum augue ornare nulla, non luctus diam neque sit amet urna. Curabitur vulputate vestibulum lorem. Fusce sagittis, libero non molestie mollis, magna orci ultrices dolor, at vulputate neque nulla lacinia eros. Sed id ligula quis est convallis tempor. Curabitur lacinia pulvinar nibh. Nam a sapien.
-\end{twocolumn}
+% \end{twocolumn}
 
 \section*{\small References}
 \begin{enumerate}
   
 \item [{[1]}] Muhammad Asaduzzaman, Chanchal K. Roy, Kevin A. Schneider, Massimiliano Di Penta, LHDiff: A Language-Independent Hybrid Approach
-for Tracking Source Code Lines, 2XXX.
+for Tracking Source Code Lines.
 \item [{[2]}] A Group of humans, paper title, 2XXX.
 \item [{[3]}] Another Group of humans, paper title, 2XXX.
 \end{enumerate}
