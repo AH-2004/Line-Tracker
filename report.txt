@@ -68,6 +68,13 @@ The results of that evaluation, if applicable
 You may use figures and tables to illustrate your method and findings. 
 
 References (Optional) 
-If you used any additional sources of information (e.g., research papers, documentation, online resources), list them in this section using an appropriate citation style. 
+G. Canfora, L. Cerulo and M. Di Penta, "Tracking Your Changes: A Language-Independent Approach," in IEEE Software, vol. 26, no. 1, pp. 50-57, Jan.-Feb. 2009. URL: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4721183&isnumber=4721166
+
+J. I. Maletic and M. L. Collard, "Supporting source code difference analysis," 20th IEEE International Conference on Software Maintenance, 2004. Proceedings., Chicago, IL, USA, 2004. URL: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1357805&isnumber=29793
+
+J. Spacco and C. Williams, "Lightweight Techniques for Tracking Unique Program Statements," 2009 Ninth IEEE International Working Conference on Source Code Analysis and Manipulation, Edmonton, AB, Canada, 2009, pp. 99-108. URL: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5279964&isnumber=5279861
+
+
+ 
 
  
