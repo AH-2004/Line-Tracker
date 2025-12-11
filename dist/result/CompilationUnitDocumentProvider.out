@@ -1,0 +1,832 @@
+Diff: ./reference/dataset/CompilationUnitDocumentProvider_1.java ./reference/dataset/CompilationUnitDocumentProvider_2.java
+(1) <-> (1)
+	package org.eclipse.jdt.internal.ui.javaeditor;
+	package org.eclipse.jdt.internal.ui.javaeditor;
+(3) <-> (3)
+	/*
+	/*
+(4) <-> (4)
+	* (c) Copyright IBM Corp. 2000, 2001.
+	* (c) Copyright IBM Corp. 2000, 2001.
+(5) <-> (5)
+	* All Rights Reserved.
+	* All Rights Reserved.
+(6) <-> (6)
+	*/
+	*/
+(9) <-> (11)
+	import java.util.ArrayList;
+	import java.util.ArrayList;
+(10) <-> (12)
+	import java.util.Iterator;
+	import java.util.Iterator;
+(12) <-> (13)
+	import java.util.List;
+	import java.util.List;
+(13) <-> (15)
+	import org.eclipse.core.resources.IFile;
+	import org.eclipse.core.resources.IFile;
+(14) <-> (16)
+	import org.eclipse.core.resources.IMarker;
+	import org.eclipse.core.resources.IMarker;
+(15) <-> (17)
+	import org.eclipse.core.resources.IResource;
+	import org.eclipse.core.resources.IResource;
+(16) <-> (18)
+	import org.eclipse.core.runtime.CoreException;
+	import org.eclipse.core.runtime.CoreException;
+(17) <-> (19)
+	import org.eclipse.core.runtime.IProgressMonitor;
+	import org.eclipse.core.runtime.IProgressMonitor;
+(19) <-> (20)
+	import org.eclipse.jface.text.BadLocationException;
+	import org.eclipse.core.runtime.NullProgressMonitor;
+(20) <-> (22)
+	import org.eclipse.jface.text.Document;
+	import org.eclipse.jface.text.Document;
+(22) <-> (23)
+	import org.eclipse.jface.text.IDocument;
+	import org.eclipse.jface.text.IDocument;
+(24) <-> (24)
+	import org.eclipse.jface.text.IDocumentPartitioner;
+	import org.eclipse.jface.text.IDocumentPartitioner;
+(25) <-> (25)
+	import org.eclipse.jface.text.source.IAnnotationModel;
+	import org.eclipse.jface.text.source.IAnnotationModel;
+(28) <-> (27)
+	import org.eclipse.ui.IEditorInput;
+	import org.eclipse.ui.IEditorInput;
+(29) <-> (28)
+	import org.eclipse.ui.IFileEditorInput;
+	import org.eclipse.ui.IFileEditorInput;
+(30) <-> (29)
+	import org.eclipse.ui.editors.text.FileDocumentProvider;
+	import org.eclipse.ui.editors.text.FileDocumentProvider;
+(31) <-> (30)
+	import org.eclipse.ui.part.FileEditorInput;
+	import org.eclipse.ui.part.FileEditorInput;
+(32) <-> (31)
+	import org.eclipse.ui.texteditor.AbstractMarkerAnnotationModel;
+	import org.eclipse.ui.texteditor.AbstractMarkerAnnotationModel;
+(33) <-> (32)
+	import org.eclipse.ui.texteditor.MarkerAnnotation;
+	import org.eclipse.ui.texteditor.MarkerAnnotation;
+(34) <-> (33)
+	import org.eclipse.ui.texteditor.ResourceMarkerAnnotationModel;
+	import org.eclipse.ui.texteditor.ResourceMarkerAnnotationModel;
+(36) <-> (39)
+	import org.eclipse.jdt.core.BufferChangedEvent;
+	import org.eclipse.jdt.core.IOpenable;
+(37) <-> (35)
+	import org.eclipse.jdt.core.IBuffer;
+	import org.eclipse.jdt.core.IBuffer;
+(38) <-> (36)
+	import org.eclipse.jdt.core.IBufferChangedListener;
+	import org.eclipse.jdt.core.IBufferFactory;
+(39) <-> (37)
+	import org.eclipse.jdt.core.ICompilationUnit;
+	import org.eclipse.jdt.core.ICompilationUnit;
+(40) <-> (38)
+	import org.eclipse.jdt.core.IJavaModelStatusConstants;
+	import org.eclipse.jdt.core.IJavaModelStatusConstants;
+(41) <-> (40)
+	import org.eclipse.jdt.core.JavaCore;
+	import org.eclipse.jdt.core.JavaCore;
+(42) <-> (41)
+	import org.eclipse.jdt.core.JavaModelException;
+	import org.eclipse.jdt.core.JavaModelException;
+(44) <-> (43)
+	import org.eclipse.jdt.ui.IWorkingCopyManager;
+	import org.eclipse.jdt.ui.IWorkingCopyManager;
+(45) <-> (44)
+	import org.eclipse.jdt.ui.text.JavaTextTools;
+	import org.eclipse.jdt.ui.text.JavaTextTools;
+(47) <-> (46)
+	import org.eclipse.jdt.internal.core.JavaModelStatus;
+	import org.eclipse.jdt.internal.core.JavaModelStatus;
+(48) <-> (47)
+	import org.eclipse.jdt.internal.ui.JavaPlugin;
+	import org.eclipse.jdt.internal.ui.JavaPlugin;
+(52) <-> (51)
+	public class CompilationUnitDocumentProvider extends FileDocumentProvider implements IWorkingCopyManager {
+	public class CompilationUnitDocumentProvider extends FileDocumentProvider implements IWorkingCopyManager {
+(54) <-> (53)
+	/**
+	/**
+(59) <-> (338)
+	*/
+	*/
+(60) <-> (96)
+	protected static class BufferSynchronizer implements IDocumentListener, IBufferChangedListener {
+	protected class BufferFactory implements IBufferFactory {
+(68) <-> (113)
+	fDocument= document;
+	return document;
+(69) <-> (251)
+	try {
+	try {
+(71) <-> (321)
+	} catch (JavaModelException x) {
+	} catch (JavaModelException x) {
+(73) <-> (351)
+	}
+	}
+(74) <-> (324)
+	}
+	}
+(76) <-> (93)
+	/**
+	/**
+(79) <-> (333)
+	*/
+	*
+(83) <-> (352)
+	}
+	}
+(85) <-> (354)
+	/**
+	/**
+(88) <-> (356)
+	*/
+	*
+(92) <-> (138)
+	}
+	}
+(96) <-> (81)
+	*/
+	*/
+(101) <-> (135)
+	}
+	}
+(103) <-> (79)
+	/**
+	/**
+(105) <-> (95)
+	*/
+	*/
+(107) <-> (257)
+	}
+	}
+(111) <-> (55)
+	*/
+	*/
+(114) <-> (308)
+	try {
+	try {
+(117) <-> (277)
+	} catch (BadLocationException x) {
+	} catch (JavaModelException x) {
+(119) <-> (255)
+	} finally {
+	} finally {
+(121) <-> (210)
+	}
+	}
+(122) <-> (136)
+	}
+	}
+(123) <-> (139)
+	};
+	};
+(126) <-> (56)
+	protected class _FileSynchronizer extends FileSynchronizer {
+	protected class _FileSynchronizer extends FileSynchronizer {
+(127) <-> (57)
+	public _FileSynchronizer(IFileEditorInput fileEditorInput) {
+	public _FileSynchronizer(IFileEditorInput fileEditorInput) {
+(128) <-> (58)
+	super(fileEditorInput);
+	super(fileEditorInput);
+(129) <-> (59)
+	}
+	}
+(130) <-> (60)
+	};
+	};
+(132) <-> (62)
+	/**
+	/**
+(133) <-> (63)
+	* Bundle of all required informations to allow working copy management.
+	* Bundle of all required informations to allow working copy management.
+(134) <-> (64)
+	*/
+	*/
+(135) <-> (65)
+	protected class CompilationUnitInfo extends FileInfo {
+	protected class CompilationUnitInfo extends FileInfo {
+(137) <-> (67)
+	ICompilationUnit fCopy;
+	ICompilationUnit fCopy;
+(140) <-> (69)
+	CompilationUnitInfo(IDocument document, IAnnotationModel model, _FileSynchronizer fileSynchronizer, ICompilationUnit copy, BufferSynchronizer bufferSynchronizer) {
+	CompilationUnitInfo(IDocument document, IAnnotationModel model, _FileSynchronizer fileSynchronizer, ICompilationUnit copy) {
+(141) <-> (70)
+	super(document, model, fileSynchronizer);
+	super(document, model, fileSynchronizer);
+(142) <-> (71)
+	fCopy= copy;
+	fCopy= copy;
+(144) <-> (72)
+	}
+	}
+(146) <-> (74)
+	void setModificationStamp(long timeStamp) {
+	void setModificationStamp(long timeStamp) {
+(147) <-> (75)
+	fModificationStamp= timeStamp;
+	fModificationStamp= timeStamp;
+(148) <-> (76)
+	}
+	}
+(149) <-> (77)
+	};
+	};
+(151) <-> (82)
+	protected class CompilationUnitMarkerAnnotationModel extends ResourceMarkerAnnotationModel {
+	protected class CompilationUnitMarkerAnnotationModel extends ResourceMarkerAnnotationModel {
+(153) <-> (84)
+	public CompilationUnitMarkerAnnotationModel(IResource resource) {
+	public CompilationUnitMarkerAnnotationModel(IResource resource) {
+(154) <-> (85)
+	super(resource);
+	super(resource);
+(155) <-> (86)
+	}
+	}
+(157) <-> (88)
+	protected MarkerAnnotation createMarkerAnnotation(IMarker marker) {
+	protected MarkerAnnotation createMarkerAnnotation(IMarker marker) {
+(158) <-> (89)
+	return new JavaMarkerAnnotation(marker);
+	return new JavaMarkerAnnotation(marker);
+(159) <-> (90)
+	}
+	}
+(160) <-> (91)
+	};
+	};
+(163) <-> (146)
+	/** The save policy used by this provider */
+	/** The save policy used by this provider */
+(164) <-> (147)
+	private ISavePolicy fSavePolicy;
+	private ISavePolicy fSavePolicy;
+(167) <-> (151)
+	/**
+	/**
+(168) <-> (152)
+	* Constructor
+	* Constructor
+(169) <-> (153)
+	*/
+	*/
+(170) <-> (154)
+	public CompilationUnitDocumentProvider() {
+	public CompilationUnitDocumentProvider() {
+(171) <-> (155)
+	}
+	}
+(173) <-> (157)
+	/**
+	/**
+(174) <-> (158)
+	* Sets the document provider's save policy.
+	* Sets the document provider's save policy.
+(175) <-> (159)
+	*/
+	*/
+(176) <-> (160)
+	public void setSavePolicy(ISavePolicy savePolicy) {
+	public void setSavePolicy(ISavePolicy savePolicy) {
+(177) <-> (161)
+	fSavePolicy= savePolicy;
+	fSavePolicy= savePolicy;
+(178) <-> (162)
+	}
+	}
+(180) <-> (169)
+	protected ICompilationUnit createCompilationUnit(IFile file) {
+	protected ICompilationUnit createCompilationUnit(IFile file) {
+(181) <-> (170)
+	Object element= JavaCore.create(file);
+	Object element= JavaCore.create(file);
+(182) <-> (171)
+	if (element instanceof ICompilationUnit)
+	if (element instanceof ICompilationUnit)
+(183) <-> (172)
+	return (ICompilationUnit) element;
+	return (ICompilationUnit) element;
+(184) <-> (173)
+	return null;
+	return null;
+(185) <-> (174)
+	}
+	}
+(187) <-> (176)
+	/**
+	/**
+(188) <-> (177)
+	* @see AbstractDocumentProvider#createElementInfo(Object)
+	* @see AbstractDocumentProvider#createElementInfo(Object)
+(189) <-> (178)
+	*/
+	*/
+(190) <-> (179)
+	protected ElementInfo createElementInfo(Object element) throws CoreException {
+	protected ElementInfo createElementInfo(Object element) throws CoreException {
+(192) <-> (181)
+	if ( !(element instanceof IFileEditorInput))
+	if ( !(element instanceof IFileEditorInput))
+(193) <-> (182)
+	return super.createElementInfo(element);
+	return super.createElementInfo(element);
+(195) <-> (184)
+	IFileEditorInput input= (IFileEditorInput) element;
+	IFileEditorInput input= (IFileEditorInput) element;
+(196) <-> (185)
+	ICompilationUnit original= createCompilationUnit(input.getFile());
+	ICompilationUnit original= createCompilationUnit(input.getFile());
+(197) <-> (186)
+	if (original != null) {
+	if (original != null) {
+(199) <-> (188)
+	try {
+	try {
+(200) <-> (193)
+	input.getFile().refreshLocal(IResource.DEPTH_INFINITE, null);
+	input.getFile().refreshLocal(IResource.DEPTH_INFINITE, monitor);
+(201) <-> (194)
+	} catch (CoreException x) {
+	} catch (CoreException x) {
+(202) <-> (195)
+	handleCoreException(x, JavaEditorMessages.getString("CompilationUnitDocumentProvider.error.createElementInfo")); //$NON-NLS-1$
+	handleCoreException(x, JavaEditorMessages.getString("CompilationUnitDocumentProvider.error.createElementInfo")); //$NON-NLS-1$
+(203) <-> (196)
+	}
+	}
+(205) <-> (198)
+	ICompilationUnit c= (ICompilationUnit) original.getWorkingCopy();
+	ICompilationUnit c= (ICompilationUnit) original.getWorkingCopy(monitor, fBufferFactory);
+(206) <-> (199)
+	IDocument d= createCompilationUnitDocument(c);
+	DocumentAdapter a= (DocumentAdapter) c.getBuffer();
+(207) <-> (200)
+	IAnnotationModel m= createCompilationUnitAnnotationModel(element);
+	IAnnotationModel m= createCompilationUnitAnnotationModel(input);
+(208) <-> (201)
+	_FileSynchronizer f= new _FileSynchronizer(input);
+	_FileSynchronizer f= new _FileSynchronizer(input);
+(209) <-> (202)
+	f.install();
+	f.install();
+(213) <-> (204)
+	CompilationUnitInfo info= new CompilationUnitInfo(d, m, f, c, b);
+	CompilationUnitInfo info= new CompilationUnitInfo(a.getDocument(), m, f, c);
+(214) <-> (205)
+	info.setModificationStamp(computeModificationStamp(input.getFile()));
+	info.setModificationStamp(computeModificationStamp(input.getFile()));
+(215) <-> (206)
+	return info;
+	return info;
+(217) <-> (211)
+	} else {
+	} else {
+(218) <-> (212)
+	return super.createElementInfo(element);
+	return super.createElementInfo(element);
+(219) <-> (213)
+	}
+	}
+(220) <-> (214)
+	}
+	}
+(222) <-> (216)
+	/**
+	/**
+(223) <-> (217)
+	* @see AbstractDocumentProvider#disposeElementInfo(Object, ElementInfo)
+	* @see AbstractDocumentProvider#disposeElementInfo(Object, ElementInfo)
+(224) <-> (218)
+	*/
+	*/
+(225) <-> (219)
+	protected void disposeElementInfo(Object element, ElementInfo info) {
+	protected void disposeElementInfo(Object element, ElementInfo info) {
+(227) <-> (221)
+	if (info instanceof CompilationUnitInfo) {
+	if (info instanceof CompilationUnitInfo) {
+(228) <-> (222)
+	CompilationUnitInfo cuInfo= (CompilationUnitInfo) info;
+	CompilationUnitInfo cuInfo= (CompilationUnitInfo) info;
+(233) <-> (223)
+	cuInfo.fCopy.destroy();
+	cuInfo.fCopy.destroy();
+(234) <-> (224)
+	}
+	}
+(236) <-> (226)
+	super.disposeElementInfo(element, info);
+	super.disposeElementInfo(element, info);
+(237) <-> (227)
+	}
+	}
+(239) <-> (229)
+	/**
+	/**
+(241) <-> (359)
+	*/
+	*/
+(242) <-> (360)
+	public void changed(Object element) {
+	public IResource getUnderlyingResource(Object element) {
+(245) <-> (361)
+	if (elementInfo instanceof CompilationUnitInfo) {
+	if (element instanceof IFileEditorInput) {
+(246) <-> (125)
+	CompilationUnitInfo info= (CompilationUnitInfo) elementInfo;
+	ICompilationUnit original= (ICompilationUnit) unit.getOriginalElement();
+(249) <-> (364)
+	}
+	}
+(252) <-> (279)
+	}
+	}
+(254) <-> (164)
+	/**
+	/**
+(255) <-> (230)
+	* @see AbstractDocumentProvider#doSaveDocument(IProgressMonitor, Object, IDocument, boolean)
+	* @see AbstractDocumentProvider#doSaveDocument(IProgressMonitor, Object, IDocument, boolean)
+(256) <-> (231)
+	*/
+	*/
+(257) <-> (232)
+	protected void doSaveDocument(IProgressMonitor monitor, Object element, IDocument document, boolean overwrite) throws CoreException {
+	protected void doSaveDocument(IProgressMonitor monitor, Object element, IDocument document, boolean overwrite) throws CoreException {
+(259) <-> (234)
+	ElementInfo elementInfo= getElementInfo(element);
+	ElementInfo elementInfo= getElementInfo(element);
+(260) <-> (235)
+	if (elementInfo instanceof CompilationUnitInfo) {
+	if (elementInfo instanceof CompilationUnitInfo) {
+(261) <-> (236)
+	CompilationUnitInfo info= (CompilationUnitInfo) elementInfo;
+	CompilationUnitInfo info= (CompilationUnitInfo) elementInfo;
+(263) <-> (239)
+	// update structure, assumes lock on info.fCopy
+	// update structure, assumes lock on info.fCopy
+(264) <-> (240)
+	info.fCopy.reconcile();
+	info.fCopy.reconcile();
+(266) <-> (242)
+	ICompilationUnit original= (ICompilationUnit) info.fCopy.getOriginalElement();
+	ICompilationUnit original= (ICompilationUnit) info.fCopy.getOriginalElement();
+(267) <-> (243)
+	IResource resource= original.getUnderlyingResource();
+	IResource resource= original.getUnderlyingResource();
+(269) <-> (245)
+	if (resource != null && !overwrite)
+	if (resource != null && !overwrite)
+(270) <-> (246)
+	checkSynchronizationState(info.fModificationStamp, resource);
+	checkSynchronizationState(info.fModificationStamp, resource);
+(272) <-> (248)
+	if (fSavePolicy != null)
+	if (fSavePolicy != null)
+(273) <-> (249)
+	fSavePolicy.preSave(info.fCopy);
+	fSavePolicy.preSave(info.fCopy);
+(278) <-> (253)
+	// commit working copy
+	// commit working copy
+(279) <-> (254)
+	info.fCopy.commit(overwrite, monitor);
+	info.fCopy.commit(overwrite, monitor);
+(281) <-> (259)
+	AbstractMarkerAnnotationModel model= (AbstractMarkerAnnotationModel) info.fModel;
+	AbstractMarkerAnnotationModel model= (AbstractMarkerAnnotationModel) info.fModel;
+(282) <-> (260)
+	model.updateMarkers(info.fDocument);
+	model.updateMarkers(info.fDocument);
+(284) <-> (262)
+	if (resource != null)
+	if (resource != null)
+(285) <-> (263)
+	info.setModificationStamp(computeModificationStamp(resource));
+	info.setModificationStamp(computeModificationStamp(resource));
+(287) <-> (265)
+	if (fSavePolicy != null) {
+	if (fSavePolicy != null) {
+(288) <-> (266)
+	ICompilationUnit unit= fSavePolicy.postSave(original);
+	ICompilationUnit unit= fSavePolicy.postSave(original);
+(289) <-> (267)
+	if (unit != null) {
+	if (unit != null) {
+(290) <-> (268)
+	IResource r= unit.getUnderlyingResource();
+	IResource r= unit.getUnderlyingResource();
+(291) <-> (269)
+	IMarker[] markers= r.findMarkers(IMarker.MARKER, true, IResource.DEPTH_ZERO);
+	IMarker[] markers= r.findMarkers(IMarker.MARKER, true, IResource.DEPTH_ZERO);
+(292) <-> (270)
+	if (markers != null && markers.length > 0) {
+	if (markers != null && markers.length > 0) {
+(293) <-> (271)
+	for (int i= 0; i < markers.length; i++)
+	for (int i= 0; i < markers.length; i++)
+(294) <-> (272)
+	model.updateMarker(markers[i], info.fDocument, null);
+	model.updateMarker(markers[i], info.fDocument, null);
+(295) <-> (273)
+	}
+	}
+(296) <-> (274)
+	}
+	}
+(297) <-> (275)
+	}
+	}
+(299) <-> (281)
+	} else {
+	} else {
+(300) <-> (282)
+	super.doSaveDocument(monitor, element, document, overwrite);
+	super.doSaveDocument(monitor, element, document, overwrite);
+(301) <-> (283)
+	}
+	}
+(302) <-> (284)
+	}
+	}
+(304) <-> (286)
+	/**
+	/**
+(305) <-> (287)
+	* Replaces createAnnotionModel of the super class
+	* Replaces createAnnotionModel of the super class
+(306) <-> (288)
+	*/
+	*/
+(307) <-> (289)
+	protected IAnnotationModel createCompilationUnitAnnotationModel(Object element) throws CoreException {
+	protected IAnnotationModel createCompilationUnitAnnotationModel(Object element) throws CoreException {
+(308) <-> (290)
+	if ( !(element instanceof IFileEditorInput))
+	if ( !(element instanceof IFileEditorInput))
+(309) <-> (291)
+	throw new CoreException(new JavaModelStatus(IJavaModelStatusConstants.INVALID_RESOURCE_TYPE));
+	throw new CoreException(new JavaModelStatus(IJavaModelStatusConstants.INVALID_RESOURCE_TYPE));
+(311) <-> (293)
+	IFileEditorInput input= (IFileEditorInput) element;
+	IFileEditorInput input= (IFileEditorInput) element;
+(312) <-> (294)
+	return new CompilationUnitMarkerAnnotationModel(input.getFile());
+	return new CompilationUnitMarkerAnnotationModel(input.getFile());
+(313) <-> (295)
+	}
+	}
+(315) <-> (297)
+	/**
+	/**
+(317) <-> (168)
+	*/
+	*/
+(318) <-> (110)
+	protected IDocument createCompilationUnitDocument(ICompilationUnit unit) throws CoreException {
+	private IDocument internalGetDocument(IFileEditorInput input) throws CoreException {
+(320) <-> (129)
+	Document document= new Document(unit.getSource());
+	IDocument document= internalGetDocument(providerKey);
+(322) <-> (102)
+	JavaTextTools tools= JavaPlugin.getDefault().getJavaTextTools();
+	JavaTextTools tools= JavaPlugin.getDefault().getJavaTextTools();
+(323) <-> (103)
+	IDocumentPartitioner partitioner= tools.createDocumentPartitioner();
+	IDocumentPartitioner partitioner= tools.createDocumentPartitioner();
+(324) <-> (104)
+	partitioner.connect(document);
+	partitioner.connect(document);
+(325) <-> (105)
+	document.setDocumentPartitioner(partitioner);
+	document.setDocumentPartitioner(partitioner);
+(327) <-> (365)
+	return document;
+	return null;
+(328) <-> (366)
+	}
+	}
+(330) <-> (368)
+	/**
+	/**
+(331) <-> (298)
+	* @see AbstractDocumentProvider#resetDocument(Object)
+	* @see AbstractDocumentProvider#resetDocument(Object)
+(332) <-> (299)
+	*/
+	*/
+(333) <-> (300)
+	public void resetDocument(Object element) throws CoreException {
+	public void resetDocument(Object element) throws CoreException {
+(334) <-> (301)
+	if (element == null)
+	if (element == null)
+(335) <-> (302)
+	return;
+	return;
+(337) <-> (304)
+	ElementInfo elementInfo= getElementInfo(element);
+	ElementInfo elementInfo= getElementInfo(element);
+(338) <-> (305)
+	if (elementInfo instanceof CompilationUnitInfo) {
+	if (elementInfo instanceof CompilationUnitInfo) {
+(339) <-> (306)
+	CompilationUnitInfo info= (CompilationUnitInfo) elementInfo;
+	CompilationUnitInfo info= (CompilationUnitInfo) elementInfo;
+(340) <-> (307)
+	if (info.fCanBeSaved) {
+	if (info.fCanBeSaved) {
+(342) <-> (310)
+	ICompilationUnit original= (ICompilationUnit) info.fCopy.getOriginalElement();
+	ICompilationUnit original= (ICompilationUnit) info.fCopy.getOriginalElement();
+(344) <-> (312)
+	fireElementContentAboutToBeReplaced(element);
+	fireElementContentAboutToBeReplaced(element);
+(346) <-> (314)
+	removeUnchangedElementListeners(element, info);
+	removeUnchangedElementListeners(element, info);
+(347) <-> (315)
+	info.fDocument.set(original.getSource());
+	info.fDocument.set(original.getSource());
+(348) <-> (316)
+	info.fCanBeSaved= false;
+	info.fCanBeSaved= false;
+(349) <-> (317)
+	addUnchangedElementListeners(element, info);
+	addUnchangedElementListeners(element, info);
+(351) <-> (319)
+	fireElementContentReplaced(element);
+	fireElementContentReplaced(element);
+(353) <-> (323)
+	}
+	}
+(354) <-> (325)
+	} else {
+	} else {
+(355) <-> (326)
+	super.resetDocument(element);
+	super.resetDocument(element);
+(356) <-> (327)
+	}
+	}
+(357) <-> (328)
+	}
+	}
+(359) <-> (330)
+	/**
+	/**
+(360) <-> (369)
+	* @see IWorkingCopyManager#connect(IEditorInput)
+	* @see IWorkingCopyManager#connect(IEditorInput)
+(361) <-> (370)
+	*/
+	*/
+(362) <-> (371)
+	public void connect(IEditorInput input) throws CoreException {
+	public void connect(IEditorInput input) throws CoreException {
+(363) <-> (372)
+	super.connect(input);
+	super.connect(input);
+(364) <-> (373)
+	}
+	}
+(366) <-> (375)
+	/**
+	/**
+(367) <-> (376)
+	* @see IWorkingCopyManager#disconnect(IEditorInput)
+	* @see IWorkingCopyManager#disconnect(IEditorInput)
+(368) <-> (377)
+	*/
+	*/
+(369) <-> (378)
+	public void disconnect(IEditorInput input) {
+	public void disconnect(IEditorInput input) {
+(370) <-> (379)
+	super.disconnect(input);
+	super.disconnect(input);
+(371) <-> (380)
+	}
+	}
+(373) <-> (382)
+	/**
+	/**
+(374) <-> (383)
+	* @see IWorkingCopyManager#getWorkingCopy(Object)
+	* @see IWorkingCopyManager#getWorkingCopy(Object)
+(375) <-> (384)
+	*/
+	*/
+(376) <-> (385)
+	public ICompilationUnit getWorkingCopy(IEditorInput element) {
+	public ICompilationUnit getWorkingCopy(IEditorInput element) {
+(378) <-> (387)
+	ElementInfo elementInfo= getElementInfo(element);
+	ElementInfo elementInfo= getElementInfo(element);
+(379) <-> (388)
+	if (elementInfo instanceof CompilationUnitInfo) {
+	if (elementInfo instanceof CompilationUnitInfo) {
+(380) <-> (389)
+	CompilationUnitInfo info= (CompilationUnitInfo) elementInfo;
+	CompilationUnitInfo info= (CompilationUnitInfo) elementInfo;
+(381) <-> (390)
+	return info.fCopy;
+	return info.fCopy;
+(382) <-> (391)
+	}
+	}
+(384) <-> (393)
+	return null;
+	return null;
+(385) <-> (394)
+	}
+	}
+(387) <-> (396)
+	/**
+	/**
+(388) <-> (397)
+	* @see IWorkingCopyManager#shutdown
+	* @see IWorkingCopyManager#shutdown
+(389) <-> (398)
+	*/
+	*/
+(390) <-> (399)
+	public void shutdown() {
+	public void shutdown() {
+(391) <-> (400)
+	Iterator e= getConnectedElements();
+	Iterator e= getConnectedElements();
+(392) <-> (401)
+	while (e.hasNext())
+	while (e.hasNext())
+(393) <-> (402)
+	disconnect(e.next());
+	disconnect(e.next());
+(394) <-> (403)
+	}
+	}
+(396) <-> (405)
+	/**
+	/**
+(397) <-> (406)
+	* Returns all working copies manages by this document provider.
+	* Returns all working copies manages by this document provider.
+(398) <-> (407)
+	*
+	*
+(399) <-> (408)
+	* @return all managed working copies
+	* @return all managed working copies
+(400) <-> (409)
+	*/
+	*/
+(401) <-> (410)
+	public ICompilationUnit[] getAllWorkingCopies() {
+	public ICompilationUnit[] getAllWorkingCopies() {
+(402) <-> (411)
+	List result= new ArrayList(10);
+	List result= new ArrayList(10);
+(403) <-> (412)
+	for (Iterator iter= getConnectedElements(); iter.hasNext();) {
+	for (Iterator iter= getConnectedElements(); iter.hasNext();) {
+(404) <-> (413)
+	ElementInfo element= getElementInfo(iter.next());
+	ElementInfo element= getElementInfo(iter.next());
+(405) <-> (414)
+	if (element instanceof CompilationUnitInfo) {
+	if (element instanceof CompilationUnitInfo) {
+(406) <-> (415)
+	CompilationUnitInfo info= (CompilationUnitInfo)element;
+	CompilationUnitInfo info= (CompilationUnitInfo)element;
+(407) <-> (416)
+	result.add(info.fCopy);
+	result.add(info.fCopy);
+(408) <-> (417)
+	}
+	}
+(409) <-> (418)
+	}
+	}
+(410) <-> (419)
+	return (ICompilationUnit[]) result.toArray(new ICompilationUnit[result.size()]);
+	return (ICompilationUnit[]) result.toArray(new ICompilationUnit[result.size()]);
+(411) <-> (420)
+	}
+	}
+(412) <-> (421)
+	}
+	}
+Number of lines in left file: 330
+Number of lines in right file: 336
+Number of lines matched: 276

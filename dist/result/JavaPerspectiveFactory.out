@@ -1,0 +1,130 @@
+Diff: ./reference/dataset/JavaPerspectiveFactory_1.java ./reference/dataset/JavaPerspectiveFactory_2.java
+(1) <-> (1)
+	package org.eclipse.jdt.internal.ui;/*
+	package org.eclipse.jdt.internal.ui;/*
+(2) <-> (2)
+	* Licensed Materials - Property of IBM,
+	* Licensed Materials - Property of IBM,
+(3) <-> (3)
+	* WebSphere Studio Workbench
+	* WebSphere Studio Workbench
+(4) <-> (4)
+	* (c) Copyright IBM Corp 1999, 2000
+	* (c) Copyright IBM Corp 1999, 2000
+(5) <-> (5)
+	*/
+	*/
+(8) <-> (12)
+	import org.eclipse.ui.IFolderLayout;
+	import org.eclipse.ui.IFolderLayout;
+(9) <-> (13)
+	import org.eclipse.ui.IPageLayout;
+	import org.eclipse.ui.IPageLayout;
+(10) <-> (14)
+	import org.eclipse.ui.IPerspectiveFactory;
+	import org.eclipse.ui.IPerspectiveFactory;
+(12) <-> (10)
+	import org.eclipse.debug.ui.IDebugUIConstants;
+	import org.eclipse.debug.ui.IDebugUIConstants;
+(14) <-> (16)
+	import org.eclipse.jdt.ui.JavaUI;
+	import org.eclipse.jdt.ui.JavaUI;
+(16) <-> (18)
+	public class JavaPerspectiveFactory implements IPerspectiveFactory {
+	public class JavaPerspectiveFactory implements IPerspectiveFactory {
+(18) <-> (20)
+	/**
+	/**
+(19) <-> (21)
+	* Constructs a new Default layout engine.
+	* Constructs a new Default layout engine.
+(20) <-> (22)
+	*/
+	*/
+(21) <-> (23)
+	public JavaPerspectiveFactory() {
+	public JavaPerspectiveFactory() {
+(22) <-> (24)
+	super();
+	super();
+(23) <-> (25)
+	}
+	}
+(25) <-> (27)
+	public void createInitialLayout(IPageLayout layout) {
+	public void createInitialLayout(IPageLayout layout) {
+(26) <-> (28)
+	String editorArea = layout.getEditorArea();
+	String editorArea = layout.getEditorArea();
+(28) <-> (30)
+	IFolderLayout folder= layout.createFolder("left", IPageLayout.LEFT, (float)0.25, editorArea);
+	IFolderLayout folder= layout.createFolder("left", IPageLayout.LEFT, (float)0.25, editorArea);
+(29) <-> (31)
+	folder.addView(IPageLayout.ID_RES_NAV);
+	folder.addView(IPageLayout.ID_RES_NAV);
+(30) <-> (32)
+	folder.addView(JavaUI.ID_TYPE_HIERARCHY);
+	folder.addView(JavaUI.ID_TYPE_HIERARCHY);
+(31) <-> (33)
+	folder.addView(JavaUI.ID_PACKAGES);
+	folder.addView(JavaUI.ID_PACKAGES);
+(33) <-> (35)
+	layout.addView(IPageLayout.ID_TASK_LIST, IPageLayout.BOTTOM, (float) 0.75, editorArea);
+	layout.addView(IPageLayout.ID_TASK_LIST, IPageLayout.BOTTOM, (float) 0.75, editorArea);
+(34) <-> (36)
+	layout.addView(IPageLayout.ID_OUTLINE, IPageLayout.RIGHT, (float)0.75, editorArea);
+	layout.addView(IPageLayout.ID_OUTLINE, IPageLayout.RIGHT, (float)0.75, editorArea);
+(36) <-> (38)
+	layout.addActionSet(IDebugUIConstants.DEBUG_ACTION_SET);
+	layout.addActionSet(IDebugUIConstants.DEBUG_ACTION_SET);
+(37) <-> (39)
+	layout.addActionSet(JavaUI.ID_ACTION_SET);
+	layout.addActionSet(JavaUI.ID_ACTION_SET);
+(39) <-> (41)
+	// views - java
+	// views - java
+(40) <-> (42)
+	layout.addShowViewShortcut("org.eclipse.jdt.ui.PackageExplorer");
+	layout.addShowViewShortcut(JavaUI.ID_PACKAGES);
+(41) <-> (43)
+	layout.addShowViewShortcut("org.eclipse.jdt.ui.TypeHierarchy");
+	layout.addShowViewShortcut(JavaUI.ID_TYPE_HIERARCHY);
+(44) <-> (46)
+	layout.addShowViewShortcut("org.eclipse.search.SearchResultView");
+	layout.addShowViewShortcut(SearchUI.SEARCH_RESULT_VIEW_ID);
+(46) <-> (48)
+	// views - debugging
+	// views - debugging
+(47) <-> (49)
+	layout.addShowViewShortcut("org.eclipse.dt.ui.ProcessView");
+	layout.addShowViewShortcut(IDebugUIConstants.ID_PROCESS_VIEW);
+(48) <-> (50)
+	layout.addShowViewShortcut("org.eclipse.dt.ui.ConsoleView");
+	layout.addShowViewShortcut(IDebugUIConstants.ID_CONSOLE_VIEW);
+(50) <-> (52)
+	// views - standard workbench
+	// views - standard workbench
+(51) <-> (53)
+	layout.addShowViewShortcut("org.eclipse.ui.views.ContentOutline");
+	layout.addShowViewShortcut(IPageLayout.ID_OUTLINE);
+(52) <-> (54)
+	layout.addShowViewShortcut("org.eclipse.ui.views.TaskList");
+	layout.addShowViewShortcut(IPageLayout.ID_TASK_LIST);
+(53) <-> (55)
+	layout.addShowViewShortcut("org.eclipse.ui.views.ResourceNavigator");
+	layout.addShowViewShortcut(IPageLayout.ID_RES_NAV);
+(55) <-> (57)
+	// new actions - Java project creation wizard
+	// new actions - Java project creation wizard
+(56) <-> (58)
+	layout.addNewWizardShortcut("org.eclipse.jdt.ui.wizards.NewProjectCreationWizard");
+	layout.addNewWizardShortcut("org.eclipse.jdt.ui.wizards.NewProjectCreationWizard");
+(57) <-> (59)
+	}
+	}
+(58) <-> (60)
+	}
+	}
+Number of lines in left file: 43
+Number of lines in right file: 43
+Number of lines matched: 42

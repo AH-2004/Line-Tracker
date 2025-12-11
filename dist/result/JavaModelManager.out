@@ -1,0 +1,3856 @@
+Diff: ./reference/dataset/JavaModelManager_1.java ./reference/dataset/JavaModelManager_2.java
+(1) <-> (1)
+	/*******************************************************************************
+	/*******************************************************************************
+(2) <-> (2)
+	* Copyright (c) 2000, 2001, 2002 International Business Machines Corp. and others.
+	* Copyright (c) 2000, 2001, 2002 International Business Machines Corp. and others.
+(3) <-> (3)
+	* All rights reserved. This program and the accompanying materials
+	* All rights reserved. This program and the accompanying materials
+(4) <-> (4)
+	* are made available under the terms of the Common Public License v0.5
+	* are made available under the terms of the Common Public License v0.5
+(5) <-> (5)
+	* which accompanies this distribution, and is available at
+	* which accompanies this distribution, and is available at
+(6) <-> (6)
+	* http://www.eclipse.org/legal/cpl-v05.html
+	* http://www.eclipse.org/legal/cpl-v05.html
+(7) <-> (7)
+	*
+	*
+(8) <-> (8)
+	* Contributors:
+	* Contributors:
+(9) <-> (9)
+	* IBM Corporation - initial API and implementation
+	* IBM Corporation - initial API and implementation
+(10) <-> (10)
+	******************************************************************************/
+	******************************************************************************/
+(11) <-> (11)
+	package org.eclipse.jdt.internal.core;
+	package org.eclipse.jdt.internal.core;
+(13) <-> (13)
+	import java.io.*;
+	import java.io.*;
+(14) <-> (14)
+	import java.util.*;
+	import java.util.*;
+(15) <-> (15)
+	import java.util.zip.ZipFile;
+	import java.util.zip.ZipFile;
+(17) <-> (17)
+	import javax.xml.parsers.DocumentBuilder;
+	import javax.xml.parsers.DocumentBuilder;
+(18) <-> (18)
+	import javax.xml.parsers.DocumentBuilderFactory;
+	import javax.xml.parsers.DocumentBuilderFactory;
+(19) <-> (19)
+	import javax.xml.parsers.ParserConfigurationException;
+	import javax.xml.parsers.ParserConfigurationException;
+(21) <-> (21)
+	import org.eclipse.core.resources.*;
+	import org.eclipse.core.resources.*;
+(22) <-> (22)
+	import org.eclipse.core.runtime.*;
+	import org.eclipse.core.runtime.*;
+(23) <-> (23)
+	import org.eclipse.jdt.core.*;
+	import org.eclipse.jdt.core.*;
+(24) <-> (24)
+	import org.eclipse.jdt.core.search.SearchEngine;
+	import org.eclipse.jdt.core.search.SearchEngine;
+(25) <-> (25)
+	import org.eclipse.jdt.internal.codeassist.CompletionEngine;
+	import org.eclipse.jdt.internal.codeassist.CompletionEngine;
+(26) <-> (26)
+	import org.eclipse.jdt.internal.codeassist.SelectionEngine;
+	import org.eclipse.jdt.internal.codeassist.SelectionEngine;
+(27) <-> (27)
+	import org.eclipse.jdt.internal.compiler.Compiler;
+	import org.eclipse.jdt.internal.compiler.Compiler;
+(28) <-> (28)
+	import org.eclipse.jdt.internal.core.builder.JavaBuilder;
+	import org.eclipse.jdt.internal.core.builder.JavaBuilder;
+(29) <-> (29)
+	import org.eclipse.jdt.internal.core.hierarchy.TypeHierarchy;
+	import org.eclipse.jdt.internal.core.hierarchy.TypeHierarchy;
+(30) <-> (30)
+	import org.eclipse.jdt.internal.core.search.AbstractSearchScope;
+	import org.eclipse.jdt.internal.core.search.AbstractSearchScope;
+(31) <-> (31)
+	import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
+	import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
+(32) <-> (32)
+	import org.w3c.dom.Element;
+	import org.w3c.dom.Element;
+(33) <-> (33)
+	import org.w3c.dom.Node;
+	import org.w3c.dom.Node;
+(34) <-> (34)
+	import org.w3c.dom.NodeList;
+	import org.w3c.dom.NodeList;
+(35) <-> (35)
+	import org.xml.sax.InputSource;
+	import org.xml.sax.InputSource;
+(36) <-> (36)
+	import org.xml.sax.SAXException;
+	import org.xml.sax.SAXException;
+(38) <-> (38)
+	/**
+	/**
+(39) <-> (39)
+	* The <code>JavaModelManager</code> manages instances of <code>IJavaModel</code>.
+	* The <code>JavaModelManager</code> manages instances of <code>IJavaModel</code>.
+(40) <-> (40)
+	* <code>IElementChangedListener</code>s register with the <code>JavaModelManager</code>,
+	* <code>IElementChangedListener</code>s register with the <code>JavaModelManager</code>,
+(41) <-> (41)
+	* and receive <code>ElementChangedEvent</code>s for all <code>IJavaModel</code>s.
+	* and receive <code>ElementChangedEvent</code>s for all <code>IJavaModel</code>s.
+(42) <-> (42)
+	* <p>
+	* <p>
+(43) <-> (43)
+	* The single instance of <code>JavaModelManager</code> is available from
+	* The single instance of <code>JavaModelManager</code> is available from
+(44) <-> (44)
+	* the static method <code>JavaModelManager.getJavaModelManager()</code>.
+	* the static method <code>JavaModelManager.getJavaModelManager()</code>.
+(45) <-> (45)
+	*/
+	*/
+(46) <-> (46)
+	public class JavaModelManager implements ISaveParticipant {
+	public class JavaModelManager implements ISaveParticipant {
+(48) <-> (48)
+	/**
+	/**
+(49) <-> (49)
+	* Unique handle onto the JavaModel
+	* Unique handle onto the JavaModel
+(50) <-> (50)
+	*/
+	*/
+(51) <-> (51)
+	private final JavaModel javaModel = new JavaModel();
+	private final JavaModel javaModel = new JavaModel();
+(53) <-> (53)
+	/**
+	/**
+(54) <-> (54)
+	* Classpath variables pool
+	* Classpath variables pool
+(55) <-> (55)
+	*/
+	*/
+(56) <-> (56)
+	private static HashMap Variables = new HashMap(5);
+	private static HashMap Variables = new HashMap(5);
+(57) <-> (57)
+	public static HashSet OptionNames = new HashSet(20);
+	public static HashSet OptionNames = new HashSet(20);
+(58) <-> (58)
+	public final static String CP_VARIABLE_PREFERENCES_PREFIX = JavaCore.PLUGIN_ID+".classpathVariable."; //$NON-NLS-1$
+	public final static String CP_VARIABLE_PREFERENCES_PREFIX = JavaCore.PLUGIN_ID+".classpathVariable."; //$NON-NLS-1$
+(59) <-> (59)
+	public final static String CP_VARIABLE_IGNORE = " ##<cp var ignore>## "; //$NON-NLS-1$
+	public final static String CP_VARIABLE_IGNORE = " ##<cp var ignore>## "; //$NON-NLS-1$
+(61) <-> (61)
+	/**
+	/**
+(62) <-> (62)
+	* Classpath containers pool
+	* Classpath containers pool
+(63) <-> (63)
+	*/
+	*/
+(64) <-> (64)
+	public static Map Containers = new HashMap(5);
+	public static Map Containers = new HashMap(5);
+(66) <-> (66)
+	/**
+	/**
+(67) <-> (67)
+	* Flag indicating whether resource may be written (false during post-change)
+	* Flag indicating whether resource may be written (false during post-change)
+(68) <-> (68)
+	*/
+	*/
+(69) <-> (69)
+	public static boolean IsResourceTreeLocked;
+	public static boolean IsResourceTreeLocked;
+(71) <-> (71)
+	/**
+	/**
+(72) <-> (72)
+	* Name of the extension point for contributing classpath variable initializers
+	* Name of the extension point for contributing classpath variable initializers
+(73) <-> (73)
+	*/
+	*/
+(74) <-> (74)
+	public static final String CPVARIABLE_INITIALIZER_EXTPOINT_ID = "classpathVariableInitializer" ; //$NON-NLS-1$
+	public static final String CPVARIABLE_INITIALIZER_EXTPOINT_ID = "classpathVariableInitializer" ; //$NON-NLS-1$
+(76) <-> (76)
+	/**
+	/**
+(77) <-> (77)
+	* Name of the extension point for contributing classpath container initializers
+	* Name of the extension point for contributing classpath container initializers
+(78) <-> (78)
+	*/
+	*/
+(79) <-> (79)
+	public static final String CPCONTAINER_INITIALIZER_EXTPOINT_ID = "classpathContainerInitializer" ; //$NON-NLS-1$
+	public static final String CPCONTAINER_INITIALIZER_EXTPOINT_ID = "classpathContainerInitializer" ; //$NON-NLS-1$
+(81) <-> (81)
+	/**
+	/**
+(82) <-> (82)
+	* Name of the extension point for contributing a source code formatter
+	* Name of the extension point for contributing a source code formatter
+(83) <-> (83)
+	*/
+	*/
+(84) <-> (84)
+	public static final String FORMATTER_EXTPOINT_ID = "codeFormatter" ; //$NON-NLS-1$
+	public static final String FORMATTER_EXTPOINT_ID = "codeFormatter" ; //$NON-NLS-1$
+(86) <-> (86)
+	/**
+	/**
+(87) <-> (87)
+	* Special value used for recognizing ongoing initialization and breaking initialization cycles
+	* Special value used for recognizing ongoing initialization and breaking initialization cycles
+(88) <-> (88)
+	*/
+	*/
+(89) <-> (89)
+	public final static IPath VariableInitializationInProgress = new Path("Variable Initialization In Progress"); //$NON-NLS-1$
+	public final static IPath VariableInitializationInProgress = new Path("Variable Initialization In Progress"); //$NON-NLS-1$
+(90) <-> (90)
+	public final static IClasspathContainer ContainerInitializationInProgress = new IClasspathContainer() {
+	public final static IClasspathContainer ContainerInitializationInProgress = new IClasspathContainer() {
+(91) <-> (91)
+	public IClasspathEntry[] getClasspathEntries() { return null; }
+	public IClasspathEntry[] getClasspathEntries() { return null; }
+(92) <-> (92)
+	public String getDescription() { return null; }
+	public String getDescription() { return null; }
+(93) <-> (93)
+	public int getKind() { return 0; }
+	public int getKind() { return 0; }
+(94) <-> (94)
+	public IPath getPath() { return null; }
+	public IPath getPath() { return null; }
+(95) <-> (95)
+	};
+	};
+(97) <-> (97)
+	private static final String INDEX_MANAGER_DEBUG = JavaCore.PLUGIN_ID + "/debug/indexmanager" ; //$NON-NLS-1$
+	private static final String INDEX_MANAGER_DEBUG = JavaCore.PLUGIN_ID + "/debug/indexmanager" ; //$NON-NLS-1$
+(98) <-> (98)
+	private static final String COMPILER_DEBUG = JavaCore.PLUGIN_ID + "/debug/compiler" ; //$NON-NLS-1$
+	private static final String COMPILER_DEBUG = JavaCore.PLUGIN_ID + "/debug/compiler" ; //$NON-NLS-1$
+(99) <-> (99)
+	private static final String JAVAMODEL_DEBUG = JavaCore.PLUGIN_ID + "/debug/javamodel" ; //$NON-NLS-1$
+	private static final String JAVAMODEL_DEBUG = JavaCore.PLUGIN_ID + "/debug/javamodel" ; //$NON-NLS-1$
+(100) <-> (100)
+	private static final String CP_RESOLVE_DEBUG = JavaCore.PLUGIN_ID + "/debug/cpresolution" ; //$NON-NLS-1$
+	private static final String CP_RESOLVE_DEBUG = JavaCore.PLUGIN_ID + "/debug/cpresolution" ; //$NON-NLS-1$
+(101) <-> (101)
+	private static final String ZIP_ACCESS_DEBUG = JavaCore.PLUGIN_ID + "/debug/zipaccess" ; //$NON-NLS-1$
+	private static final String ZIP_ACCESS_DEBUG = JavaCore.PLUGIN_ID + "/debug/zipaccess" ; //$NON-NLS-1$
+(102) <-> (102)
+	private static final String DELTA_DEBUG =JavaCore.PLUGIN_ID + "/debug/javadelta" ; //$NON-NLS-1$
+	private static final String DELTA_DEBUG =JavaCore.PLUGIN_ID + "/debug/javadelta" ; //$NON-NLS-1$
+(103) <-> (103)
+	private static final String HIERARCHY_DEBUG = JavaCore.PLUGIN_ID + "/debug/hierarchy" ; //$NON-NLS-1$
+	private static final String HIERARCHY_DEBUG = JavaCore.PLUGIN_ID + "/debug/hierarchy" ; //$NON-NLS-1$
+(104) <-> (104)
+	private static final String POST_ACTION_DEBUG = JavaCore.PLUGIN_ID + "/debug/postaction" ;
+	private static final String POST_ACTION_DEBUG = JavaCore.PLUGIN_ID + "/debug/postaction" ;
+(105) <-> (105)
+	private static final String BUILDER_DEBUG = JavaCore.PLUGIN_ID + "/debug/builder" ; //$NON-NLS-1$
+	private static final String BUILDER_DEBUG = JavaCore.PLUGIN_ID + "/debug/builder" ; //$NON-NLS-1$
+(106) <-> (106)
+	private static final String COMPLETION_DEBUG = JavaCore.PLUGIN_ID + "/debug/completion" ; //$NON-NLS-1$
+	private static final String COMPLETION_DEBUG = JavaCore.PLUGIN_ID + "/debug/completion" ; //$NON-NLS-1$
+(107) <-> (107)
+	private static final String SELECTION_DEBUG = JavaCore.PLUGIN_ID + "/debug/selection" ; //$NON-NLS-1$
+	private static final String SELECTION_DEBUG = JavaCore.PLUGIN_ID + "/debug/selection" ; //$NON-NLS-1$
+(108) <-> (108)
+	private static final String SHARED_WC_DEBUG = JavaCore.PLUGIN_ID + "/debug/sharedworkingcopy" ; //$NON-NLS-1$
+	private static final String SHARED_WC_DEBUG = JavaCore.PLUGIN_ID + "/debug/sharedworkingcopy" ; //$NON-NLS-1$
+(109) <-> (109)
+	private static final String SEARCH_DEBUG = JavaCore.PLUGIN_ID + "/debug/search" ; //$NON-NLS-1$
+	private static final String SEARCH_DEBUG = JavaCore.PLUGIN_ID + "/debug/search" ; //$NON-NLS-1$
+(111) <-> (111)
+	public final static IWorkingCopy[] NoWorkingCopy = new IWorkingCopy[0];
+	public final static IWorkingCopy[] NoWorkingCopy = new IWorkingCopy[0];
+(113) <-> (113)
+	/**
+	/**
+(114) <-> (114)
+	* Returns whether the given full path (for a package) conflicts with the output location
+	* Returns whether the given full path (for a package) conflicts with the output location
+(115) <-> (115)
+	* of the given project.
+	* of the given project.
+(116) <-> (116)
+	*/
+	*/
+(117) <-> (117)
+	public static boolean conflictsWithOutputLocation(IPath folderPath, JavaProject project) {
+	public static boolean conflictsWithOutputLocation(IPath folderPath, JavaProject project) {
+(118) <-> (118)
+	try {
+	try {
+(119) <-> (119)
+	IPath outputLocation = project.getOutputLocation();
+	IPath outputLocation = project.getOutputLocation();
+(120) <-> (120)
+	if (outputLocation == null) {
+	if (outputLocation == null) {
+(121) <-> (121)
+	// in doubt, there is a conflict
+	// in doubt, there is a conflict
+(122) <-> (122)
+	return true;
+	return true;
+(123) <-> (123)
+	}
+	}
+(124) <-> (124)
+	if (outputLocation.isPrefixOf(folderPath)) {
+	if (outputLocation.isPrefixOf(folderPath)) {
+(125) <-> (125)
+	// only allow nesting in outputlocation if there is a corresponding source folder
+	// only allow nesting in outputlocation if there is a corresponding source folder
+(126) <-> (126)
+	return project.getClasspathEntryFor(outputLocation) == null;
+	return project.getClasspathEntryFor(outputLocation) == null;
+(127) <-> (127)
+	}
+	}
+(128) <-> (128)
+	return false;
+	return false;
+(129) <-> (129)
+	} catch (JavaModelException e) {
+	} catch (JavaModelException e) {
+(130) <-> (130)
+	// in doubt, there is a conflict
+	// in doubt, there is a conflict
+(131) <-> (131)
+	return true;
+	return true;
+(132) <-> (132)
+	}
+	}
+(133) <-> (133)
+	}
+	}
+(135) <-> (135)
+	/**
+	/**
+(136) <-> (136)
+	* Returns the Java element corresponding to the given resource, or
+	* Returns the Java element corresponding to the given resource, or
+(137) <-> (137)
+	* <code>null</code> if unable to associate the given resource
+	* <code>null</code> if unable to associate the given resource
+(138) <-> (138)
+	* with a Java element.
+	* with a Java element.
+(139) <-> (139)
+	* <p>
+	* <p>
+(140) <-> (140)
+	* The resource must be one of:<ul>
+	* The resource must be one of:<ul>
+(141) <-> (141)
+	* <li>a project - the element returned is the corresponding <code>IJavaProject</code></li>
+	* <li>a project - the element returned is the corresponding <code>IJavaProject</code></li>
+(142) <-> (142)
+	* <li>a <code>.java</code> file - the element returned is the corresponding <code>ICompilationUnit</code></li>
+	* <li>a <code>.java</code> file - the element returned is the corresponding <code>ICompilationUnit</code></li>
+(143) <-> (143)
+	* <li>a <code>.class</code> file - the element returned is the corresponding <code>IClassFile</code></li>
+	* <li>a <code>.class</code> file - the element returned is the corresponding <code>IClassFile</code></li>
+(144) <-> (144)
+	* <li>a <code>.jar</code> file - the element returned is the corresponding <code>IPackageFragmentRoot</code></li>
+	* <li>a <code>.jar</code> file - the element returned is the corresponding <code>IPackageFragmentRoot</code></li>
+(145) <-> (145)
+	* <li>a folder - the element returned is the corresponding <code>IPackageFragmentRoot</code>
+	* <li>a folder - the element returned is the corresponding <code>IPackageFragmentRoot</code>
+(146) <-> (146)
+	* or <code>IPackageFragment</code></li>
+	* or <code>IPackageFragment</code></li>
+(147) <-> (147)
+	* <li>the workspace root resource - the element returned is the <code>IJavaModel</code></li>
+	* <li>the workspace root resource - the element returned is the <code>IJavaModel</code></li>
+(148) <-> (148)
+	* </ul>
+	* </ul>
+(149) <-> (149)
+	* <p>
+	* <p>
+(150) <-> (150)
+	* Creating a Java element has the side effect of creating and opening all of the
+	* Creating a Java element has the side effect of creating and opening all of the
+(151) <-> (151)
+	* element's parents if they are not yet open.
+	* element's parents if they are not yet open.
+(152) <-> (152)
+	*/
+	*/
+(153) <-> (153)
+	public static IJavaElement create(IResource resource, IJavaProject project) {
+	public static IJavaElement create(IResource resource, IJavaProject project) {
+(154) <-> (154)
+	if (resource == null) {
+	if (resource == null) {
+(155) <-> (155)
+	return null;
+	return null;
+(156) <-> (156)
+	}
+	}
+(157) <-> (157)
+	int type = resource.getType();
+	int type = resource.getType();
+(158) <-> (158)
+	switch (type) {
+	switch (type) {
+(159) <-> (159)
+	case IResource.PROJECT :
+	case IResource.PROJECT :
+(160) <-> (160)
+	return JavaCore.create((IProject) resource);
+	return JavaCore.create((IProject) resource);
+(161) <-> (161)
+	case IResource.FILE :
+	case IResource.FILE :
+(162) <-> (162)
+	return create((IFile) resource, project);
+	return create((IFile) resource, project);
+(163) <-> (163)
+	case IResource.FOLDER :
+	case IResource.FOLDER :
+(164) <-> (164)
+	return create((IFolder) resource, project);
+	return create((IFolder) resource, project);
+(165) <-> (165)
+	case IResource.ROOT :
+	case IResource.ROOT :
+(166) <-> (166)
+	return JavaCore.create((IWorkspaceRoot) resource);
+	return JavaCore.create((IWorkspaceRoot) resource);
+(167) <-> (167)
+	default :
+	default :
+(168) <-> (168)
+	return null;
+	return null;
+(169) <-> (169)
+	}
+	}
+(170) <-> (170)
+	}
+	}
+(172) <-> (172)
+	/**
+	/**
+(173) <-> (173)
+	* Returns the Java element corresponding to the given file, its project being the given
+	* Returns the Java element corresponding to the given file, its project being the given
+(174) <-> (174)
+	* project.
+	* project.
+(175) <-> (175)
+	* Returns <code>null</code> if unable to associate the given file
+	* Returns <code>null</code> if unable to associate the given file
+(176) <-> (176)
+	* with a Java element.
+	* with a Java element.
+(177) <-> (177)
+	*
+	*
+(178) <-> (178)
+	* <p>The file must be one of:<ul>
+	* <p>The file must be one of:<ul>
+(179) <-> (179)
+	* <li>a <code>.java</code> file - the element returned is the corresponding <code>ICompilationUnit</code></li>
+	* <li>a <code>.java</code> file - the element returned is the corresponding <code>ICompilationUnit</code></li>
+(180) <-> (180)
+	* <li>a <code>.class</code> file - the element returned is the corresponding <code>IClassFile</code></li>
+	* <li>a <code>.class</code> file - the element returned is the corresponding <code>IClassFile</code></li>
+(181) <-> (181)
+	* <li>a <code>.jar</code> file - the element returned is the corresponding <code>IPackageFragmentRoot</code></li>
+	* <li>a <code>.jar</code> file - the element returned is the corresponding <code>IPackageFragmentRoot</code></li>
+(182) <-> (182)
+	* </ul>
+	* </ul>
+(183) <-> (183)
+	* <p>
+	* <p>
+(184) <-> (184)
+	* Creating a Java element has the side effect of creating and opening all of the
+	* Creating a Java element has the side effect of creating and opening all of the
+(185) <-> (185)
+	* element's parents if they are not yet open.
+	* element's parents if they are not yet open.
+(186) <-> (186)
+	*/
+	*/
+(187) <-> (187)
+	public static IJavaElement create(IFile file, IJavaProject project) {
+	public static IJavaElement create(IFile file, IJavaProject project) {
+(188) <-> (188)
+	if (file == null) {
+	if (file == null) {
+(189) <-> (189)
+	return null;
+	return null;
+(190) <-> (190)
+	}
+	}
+(191) <-> (191)
+	if (project == null) {
+	if (project == null) {
+(192) <-> (192)
+	project = JavaCore.create(file.getProject());
+	project = JavaCore.create(file.getProject());
+(193) <-> (193)
+	}
+	}
+(195) <-> (195)
+	String extension = file.getFileExtension();
+	String extension = file.getFileExtension();
+(196) <-> (196)
+	if (extension != null) {
+	if (extension != null) {
+(197) <-> (197)
+	if (Util.isValidCompilationUnitName(file.getName())) {
+	if (Util.isValidCompilationUnitName(file.getName())) {
+(198) <-> (198)
+	return createCompilationUnitFrom(file, project);
+	return createCompilationUnitFrom(file, project);
+(199) <-> (199)
+	} else if (Util.isValidClassFileName(file.getName())) {
+	} else if (Util.isValidClassFileName(file.getName())) {
+(200) <-> (200)
+	return createClassFileFrom(file, project);
+	return createClassFileFrom(file, project);
+(201) <-> (201)
+	} else if (extension.equalsIgnoreCase("jar") //$NON-NLS-1$
+	} else if (extension.equalsIgnoreCase("jar") //$NON-NLS-1$
+(202) <-> (202)
+	|| extension.equalsIgnoreCase("zip")) { //$NON-NLS-1$
+	|| extension.equalsIgnoreCase("zip")) { //$NON-NLS-1$
+(203) <-> (203)
+	return createJarPackageFragmentRootFrom(file, project);
+	return createJarPackageFragmentRootFrom(file, project);
+(204) <-> (204)
+	}
+	}
+(205) <-> (205)
+	}
+	}
+(206) <-> (206)
+	return null;
+	return null;
+(207) <-> (207)
+	}
+	}
+(209) <-> (209)
+	/**
+	/**
+(210) <-> (210)
+	* Returns the package fragment or package fragment root corresponding to the given folder,
+	* Returns the package fragment or package fragment root corresponding to the given folder,
+(211) <-> (211)
+	* its parent or great parent being the given project.
+	* its parent or great parent being the given project.
+(212) <-> (212)
+	* or <code>null</code> if unable to associate the given folder with a Java element.
+	* or <code>null</code> if unable to associate the given folder with a Java element.
+(213) <-> (213)
+	* <p>
+	* <p>
+(214) <-> (214)
+	* Note that a package fragment root is returned rather than a default package.
+	* Note that a package fragment root is returned rather than a default package.
+(215) <-> (215)
+	* <p>
+	* <p>
+(216) <-> (216)
+	* Creating a Java element has the side effect of creating and opening all of the
+	* Creating a Java element has the side effect of creating and opening all of the
+(217) <-> (217)
+	* element's parents if they are not yet open.
+	* element's parents if they are not yet open.
+(218) <-> (218)
+	*/
+	*/
+(219) <-> (219)
+	public static IJavaElement create(IFolder folder, IJavaProject project) {
+	public static IJavaElement create(IFolder folder, IJavaProject project) {
+(220) <-> (220)
+	if (folder == null) {
+	if (folder == null) {
+(221) <-> (221)
+	return null;
+	return null;
+(222) <-> (222)
+	}
+	}
+(223) <-> (223)
+	if (project == null) {
+	if (project == null) {
+(224) <-> (224)
+	project = JavaCore.create(folder.getProject());
+	project = JavaCore.create(folder.getProject());
+(225) <-> (225)
+	}
+	}
+(226) <-> (226)
+	IJavaElement element = determineIfOnClasspath(folder, project);
+	IJavaElement element = determineIfOnClasspath(folder, project);
+(227) <-> (227)
+	if (conflictsWithOutputLocation(folder.getFullPath(), (JavaProject)project)
+	if (conflictsWithOutputLocation(folder.getFullPath(), (JavaProject)project)
+(228) <-> (228)
+	|| (folder.getName().indexOf('.') >= 0
+	|| (folder.getName().indexOf('.') >= 0
+(229) <-> (229)
+	&& !(element instanceof IPackageFragmentRoot))) {
+	&& !(element instanceof IPackageFragmentRoot))) {
+(230) <-> (230)
+	return null; // only package fragment roots are allowed with dot names
+	return null; // only package fragment roots are allowed with dot names
+(231) <-> (231)
+	} else {
+	} else {
+(232) <-> (232)
+	return element;
+	return element;
+(233) <-> (233)
+	}
+	}
+(234) <-> (234)
+	}
+	}
+(236) <-> (236)
+	/**
+	/**
+(237) <-> (237)
+	* Creates and returns a class file element for the given <code>.class</code> file,
+	* Creates and returns a class file element for the given <code>.class</code> file,
+(238) <-> (238)
+	* its project being the given project. Returns <code>null</code> if unable
+	* its project being the given project. Returns <code>null</code> if unable
+(239) <-> (239)
+	* to recognize the class file.
+	* to recognize the class file.
+(240) <-> (240)
+	*/
+	*/
+(241) <-> (241)
+	public static IClassFile createClassFileFrom(IFile file, IJavaProject project ) {
+	public static IClassFile createClassFileFrom(IFile file, IJavaProject project ) {
+(242) <-> (242)
+	if (file == null) {
+	if (file == null) {
+(243) <-> (243)
+	return null;
+	return null;
+(244) <-> (244)
+	}
+	}
+(245) <-> (245)
+	if (project == null) {
+	if (project == null) {
+(246) <-> (246)
+	project = JavaCore.create(file.getProject());
+	project = JavaCore.create(file.getProject());
+(247) <-> (247)
+	}
+	}
+(248) <-> (248)
+	IPackageFragment pkg = (IPackageFragment) determineIfOnClasspath(file, project);
+	IPackageFragment pkg = (IPackageFragment) determineIfOnClasspath(file, project);
+(249) <-> (249)
+	if (pkg == null) {
+	if (pkg == null) {
+(250) <-> (250)
+	// fix for 1FVS7WE
+	// fix for 1FVS7WE
+(251) <-> (251)
+	// not on classpath - make the root its folder, and a default package
+	// not on classpath - make the root its folder, and a default package
+(252) <-> (252)
+	IPackageFragmentRoot root = project.getPackageFragmentRoot(file.getParent());
+	IPackageFragmentRoot root = project.getPackageFragmentRoot(file.getParent());
+(253) <-> (253)
+	pkg = root.getPackageFragment(IPackageFragment.DEFAULT_PACKAGE_NAME);
+	pkg = root.getPackageFragment(IPackageFragment.DEFAULT_PACKAGE_NAME);
+(254) <-> (254)
+	}
+	}
+(255) <-> (255)
+	return pkg.getClassFile(file.getName());
+	return pkg.getClassFile(file.getName());
+(256) <-> (256)
+	}
+	}
+(258) <-> (258)
+	/**
+	/**
+(259) <-> (259)
+	* Creates and returns a compilation unit element for the given <code>.java</code>
+	* Creates and returns a compilation unit element for the given <code>.java</code>
+(260) <-> (260)
+	* file, its project being the given project. Returns <code>null</code> if unable
+	* file, its project being the given project. Returns <code>null</code> if unable
+(261) <-> (261)
+	* to recognize the compilation unit.
+	* to recognize the compilation unit.
+(262) <-> (262)
+	*/
+	*/
+(263) <-> (263)
+	public static ICompilationUnit createCompilationUnitFrom(IFile file, IJavaProject project) {
+	public static ICompilationUnit createCompilationUnitFrom(IFile file, IJavaProject project) {
+(264) <-> (264)
+	if (file == null) {
+	if (file == null) {
+(265) <-> (265)
+	return null;
+	return null;
+(266) <-> (266)
+	}
+	}
+(267) <-> (267)
+	if (project == null) {
+	if (project == null) {
+(268) <-> (268)
+	project = JavaCore.create(file.getProject());
+	project = JavaCore.create(file.getProject());
+(269) <-> (269)
+	}
+	}
+(271) <-> (271)
+	IPackageFragment pkg = (IPackageFragment) determineIfOnClasspath(file, project);
+	IPackageFragment pkg = (IPackageFragment) determineIfOnClasspath(file, project);
+(272) <-> (272)
+	if (pkg == null) {
+	if (pkg == null) {
+(273) <-> (273)
+	// fix for 1FVS7WE
+	// fix for 1FVS7WE
+(274) <-> (274)
+	// not on classpath - make the root its folder, and a default package
+	// not on classpath - make the root its folder, and a default package
+(275) <-> (275)
+	IPackageFragmentRoot root = project.getPackageFragmentRoot(file.getParent());
+	IPackageFragmentRoot root = project.getPackageFragmentRoot(file.getParent());
+(276) <-> (276)
+	pkg = root.getPackageFragment(IPackageFragment.DEFAULT_PACKAGE_NAME);
+	pkg = root.getPackageFragment(IPackageFragment.DEFAULT_PACKAGE_NAME);
+(277) <-> (277)
+	}
+	}
+(278) <-> (278)
+	return pkg.getCompilationUnit(file.getName());
+	return pkg.getCompilationUnit(file.getName());
+(279) <-> (279)
+	}
+	}
+(281) <-> (281)
+	/**
+	/**
+(282) <-> (282)
+	* Creates and returns a handle for the given JAR file, its project being the given project.
+	* Creates and returns a handle for the given JAR file, its project being the given project.
+(283) <-> (283)
+	* The Java model associated with the JAR's project may be
+	* The Java model associated with the JAR's project may be
+(284) <-> (284)
+	* created as a side effect.
+	* created as a side effect.
+(285) <-> (285)
+	* Returns <code>null</code> if unable to create a JAR package fragment root.
+	* Returns <code>null</code> if unable to create a JAR package fragment root.
+(286) <-> (286)
+	* (for example, if the JAR file represents a non-Java resource)
+	* (for example, if the JAR file represents a non-Java resource)
+(287) <-> (287)
+	*/
+	*/
+(288) <-> (288)
+	public static IPackageFragmentRoot createJarPackageFragmentRootFrom(IFile file, IJavaProject project) {
+	public static IPackageFragmentRoot createJarPackageFragmentRootFrom(IFile file, IJavaProject project) {
+(289) <-> (289)
+	if (file == null) {
+	if (file == null) {
+(290) <-> (290)
+	return null;
+	return null;
+(291) <-> (291)
+	}
+	}
+(292) <-> (292)
+	if (project == null) {
+	if (project == null) {
+(293) <-> (293)
+	project = JavaCore.create(file.getProject());
+	project = JavaCore.create(file.getProject());
+(294) <-> (294)
+	}
+	}
+(296) <-> (296)
+	// Create a jar package fragment root only if on the classpath
+	// Create a jar package fragment root only if on the classpath
+(297) <-> (297)
+	IPath resourcePath = file.getFullPath();
+	IPath resourcePath = file.getFullPath();
+(298) <-> (298)
+	try {
+	try {
+(299) <-> (299)
+	IClasspathEntry[] entries = ((JavaProject)project).getResolvedClasspath(true);
+	IClasspathEntry[] entries = ((JavaProject)project).getResolvedClasspath(true);
+(300) <-> (300)
+	for (int i = 0, length = entries.length; i < length; i++) {
+	for (int i = 0, length = entries.length; i < length; i++) {
+(301) <-> (301)
+	IClasspathEntry entry = entries[i];
+	IClasspathEntry entry = entries[i];
+(302) <-> (302)
+	IPath rootPath = entry.getPath();
+	IPath rootPath = entry.getPath();
+(303) <-> (303)
+	if (rootPath.equals(resourcePath)) {
+	if (rootPath.equals(resourcePath)) {
+(304) <-> (304)
+	return project.getPackageFragmentRoot(file);
+	return project.getPackageFragmentRoot(file);
+(305) <-> (305)
+	}
+	}
+(306) <-> (306)
+	}
+	}
+(307) <-> (307)
+	} catch (JavaModelException e) {
+	} catch (JavaModelException e) {
+(308) <-> (308)
+	}
+	}
+(309) <-> (309)
+	return null;
+	return null;
+(310) <-> (310)
+	}
+	}
+(312) <-> (312)
+	/**
+	/**
+(313) <-> (313)
+	* Returns the package fragment root represented by the resource, or
+	* Returns the package fragment root represented by the resource, or
+(314) <-> (314)
+	* the package fragment the given resource is located in, or <code>null</code>
+	* the package fragment the given resource is located in, or <code>null</code>
+(315) <-> (315)
+	* if the given resource is not on the classpath of the given project.
+	* if the given resource is not on the classpath of the given project.
+(316) <-> (316)
+	*/
+	*/
+(317) <-> (317)
+	public static IJavaElement determineIfOnClasspath(
+	public static IJavaElement determineIfOnClasspath(
+(318) <-> (318)
+	IResource resource,
+	IResource resource,
+(319) <-> (319)
+	IJavaProject project) {
+	IJavaProject project) {
+(321) <-> (321)
+	IPath resourcePath = resource.getFullPath();
+	IPath resourcePath = resource.getFullPath();
+(322) <-> (322)
+	try {
+	try {
+(323) <-> (323)
+	IClasspathEntry[] entries =
+	IClasspathEntry[] entries =
+(324) <-> (324)
+	Util.isJavaFileName(resourcePath.lastSegment())
+	Util.isJavaFileName(resourcePath.lastSegment())
+(325) <-> (325)
+	? project.getRawClasspath() // JAVA file can only live inside SRC folder (on the raw path)
+	? project.getRawClasspath() // JAVA file can only live inside SRC folder (on the raw path)
+(326) <-> (326)
+	: ((JavaProject)project).getResolvedClasspath(true);
+	: ((JavaProject)project).getResolvedClasspath(true);
+(328) <-> (328)
+	for (int i = 0; i < entries.length; i++) {
+	for (int i = 0; i < entries.length; i++) {
+(329) <-> (329)
+	IClasspathEntry entry = entries[i];
+	IClasspathEntry entry = entries[i];
+(330) <-> (330)
+	if (entry.getEntryKind() == IClasspathEntry.CPE_PROJECT) continue;
+	if (entry.getEntryKind() == IClasspathEntry.CPE_PROJECT) continue;
+(331) <-> (331)
+	IPath rootPath = entry.getPath();
+	IPath rootPath = entry.getPath();
+(332) <-> (332)
+	if (rootPath.equals(resourcePath)) {
+	if (rootPath.equals(resourcePath)) {
+(333) <-> (333)
+	return project.getPackageFragmentRoot(resource);
+	return project.getPackageFragmentRoot(resource);
+(334) <-> (334)
+	} else if (rootPath.isPrefixOf(resourcePath)) {
+	} else if (rootPath.isPrefixOf(resourcePath)) {
+(335) <-> (335)
+	IPackageFragmentRoot root = ((JavaProject) project).getPackageFragmentRoot(rootPath);
+	IPackageFragmentRoot root = ((JavaProject) project).getPackageFragmentRoot(rootPath);
+(336) <-> (336)
+	if (root == null) return null;
+	if (root == null) return null;
+(337) <-> (337)
+	IPath pkgPath = resourcePath.removeFirstSegments(rootPath.segmentCount());
+	IPath pkgPath = resourcePath.removeFirstSegments(rootPath.segmentCount());
+(338) <-> (338)
+	if (resource.getType() == IResource.FILE) {
+	if (resource.getType() == IResource.FILE) {
+(339) <-> (339)
+	// if the resource is a file, then remove the last segment which
+	// if the resource is a file, then remove the last segment which
+(340) <-> (340)
+	// is the file name in the package
+	// is the file name in the package
+(341) <-> (341)
+	pkgPath = pkgPath.removeLastSegments(1);
+	pkgPath = pkgPath.removeLastSegments(1);
+(342) <-> (342)
+	}
+	}
+(343) <-> (343)
+	String pkgName = Util.packageName(pkgPath);
+	String pkgName = Util.packageName(pkgPath);
+(344) <-> (344)
+	if (pkgName == null || JavaConventions.validatePackageName(pkgName).getSeverity() == IStatus.ERROR) {
+	if (pkgName == null || JavaConventions.validatePackageName(pkgName).getSeverity() == IStatus.ERROR) {
+(345) <-> (345)
+	return null;
+	return null;
+(346) <-> (346)
+	}
+	}
+(347) <-> (347)
+	return root.getPackageFragment(pkgName);
+	return root.getPackageFragment(pkgName);
+(348) <-> (348)
+	}
+	}
+(349) <-> (349)
+	}
+	}
+(350) <-> (350)
+	} catch (JavaModelException npe) {
+	} catch (JavaModelException npe) {
+(351) <-> (351)
+	return null;
+	return null;
+(352) <-> (352)
+	}
+	}
+(353) <-> (353)
+	return null;
+	return null;
+(354) <-> (354)
+	}
+	}
+(356) <-> (356)
+	/**
+	/**
+(357) <-> (357)
+	* The singleton manager
+	* The singleton manager
+(358) <-> (358)
+	*/
+	*/
+(359) <-> (359)
+	private final static JavaModelManager Manager= new JavaModelManager();
+	private final static JavaModelManager Manager= new JavaModelManager();
+(361) <-> (361)
+	/**
+	/**
+(362) <-> (362)
+	* Infos cache.
+	* Infos cache.
+(363) <-> (363)
+	*/
+	*/
+(364) <-> (364)
+	protected JavaModelCache cache = new JavaModelCache();
+	protected JavaModelCache cache = new JavaModelCache();
+(366) <-> (366)
+	/**
+	/**
+(367) <-> (367)
+	* Set of elements which are out of sync with their buffers.
+	* Set of elements which are out of sync with their buffers.
+(368) <-> (368)
+	*/
+	*/
+(369) <-> (369)
+	protected Map elementsOutOfSynchWithBuffers = new HashMap(11);
+	protected Map elementsOutOfSynchWithBuffers = new HashMap(11);
+(371) <-> (371)
+	/**
+	/**
+(372) <-> (372)
+	* Turns delta firing on/off. By default it is on.
+	* Turns delta firing on/off. By default it is on.
+(373) <-> (373)
+	*/
+	*/
+(374) <-> (374)
+	private boolean isFiring= true;
+	private boolean isFiring= true;
+(376) <-> (376)
+	/**
+	/**
+(377) <-> (377)
+	* Queue of deltas created explicily by the Java Model that
+	* Queue of deltas created explicily by the Java Model that
+(378) <-> (378)
+	* have yet to be fired.
+	* have yet to be fired.
+(379) <-> (379)
+	*/
+	*/
+(380) <-> (380)
+	ArrayList javaModelDeltas= new ArrayList();
+	ArrayList javaModelDeltas= new ArrayList();
+(382) <-> (382)
+	/**
+	/**
+(383) <-> (383)
+	* Collection of listeners for Java element deltas
+	* Collection of listeners for Java element deltas
+(384) <-> (384)
+	*/
+	*/
+(385) <-> (385)
+	private IElementChangedListener[] elementChangedListeners = new IElementChangedListener[5];
+	private IElementChangedListener[] elementChangedListeners = new IElementChangedListener[5];
+(386) <-> (386)
+	private int[] elementChangedListenerMasks = new int[5];
+	private int[] elementChangedListenerMasks = new int[5];
+(387) <-> (387)
+	private int elementChangedListenerCount = 0;
+	private int elementChangedListenerCount = 0;
+(388) <-> (388)
+	public int currentChangeEventType = ElementChangedEvent.PRE_AUTO_BUILD;
+	public int currentChangeEventType = ElementChangedEvent.PRE_AUTO_BUILD;
+(389) <-> (389)
+	public static final int DEFAULT_CHANGE_EVENT = 0; // must not collide with ElementChangedEvent event masks
+	public static final int DEFAULT_CHANGE_EVENT = 0; // must not collide with ElementChangedEvent event masks
+(393) <-> (393)
+	/**
+	/**
+(394) <-> (394)
+	* Used to convert <code>IResourceDelta</code>s into <code>IJavaElementDelta</code>s.
+	* Used to convert <code>IResourceDelta</code>s into <code>IJavaElementDelta</code>s.
+(395) <-> (395)
+	*/
+	*/
+(396) <-> (396)
+	public final DeltaProcessor deltaProcessor = new DeltaProcessor(this);
+	public final DeltaProcessor deltaProcessor = new DeltaProcessor(this);
+(397) <-> (397)
+	/**
+	/**
+(398) <-> (398)
+	* Used to update the JavaModel for <code>IJavaElementDelta</code>s.
+	* Used to update the JavaModel for <code>IJavaElementDelta</code>s.
+(399) <-> (399)
+	*/
+	*/
+(400) <-> (400)
+	private final ModelUpdater modelUpdater =new ModelUpdater();
+	private final ModelUpdater modelUpdater =new ModelUpdater();
+(401) <-> (401)
+	/**
+	/**
+(402) <-> (402)
+	* Workaround for bug 15168 circular errors not reported
+	* Workaround for bug 15168 circular errors not reported
+(403) <-> (403)
+	* This is a cache of the projects before any project addition/deletion has started.
+	* This is a cache of the projects before any project addition/deletion has started.
+(404) <-> (404)
+	*/
+	*/
+(405) <-> (405)
+	public IJavaProject[] javaProjectsCache;
+	public IJavaProject[] javaProjectsCache;
+(408) <-> (408)
+	/**
+	/**
+(409) <-> (409)
+	* Local Java workspace properties file name (generated inside JavaCore plugin state location)
+	* Local Java workspace properties file name (generated inside JavaCore plugin state location)
+(410) <-> (410)
+	*/
+	*/
+(411) <-> (411)
+	private static final String WKS_PROP_FILENAME= "workspace.properties"; //$NON-NLS-1$
+	private static final String WKS_PROP_FILENAME= "workspace.properties"; //$NON-NLS-1$
+(413) <-> (413)
+	/**
+	/**
+(414) <-> (414)
+	* Name of the handle id attribute in a Java marker
+	* Name of the handle id attribute in a Java marker
+(415) <-> (415)
+	*/
+	*/
+(416) <-> (416)
+	private static final String ATT_HANDLE_ID= "org.eclipse.jdt.internal.core.JavaModelManager.handleId"; //$NON-NLS-1$
+	private static final String ATT_HANDLE_ID= "org.eclipse.jdt.internal.core.JavaModelManager.handleId"; //$NON-NLS-1$
+(418) <-> (418)
+	/**
+	/**
+(419) <-> (419)
+	* Table from IProject to PerProjectInfo.
+	* Table from IProject to PerProjectInfo.
+(420) <-> (420)
+	*/
+	*/
+(421) <-> (421)
+	protected Map perProjectInfo = new HashMap(5);
+	protected Map perProjectInfo = new HashMap(5);
+(423) <-> (423)
+	/**
+	/**
+(424) <-> (424)
+	* A map from ICompilationUnit to IWorkingCopy
+	* A map from ICompilationUnit to IWorkingCopy
+(425) <-> (425)
+	* of the shared working copies.
+	* of the shared working copies.
+(426) <-> (426)
+	*/
+	*/
+(427) <-> (427)
+	public Map sharedWorkingCopies = new HashMap();
+	public Map sharedWorkingCopies = new HashMap();
+(429) <-> (429)
+	/**
+	/**
+(430) <-> (430)
+	* A weak set of the known scopes.
+	* A weak set of the known scopes.
+(431) <-> (431)
+	*/
+	*/
+(432) <-> (432)
+	protected WeakHashMap scopes = new WeakHashMap();
+	protected WeakHashMap scopes = new WeakHashMap();
+(434) <-> (434)
+	static class PerProjectInfo {
+	public static class PerProjectInfo {
+(435) <-> (435)
+	IProject project;
+	public IProject project;
+(436) <-> (436)
+	Object savedState;
+	public Object savedState;
+(437) <-> (437)
+	boolean triedRead;
+	public boolean triedRead;
+(438) <-> (438)
+	IClasspathEntry[] classpath;
+	public IClasspathEntry[] classpath;
+(439) <-> (439)
+	IClasspathEntry[] lastResolvedClasspath;
+	public IClasspathEntry[] lastResolvedClasspath;
+(440) <-> (440)
+	Preferences preferences;
+	public Preferences preferences;
+(441) <-> (441)
+	PerProjectInfo(IProject project) {
+	public PerProjectInfo(IProject project) {
+(442) <-> (442)
+	this.triedRead = false;
+	this.triedRead = false;
+(443) <-> (443)
+	this.savedState = null;
+	this.savedState = null;
+(444) <-> (444)
+	this.project = project;
+	this.project = project;
+(445) <-> (445)
+	}
+	}
+(446) <-> (446)
+	};
+	};
+(447) <-> (447)
+	public static boolean VERBOSE = false;
+	public static boolean VERBOSE = false;
+(448) <-> (448)
+	public static boolean CP_RESOLVE_VERBOSE = false;
+	public static boolean CP_RESOLVE_VERBOSE = false;
+(449) <-> (449)
+	public static boolean ZIP_ACCESS_VERBOSE = false;
+	public static boolean ZIP_ACCESS_VERBOSE = false;
+(451) <-> (451)
+	/**
+	/**
+(452) <-> (452)
+	* A cache of opened zip files per thread.
+	* A cache of opened zip files per thread.
+(453) <-> (453)
+	* (map from Thread to map of IPath to java.io.ZipFile)
+	* (map from Thread to map of IPath to java.io.ZipFile)
+(454) <-> (454)
+	*/
+	*/
+(455) <-> (455)
+	private HashMap zipFiles = new HashMap();
+	private HashMap zipFiles = new HashMap();
+(458) <-> (458)
+	/**
+	/**
+(459) <-> (459)
+	* Update the classpath variable cache
+	* Update the classpath variable cache
+(460) <-> (460)
+	*/
+	*/
+(461) <-> (461)
+	public static class PluginPreferencesListener implements Preferences.IPropertyChangeListener {
+	public static class PluginPreferencesListener implements Preferences.IPropertyChangeListener {
+(462) <-> (462)
+	/**
+	/**
+(463) <-> (463)
+	* @see org.eclipse.core.runtime.Preferences.IPropertyChangeListener#propertyChange(PropertyChangeEvent)
+	* @see org.eclipse.core.runtime.Preferences.IPropertyChangeListener#propertyChange(PropertyChangeEvent)
+(464) <-> (464)
+	*/
+	*/
+(465) <-> (465)
+	public void propertyChange(Preferences.PropertyChangeEvent event) {
+	public void propertyChange(Preferences.PropertyChangeEvent event) {
+(467) <-> (467)
+	String propertyName = event.getProperty();
+	String propertyName = event.getProperty();
+(468) <-> (468)
+	if (propertyName.startsWith(CP_VARIABLE_PREFERENCES_PREFIX)) {
+	if (propertyName.startsWith(CP_VARIABLE_PREFERENCES_PREFIX)) {
+(470) <-> (470)
+	// update path cache
+	// update path cache
+(471) <-> (471)
+	String varName = propertyName.substring(CP_VARIABLE_PREFERENCES_PREFIX.length());
+	String varName = propertyName.substring(CP_VARIABLE_PREFERENCES_PREFIX.length());
+(472) <-> (472)
+	String newValue = (String)event.getNewValue();
+	String newValue = (String)event.getNewValue();
+(473) <-> (473)
+	if (newValue == null || newValue.equals(CP_VARIABLE_IGNORE)) {
+	if (newValue == null || newValue.equals(CP_VARIABLE_IGNORE)) {
+(474) <-> (474)
+	Variables.remove(varName);
+	Variables.remove(varName);
+(475) <-> (475)
+	} else {
+	} else {
+(476) <-> (476)
+	Variables.put(varName, new Path(newValue));
+	Variables.put(varName, new Path(newValue));
+(477) <-> (477)
+	}
+	}
+(478) <-> (478)
+	}
+	}
+(479) <-> (479)
+	}
+	}
+(480) <-> (480)
+	}
+	}
+(482) <-> (482)
+	/**
+	/**
+(483) <-> (483)
+	* Line separator to use throughout the JavaModel for any source edit operation
+	* Line separator to use throughout the JavaModel for any source edit operation
+(484) <-> (484)
+	*/
+	*/
+(485) <-> (485)
+	// public static String LINE_SEPARATOR = System.getProperty("line.separator"); //$NON-NLS-1$
+	// public static String LINE_SEPARATOR = System.getProperty("line.separator"); //$NON-NLS-1$
+(486) <-> (486)
+	/**
+	/**
+(487) <-> (487)
+	* Constructs a new JavaModelManager
+	* Constructs a new JavaModelManager
+(488) <-> (488)
+	*/
+	*/
+(489) <-> (489)
+	private JavaModelManager() {
+	private JavaModelManager() {
+(490) <-> (490)
+	}
+	}
+(492) <-> (492)
+	/**
+	/**
+(493) <-> (493)
+	* @deprecated - discard once debug has converted to not using it
+	* @deprecated - discard once debug has converted to not using it
+(494) <-> (494)
+	*/
+	*/
+(495) <-> (495)
+	public void addElementChangedListener(IElementChangedListener listener) {
+	public void addElementChangedListener(IElementChangedListener listener) {
+(496) <-> (496)
+	this.addElementChangedListener(listener, ElementChangedEvent.POST_CHANGE | ElementChangedEvent.POST_RECONCILE);
+	this.addElementChangedListener(listener, ElementChangedEvent.POST_CHANGE | ElementChangedEvent.POST_RECONCILE);
+(497) <-> (497)
+	}
+	}
+(498) <-> (498)
+	/**
+	/**
+(499) <-> (499)
+	* addElementChangedListener method comment.
+	* addElementChangedListener method comment.
+(500) <-> (500)
+	* Need to clone defensively the listener information, in case some listener is reacting to some notification iteration by adding/changing/removing
+	* Need to clone defensively the listener information, in case some listener is reacting to some notification iteration by adding/changing/removing
+(501) <-> (501)
+	* any of the other (i.e. it deregisters itself).
+	* any of the other (i.e. it deregisters itself).
+(502) <-> (502)
+	*/
+	*/
+(503) <-> (503)
+	public void addElementChangedListener(IElementChangedListener listener, int eventMask) {
+	public void addElementChangedListener(IElementChangedListener listener, int eventMask) {
+(504) <-> (504)
+	for (int i = 0; i < this.elementChangedListenerCount; i++){
+	for (int i = 0; i < this.elementChangedListenerCount; i++){
+(505) <-> (505)
+	if (this.elementChangedListeners[i].equals(listener)){
+	if (this.elementChangedListeners[i].equals(listener)){
+(507) <-> (507)
+	// only clone the masks, since we could be in the middle of notifications and one listener decide to change
+	// only clone the masks, since we could be in the middle of notifications and one listener decide to change
+(508) <-> (508)
+	// any event mask of another listeners (yet not notified).
+	// any event mask of another listeners (yet not notified).
+(509) <-> (509)
+	int cloneLength = this.elementChangedListenerMasks.length;
+	int cloneLength = this.elementChangedListenerMasks.length;
+(510) <-> (510)
+	System.arraycopy(this.elementChangedListenerMasks, 0, this.elementChangedListenerMasks = new int[cloneLength], 0, cloneLength);
+	System.arraycopy(this.elementChangedListenerMasks, 0, this.elementChangedListenerMasks = new int[cloneLength], 0, cloneLength);
+(511) <-> (511)
+	this.elementChangedListenerMasks[i] = eventMask; // could be different
+	this.elementChangedListenerMasks[i] = eventMask; // could be different
+(512) <-> (512)
+	return;
+	return;
+(513) <-> (513)
+	}
+	}
+(514) <-> (514)
+	}
+	}
+(515) <-> (515)
+	// may need to grow, no need to clone, since iterators will have cached original arrays and max boundary and we only add to the end.
+	// may need to grow, no need to clone, since iterators will have cached original arrays and max boundary and we only add to the end.
+(516) <-> (516)
+	int length;
+	int length;
+(517) <-> (517)
+	if ((length = this.elementChangedListeners.length) == this.elementChangedListenerCount){
+	if ((length = this.elementChangedListeners.length) == this.elementChangedListenerCount){
+(518) <-> (518)
+	System.arraycopy(this.elementChangedListeners, 0, this.elementChangedListeners = new IElementChangedListener[length*2], 0, length);
+	System.arraycopy(this.elementChangedListeners, 0, this.elementChangedListeners = new IElementChangedListener[length*2], 0, length);
+(519) <-> (519)
+	System.arraycopy(this.elementChangedListenerMasks, 0, this.elementChangedListenerMasks = new int[length*2], 0, length);
+	System.arraycopy(this.elementChangedListenerMasks, 0, this.elementChangedListenerMasks = new int[length*2], 0, length);
+(520) <-> (520)
+	}
+	}
+(521) <-> (521)
+	this.elementChangedListeners[this.elementChangedListenerCount] = listener;
+	this.elementChangedListeners[this.elementChangedListenerCount] = listener;
+(522) <-> (522)
+	this.elementChangedListenerMasks[this.elementChangedListenerCount] = eventMask;
+	this.elementChangedListenerMasks[this.elementChangedListenerCount] = eventMask;
+(523) <-> (523)
+	this.elementChangedListenerCount++;
+	this.elementChangedListenerCount++;
+(524) <-> (524)
+	}
+	}
+(526) <-> (526)
+	/**
+	/**
+(527) <-> (527)
+	* Starts caching ZipFiles.
+	* Starts caching ZipFiles.
+(528) <-> (528)
+	* Ignores if there are already clients.
+	* Ignores if there are already clients.
+(529) <-> (529)
+	*/
+	*/
+(530) <-> (530)
+	public synchronized void cacheZipFiles() {
+	public synchronized void cacheZipFiles() {
+(531) <-> (531)
+	Thread currentThread = Thread.currentThread();
+	Thread currentThread = Thread.currentThread();
+(532) <-> (532)
+	if (this.zipFiles.get(currentThread) != null) return;
+	if (this.zipFiles.get(currentThread) != null) return;
+(533) <-> (533)
+	this.zipFiles.put(currentThread, new HashMap());
+	this.zipFiles.put(currentThread, new HashMap());
+(534) <-> (534)
+	}
+	}
+(535) <-> (535)
+	public synchronized void closeZipFile(ZipFile zipFile) {
+	public synchronized void closeZipFile(ZipFile zipFile) {
+(536) <-> (536)
+	if (zipFile == null) return;
+	if (zipFile == null) return;
+(537) <-> (537)
+	if (this.zipFiles.get(Thread.currentThread()) != null) {
+	if (this.zipFiles.get(Thread.currentThread()) != null) {
+(538) <-> (538)
+	return; // zip file will be closed by call to flushZipFiles
+	return; // zip file will be closed by call to flushZipFiles
+(539) <-> (539)
+	}
+	}
+(540) <-> (540)
+	try {
+	try {
+(541) <-> (541)
+	if (JavaModelManager.ZIP_ACCESS_VERBOSE) {
+	if (JavaModelManager.ZIP_ACCESS_VERBOSE) {
+(542) <-> (542)
+	System.out.println("(" + Thread.currentThread() + ") [JavaModelManager.closeZipFile(ZipFile)] Closing ZipFile on " +zipFile.getName()); //$NON-NLS-1$ //$NON-NLS-2$
+	System.out.println("(" + Thread.currentThread() + ") [JavaModelManager.closeZipFile(ZipFile)] Closing ZipFile on " +zipFile.getName()); //$NON-NLS-1$ //$NON-NLS-2$
+(543) <-> (543)
+	}
+	}
+(544) <-> (544)
+	zipFile.close();
+	zipFile.close();
+(545) <-> (545)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(546) <-> (546)
+	}
+	}
+(547) <-> (547)
+	}
+	}
+(551) <-> (551)
+	/**
+	/**
+(552) <-> (552)
+	* Configure the plugin with respect to option settings defined in ".options" file
+	* Configure the plugin with respect to option settings defined in ".options" file
+(553) <-> (553)
+	*/
+	*/
+(554) <-> (554)
+	public void configurePluginDebugOptions(){
+	public void configurePluginDebugOptions(){
+(555) <-> (555)
+	if(JavaCore.getPlugin().isDebugging()){
+	if(JavaCore.getPlugin().isDebugging()){
+(556) <-> (556)
+	String option = Platform.getDebugOption(BUILDER_DEBUG);
+	String option = Platform.getDebugOption(BUILDER_DEBUG);
+(557) <-> (557)
+	if(option != null) JavaBuilder.DEBUG = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) JavaBuilder.DEBUG = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(559) <-> (559)
+	option = Platform.getDebugOption(COMPILER_DEBUG);
+	option = Platform.getDebugOption(COMPILER_DEBUG);
+(560) <-> (560)
+	if(option != null) Compiler.DEBUG = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) Compiler.DEBUG = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(562) <-> (562)
+	option = Platform.getDebugOption(COMPLETION_DEBUG);
+	option = Platform.getDebugOption(COMPLETION_DEBUG);
+(563) <-> (563)
+	if(option != null) CompletionEngine.DEBUG = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) CompletionEngine.DEBUG = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(565) <-> (565)
+	option = Platform.getDebugOption(CP_RESOLVE_DEBUG);
+	option = Platform.getDebugOption(CP_RESOLVE_DEBUG);
+(566) <-> (566)
+	if(option != null) JavaModelManager.CP_RESOLVE_VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) JavaModelManager.CP_RESOLVE_VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(568) <-> (568)
+	option = Platform.getDebugOption(DELTA_DEBUG);
+	option = Platform.getDebugOption(DELTA_DEBUG);
+(569) <-> (569)
+	if(option != null) DeltaProcessor.VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) DeltaProcessor.VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(571) <-> (571)
+	option = Platform.getDebugOption(HIERARCHY_DEBUG);
+	option = Platform.getDebugOption(HIERARCHY_DEBUG);
+(572) <-> (572)
+	if(option != null) TypeHierarchy.DEBUG = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) TypeHierarchy.DEBUG = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(574) <-> (574)
+	option = Platform.getDebugOption(INDEX_MANAGER_DEBUG);
+	option = Platform.getDebugOption(INDEX_MANAGER_DEBUG);
+(575) <-> (575)
+	if(option != null) IndexManager.VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) IndexManager.VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(577) <-> (577)
+	option = Platform.getDebugOption(JAVAMODEL_DEBUG);
+	option = Platform.getDebugOption(JAVAMODEL_DEBUG);
+(578) <-> (578)
+	if(option != null) JavaModelManager.VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) JavaModelManager.VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(580) <-> (580)
+	option = Platform.getDebugOption(POST_ACTION_DEBUG);
+	option = Platform.getDebugOption(POST_ACTION_DEBUG);
+(581) <-> (581)
+	if(option != null) JavaModelOperation.POST_ACTION_VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) JavaModelOperation.POST_ACTION_VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(583) <-> (583)
+	option = Platform.getDebugOption(SEARCH_DEBUG);
+	option = Platform.getDebugOption(SEARCH_DEBUG);
+(584) <-> (584)
+	if(option != null) SearchEngine.VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) SearchEngine.VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(586) <-> (586)
+	option = Platform.getDebugOption(SELECTION_DEBUG);
+	option = Platform.getDebugOption(SELECTION_DEBUG);
+(587) <-> (587)
+	if(option != null) SelectionEngine.DEBUG = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) SelectionEngine.DEBUG = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(589) <-> (589)
+	option = Platform.getDebugOption(SHARED_WC_DEBUG);
+	option = Platform.getDebugOption(SHARED_WC_DEBUG);
+(590) <-> (590)
+	if(option != null) CompilationUnit.SHARED_WC_VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) CompilationUnit.SHARED_WC_VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(592) <-> (592)
+	option = Platform.getDebugOption(ZIP_ACCESS_DEBUG);
+	option = Platform.getDebugOption(ZIP_ACCESS_DEBUG);
+(593) <-> (593)
+	if(option != null) JavaModelManager.ZIP_ACCESS_VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+	if(option != null) JavaModelManager.ZIP_ACCESS_VERBOSE = option.equalsIgnoreCase("true") ; //$NON-NLS-1$
+(594) <-> (594)
+	}
+	}
+(595) <-> (595)
+	}
+	}
+(599) <-> (599)
+	/**
+	/**
+(600) <-> (600)
+	* @see ISaveParticipant
+	* @see ISaveParticipant
+(601) <-> (601)
+	*/
+	*/
+(602) <-> (602)
+	public void doneSaving(ISaveContext context){
+	public void doneSaving(ISaveContext context){
+(603) <-> (603)
+	}
+	}
+(605) <-> (605)
+	/**
+	/**
+(606) <-> (606)
+	* Fire Java Model delta, flushing them after the fact after post_change notification.
+	* Fire Java Model delta, flushing them after the fact after post_change notification.
+(607) <-> (607)
+	* If the firing mode has been turned off, this has no effect.
+	* If the firing mode has been turned off, this has no effect.
+(608) <-> (608)
+	*/
+	*/
+(609) <-> (609)
+	public void fire(JavaElementDelta customDelta, int originalEventType) {
+	public void fire(JavaElementDelta customDelta, int originalEventType) {
+(611) <-> (611)
+	if (this.isFiring) {
+	if (this.isFiring) {
+(613) <-> (613)
+	int eventType;
+	int eventType;
+(615) <-> (615)
+	/* DEFAULT event type is used when operation doesn't know actual event type and needed to fire immediately:
+	/* DEFAULT event type is used when operation doesn't know actual event type and needed to fire immediately:
+(616) <-> (616)
+	* e.g. non-resource modifying operation, create/destroy shared working copies
+	* e.g. non-resource modifying operation, create/destroy shared working copies
+(617) <-> (617)
+	*
+	*
+(618) <-> (618)
+	* this is mapped to a POST-change + PRE-build change for all interested listeners
+	* this is mapped to a POST-change + PRE-build change for all interested listeners
+(619) <-> (619)
+	*/
+	*/
+(620) <-> (620)
+	if (originalEventType == DEFAULT_CHANGE_EVENT){
+	if (originalEventType == DEFAULT_CHANGE_EVENT){
+(621) <-> (621)
+	eventType = ElementChangedEvent.POST_CHANGE;
+	eventType = ElementChangedEvent.POST_CHANGE;
+(622) <-> (622)
+	} else {
+	} else {
+(623) <-> (623)
+	eventType = originalEventType;
+	eventType = originalEventType;
+(624) <-> (624)
+	}
+	}
+(626) <-> (626)
+	JavaElementDelta deltaToNotify;
+	JavaElementDelta deltaToNotify;
+(627) <-> (627)
+	if (customDelta == null){
+	if (customDelta == null){
+(628) <-> (628)
+	this.mergeDeltas();
+	this.mergeDeltas();
+(629) <-> (629)
+	if (this.javaModelDeltas.size() > 0){
+	if (this.javaModelDeltas.size() > 0){
+(631) <-> (631)
+	// cannot be more than 1 after merge
+	// cannot be more than 1 after merge
+(632) <-> (632)
+	deltaToNotify = (JavaElementDelta)this.javaModelDeltas.get(0);
+	deltaToNotify = (JavaElementDelta)this.javaModelDeltas.get(0);
+(634) <-> (634)
+	// empty the queue only after having fired final volley of deltas and no custom deltas was superposed
+	// empty the queue only after having fired final volley of deltas and no custom deltas was superposed
+(635) <-> (635)
+	if (eventType == ElementChangedEvent.POST_CHANGE){
+	if (eventType == ElementChangedEvent.POST_CHANGE){
+(636) <-> (636)
+	// flush now so as to keep listener reactions to post their own deltas for subsequent iteration
+	// flush now so as to keep listener reactions to post their own deltas for subsequent iteration
+(637) <-> (637)
+	this.flush();
+	this.flush();
+(638) <-> (638)
+	}
+	}
+(639) <-> (639)
+	} else {
+	} else {
+(640) <-> (640)
+	return;
+	return;
+(641) <-> (641)
+	}
+	}
+(642) <-> (642)
+	} else {
+	} else {
+(643) <-> (643)
+	deltaToNotify = customDelta;
+	deltaToNotify = customDelta;
+(644) <-> (644)
+	}
+	}
+(646) <-> (646)
+	// Refresh internal scopes
+	// Refresh internal scopes
+(647) <-> (647)
+	Iterator scopes = this.scopes.keySet().iterator();
+	Iterator scopes = this.scopes.keySet().iterator();
+(648) <-> (648)
+	while (scopes.hasNext()) {
+	while (scopes.hasNext()) {
+(649) <-> (649)
+	AbstractSearchScope scope = (AbstractSearchScope)scopes.next();
+	AbstractSearchScope scope = (AbstractSearchScope)scopes.next();
+(650) <-> (650)
+	scope.processDelta(deltaToNotify);
+	scope.processDelta(deltaToNotify);
+(651) <-> (651)
+	}
+	}
+(653) <-> (653)
+	// Notification
+	// Notification
+(655) <-> (655)
+	// Important: if any listener reacts to notification by updating the listeners list or mask, these lists will
+	// Important: if any listener reacts to notification by updating the listeners list or mask, these lists will
+(656) <-> (656)
+	// be duplicated, so it is necessary to remember original lists in a variable (since field values may change under us)
+	// be duplicated, so it is necessary to remember original lists in a variable (since field values may change under us)
+(657) <-> (657)
+	IElementChangedListener[] listeners = this.elementChangedListeners;
+	IElementChangedListener[] listeners = this.elementChangedListeners;
+(658) <-> (658)
+	int[] listenerMask = this.elementChangedListenerMasks;
+	int[] listenerMask = this.elementChangedListenerMasks;
+(659) <-> (659)
+	int listenerCount = this.elementChangedListenerCount;
+	int listenerCount = this.elementChangedListenerCount;
+(661) <-> (661)
+	// in case using a DEFAULT change event, will notify also all listeners also interested in PRE-build events
+	// in case using a DEFAULT change event, will notify also all listeners also interested in PRE-build events
+(662) <-> (662)
+	if (originalEventType == DEFAULT_CHANGE_EVENT){
+	if (originalEventType == DEFAULT_CHANGE_EVENT){
+(663) <-> (663)
+	if (DeltaProcessor.VERBOSE){
+	if (DeltaProcessor.VERBOSE){
+(664) <-> (664)
+	System.out.println("FIRING PRE_AUTO_BUILD Delta ["+Thread.currentThread()+"]:\n" + deltaToNotify);//$NON-NLS-1$//$NON-NLS-2$
+	System.out.println("FIRING PRE_AUTO_BUILD Delta ["+Thread.currentThread()+"]:\n" + deltaToNotify);//$NON-NLS-1$//$NON-NLS-2$
+(665) <-> (665)
+	}
+	}
+(666) <-> (666)
+	final ElementChangedEvent extraEvent = new ElementChangedEvent(deltaToNotify, ElementChangedEvent.PRE_AUTO_BUILD);
+	final ElementChangedEvent extraEvent = new ElementChangedEvent(deltaToNotify, ElementChangedEvent.PRE_AUTO_BUILD);
+(667) <-> (667)
+	for (int i= 0; i < listenerCount; i++) {
+	for (int i= 0; i < listenerCount; i++) {
+(668) <-> (668)
+	if ((listenerMask[i] & ElementChangedEvent.PRE_AUTO_BUILD) != 0){
+	if ((listenerMask[i] & ElementChangedEvent.PRE_AUTO_BUILD) != 0){
+(669) <-> (669)
+	final IElementChangedListener listener = listeners[i];
+	final IElementChangedListener listener = listeners[i];
+(670) <-> (670)
+	// wrap callbacks with Safe runnable for subsequent listeners to be called when some are causing grief
+	// wrap callbacks with Safe runnable for subsequent listeners to be called when some are causing grief
+(671) <-> (671)
+	Platform.run(new ISafeRunnable() {
+	Platform.run(new ISafeRunnable() {
+(672) <-> (672)
+	public void handleException(Throwable exception) {
+	public void handleException(Throwable exception) {
+(673) <-> (673)
+	Util.log(exception, "Exception occurred in listener of Java element change notification"); //$NON-NLS-1$
+	Util.log(exception, "Exception occurred in listener of Java element change notification"); //$NON-NLS-1$
+(674) <-> (674)
+	}
+	}
+(675) <-> (675)
+	public void run() throws Exception {
+	public void run() throws Exception {
+(676) <-> (676)
+	listener.elementChanged(extraEvent);
+	listener.elementChanged(extraEvent);
+(677) <-> (677)
+	}
+	}
+(678) <-> (678)
+	});
+	});
+(679) <-> (679)
+	}
+	}
+(680) <-> (680)
+	}
+	}
+(681) <-> (681)
+	}
+	}
+(683) <-> (683)
+	// regular notification
+	// regular notification
+(684) <-> (684)
+	if (DeltaProcessor.VERBOSE){
+	if (DeltaProcessor.VERBOSE){
+(685) <-> (685)
+	String type = "";//$NON-NLS-1$
+	String type = "";//$NON-NLS-1$
+(686) <-> (686)
+	switch (eventType) {
+	switch (eventType) {
+(687) <-> (687)
+	case ElementChangedEvent.POST_CHANGE:
+	case ElementChangedEvent.POST_CHANGE:
+(688) <-> (688)
+	type = "POST_CHANGE"; //$NON-NLS-1$
+	type = "POST_CHANGE"; //$NON-NLS-1$
+(689) <-> (689)
+	break;
+	break;
+(690) <-> (690)
+	case ElementChangedEvent.PRE_AUTO_BUILD:
+	case ElementChangedEvent.PRE_AUTO_BUILD:
+(691) <-> (691)
+	type = "PRE_AUTO_BUILD"; //$NON-NLS-1$
+	type = "PRE_AUTO_BUILD"; //$NON-NLS-1$
+(692) <-> (692)
+	break;
+	break;
+(693) <-> (693)
+	case ElementChangedEvent.POST_RECONCILE:
+	case ElementChangedEvent.POST_RECONCILE:
+(694) <-> (694)
+	type = "POST_RECONCILE"; //$NON-NLS-1$
+	type = "POST_RECONCILE"; //$NON-NLS-1$
+(695) <-> (695)
+	break;
+	break;
+(696) <-> (696)
+	}
+	}
+(697) <-> (697)
+	System.out.println("FIRING " + type + " Delta ["+Thread.currentThread()+"]:\n" + deltaToNotify);//$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
+	System.out.println("FIRING " + type + " Delta ["+Thread.currentThread()+"]:\n" + deltaToNotify);//$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
+(698) <-> (698)
+	}
+	}
+(699) <-> (699)
+	final ElementChangedEvent event = new ElementChangedEvent(deltaToNotify, eventType);
+	final ElementChangedEvent event = new ElementChangedEvent(deltaToNotify, eventType);
+(700) <-> (700)
+	for (int i= 0; i < listenerCount; i++) {
+	for (int i= 0; i < listenerCount; i++) {
+(701) <-> (701)
+	if ((listenerMask[i] & eventType) != 0){
+	if ((listenerMask[i] & eventType) != 0){
+(702) <-> (702)
+	// wrap callbacks with Safe runnable for subsequent listeners to be called when some are causing grief
+	// wrap callbacks with Safe runnable for subsequent listeners to be called when some are causing grief
+(703) <-> (703)
+	final IElementChangedListener listener = listeners[i];
+	final IElementChangedListener listener = listeners[i];
+(704) <-> (704)
+	Platform.run(new ISafeRunnable() {
+	Platform.run(new ISafeRunnable() {
+(705) <-> (705)
+	public void handleException(Throwable exception) {
+	public void handleException(Throwable exception) {
+(706) <-> (706)
+	Util.log(exception, "Exception occurred in listener of Java element change notification"); //$NON-NLS-1$
+	Util.log(exception, "Exception occurred in listener of Java element change notification"); //$NON-NLS-1$
+(707) <-> (707)
+	}
+	}
+(708) <-> (708)
+	public void run() throws Exception {
+	public void run() throws Exception {
+(709) <-> (709)
+	listener.elementChanged(event);
+	listener.elementChanged(event);
+(710) <-> (710)
+	}
+	}
+(711) <-> (711)
+	});
+	});
+(712) <-> (712)
+	}
+	}
+(713) <-> (713)
+	}
+	}
+(714) <-> (714)
+	}
+	}
+(715) <-> (715)
+	}
+	}
+(717) <-> (717)
+	/**
+	/**
+(718) <-> (718)
+	* Flushes all deltas without firing them.
+	* Flushes all deltas without firing them.
+(719) <-> (719)
+	*/
+	*/
+(720) <-> (720)
+	protected void flush() {
+	protected void flush() {
+(721) <-> (721)
+	this.javaModelDeltas= new ArrayList();
+	this.javaModelDeltas= new ArrayList();
+(722) <-> (722)
+	}
+	}
+(724) <-> (724)
+	/**
+	/**
+(725) <-> (725)
+	* Flushes ZipFiles cache if there are no more clients.
+	* Flushes ZipFiles cache if there are no more clients.
+(726) <-> (726)
+	*/
+	*/
+(727) <-> (727)
+	public synchronized void flushZipFiles() {
+	public synchronized void flushZipFiles() {
+(728) <-> (728)
+	Thread currentThread = Thread.currentThread();
+	Thread currentThread = Thread.currentThread();
+(729) <-> (729)
+	HashMap map = (HashMap)this.zipFiles.remove(currentThread);
+	HashMap map = (HashMap)this.zipFiles.remove(currentThread);
+(730) <-> (730)
+	if (map == null) return;
+	if (map == null) return;
+(731) <-> (731)
+	Iterator iterator = map.values().iterator();
+	Iterator iterator = map.values().iterator();
+(732) <-> (732)
+	while (iterator.hasNext()) {
+	while (iterator.hasNext()) {
+(733) <-> (733)
+	try {
+	try {
+(734) <-> (734)
+	ZipFile zipFile = (ZipFile)iterator.next();
+	ZipFile zipFile = (ZipFile)iterator.next();
+(735) <-> (735)
+	if (JavaModelManager.ZIP_ACCESS_VERBOSE) {
+	if (JavaModelManager.ZIP_ACCESS_VERBOSE) {
+(736) <-> (736)
+	System.out.println("(" + currentThread + ") [JavaModelManager.flushZipFiles()] Closing ZipFile on " +zipFile.getName()); //$NON-NLS-1$//$NON-NLS-2$
+	System.out.println("(" + currentThread + ") [JavaModelManager.flushZipFiles()] Closing ZipFile on " +zipFile.getName()); //$NON-NLS-1$//$NON-NLS-2$
+(737) <-> (737)
+	}
+	}
+(738) <-> (738)
+	zipFile.close();
+	zipFile.close();
+(739) <-> (739)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(740) <-> (740)
+	}
+	}
+(741) <-> (741)
+	}
+	}
+(743) <-> (743)
+	}
+	}
+(745) <-> (745)
+	/**
+	/**
+(746) <-> (746)
+	* Retrieve the registered classpath container initializer for a given container ID
+	* Retrieve the registered classpath container initializer for a given container ID
+(747) <-> (747)
+	*/
+	*/
+(748) <-> (748)
+	public static ClasspathContainerInitializer getClasspathContainerInitializer(String containerID){
+	public static ClasspathContainerInitializer getClasspathContainerInitializer(String containerID){
+(750) <-> (750)
+	Plugin jdtCorePlugin = JavaCore.getPlugin();
+	Plugin jdtCorePlugin = JavaCore.getPlugin();
+(751) <-> (751)
+	if (jdtCorePlugin == null) return null;
+	if (jdtCorePlugin == null) return null;
+(753) <-> (753)
+	IExtensionPoint extension = jdtCorePlugin.getDescriptor().getExtensionPoint(CPCONTAINER_INITIALIZER_EXTPOINT_ID);
+	IExtensionPoint extension = jdtCorePlugin.getDescriptor().getExtensionPoint(CPCONTAINER_INITIALIZER_EXTPOINT_ID);
+(754) <-> (754)
+	if (extension != null) {
+	if (extension != null) {
+(755) <-> (755)
+	IExtension[] extensions = extension.getExtensions();
+	IExtension[] extensions = extension.getExtensions();
+(756) <-> (756)
+	for(int i = 0; i < extensions.length; i++){
+	for(int i = 0; i < extensions.length; i++){
+(757) <-> (757)
+	IConfigurationElement [] configElements = extensions[i].getConfigurationElements();
+	IConfigurationElement [] configElements = extensions[i].getConfigurationElements();
+(758) <-> (758)
+	IPluginDescriptor plugin = extension.getDeclaringPluginDescriptor();
+	IPluginDescriptor plugin = extension.getDeclaringPluginDescriptor();
+(759) <-> (759)
+	if (plugin.isPluginActivated()) {
+	if (plugin.isPluginActivated()) {
+(761) <-> (761)
+	for(int j = 0; j < configElements.length; j++){
+	for(int j = 0; j < configElements.length; j++){
+(762) <-> (762)
+	String initializerID = configElements[j].getAttribute("id"); //$NON-NLS-1$
+	String initializerID = configElements[j].getAttribute("id"); //$NON-NLS-1$
+(763) <-> (763)
+	if (initializerID != null && initializerID.equals(containerID)){
+	if (initializerID != null && initializerID.equals(containerID)){
+(764) <-> (764)
+	if (JavaModelManager.CP_RESOLVE_VERBOSE) {
+	if (JavaModelManager.CP_RESOLVE_VERBOSE) {
+(765) <-> (765)
+	System.out.println("CPVariable INIT - found initializer: "+containerID +" --> " + configElements[j].getAttribute("class"));//$NON-NLS-3$//$NON-NLS-2$//$NON-NLS-1$
+	System.out.println("CPVariable INIT - found initializer: "+containerID +" --> " + configElements[j].getAttribute("class"));//$NON-NLS-3$//$NON-NLS-2$//$NON-NLS-1$
+(766) <-> (766)
+	}
+	}
+(767) <-> (767)
+	try {
+	try {
+(768) <-> (768)
+	Object execExt = configElements[j].createExecutableExtension("class"); //$NON-NLS-1$
+	Object execExt = configElements[j].createExecutableExtension("class"); //$NON-NLS-1$
+(769) <-> (769)
+	if (execExt instanceof ClasspathContainerInitializer){
+	if (execExt instanceof ClasspathContainerInitializer){
+(770) <-> (770)
+	return (ClasspathContainerInitializer)execExt;
+	return (ClasspathContainerInitializer)execExt;
+(771) <-> (771)
+	}
+	}
+(772) <-> (772)
+	} catch(CoreException e) {
+	} catch(CoreException e) {
+(773) <-> (773)
+	}
+	}
+(774) <-> (774)
+	}
+	}
+(775) <-> (775)
+	}
+	}
+(776) <-> (776)
+	}
+	}
+(777) <-> (777)
+	}
+	}
+(778) <-> (778)
+	}
+	}
+(779) <-> (779)
+	return null;
+	return null;
+(780) <-> (780)
+	}
+	}
+(782) <-> (782)
+	/**
+	/**
+(783) <-> (783)
+	* Returns the set of elements which are out of synch with their buffers.
+	* Returns the set of elements which are out of synch with their buffers.
+(784) <-> (784)
+	*/
+	*/
+(785) <-> (785)
+	protected Map getElementsOutOfSynchWithBuffers() {
+	protected Map getElementsOutOfSynchWithBuffers() {
+(786) <-> (786)
+	return this.elementsOutOfSynchWithBuffers;
+	return this.elementsOutOfSynchWithBuffers;
+(787) <-> (787)
+	}
+	}
+(789) <-> (789)
+	/**
+	/**
+(790) <-> (790)
+	* Returns the <code>IJavaElement</code> represented by the
+	* Returns the <code>IJavaElement</code> represented by the
+(791) <-> (791)
+	* <code>String</code> memento.
+	* <code>String</code> memento.
+(792) <-> (792)
+	*/
+	*/
+(793) <-> (793)
+	public IJavaElement getHandleFromMemento(String memento) throws JavaModelException {
+	public IJavaElement getHandleFromMemento(String memento) throws JavaModelException {
+(794) <-> (794)
+	if (memento == null) {
+	if (memento == null) {
+(795) <-> (795)
+	return null;
+	return null;
+(796) <-> (796)
+	}
+	}
+(797) <-> (797)
+	JavaModel model= (JavaModel) getJavaModel();
+	JavaModel model= (JavaModel) getJavaModel();
+(798) <-> (798)
+	if (memento.equals("")){ // workspace memento //$NON-NLS-1$
+	if (memento.equals("")){ // workspace memento //$NON-NLS-1$
+(799) <-> (799)
+	return model;
+	return model;
+(800) <-> (800)
+	}
+	}
+(801) <-> (801)
+	int modelEnd= memento.indexOf(JavaElement.JEM_JAVAPROJECT);
+	int modelEnd= memento.indexOf(JavaElement.JEM_JAVAPROJECT);
+(802) <-> (802)
+	if (modelEnd == -1) {
+	if (modelEnd == -1) {
+(803) <-> (803)
+	return null;
+	return null;
+(804) <-> (804)
+	}
+	}
+(805) <-> (805)
+	boolean returnProject= false;
+	boolean returnProject= false;
+(806) <-> (806)
+	int projectEnd= memento.indexOf(JavaElement.JEM_PACKAGEFRAGMENTROOT, modelEnd);
+	int projectEnd= memento.indexOf(JavaElement.JEM_PACKAGEFRAGMENTROOT, modelEnd);
+(807) <-> (807)
+	if (projectEnd == -1) {
+	if (projectEnd == -1) {
+(808) <-> (808)
+	projectEnd= memento.length();
+	projectEnd= memento.length();
+(809) <-> (809)
+	returnProject= true;
+	returnProject= true;
+(810) <-> (810)
+	}
+	}
+(811) <-> (811)
+	String projectName= memento.substring(modelEnd + 1, projectEnd);
+	String projectName= memento.substring(modelEnd + 1, projectEnd);
+(812) <-> (812)
+	JavaProject proj= (JavaProject) model.getJavaProject(projectName);
+	JavaProject proj= (JavaProject) model.getJavaProject(projectName);
+(813) <-> (813)
+	if (returnProject) {
+	if (returnProject) {
+(814) <-> (814)
+	return proj;
+	return proj;
+(815) <-> (815)
+	}
+	}
+(816) <-> (816)
+	int rootEnd= memento.indexOf(JavaElement.JEM_PACKAGEFRAGMENT, projectEnd + 1);
+	int rootEnd= memento.indexOf(JavaElement.JEM_PACKAGEFRAGMENT, projectEnd + 1);
+(817) <-> (817)
+	if (rootEnd == -1) {
+	if (rootEnd == -1) {
+(818) <-> (818)
+	return proj.getPackageFragmentRoot(new Path(Path.SEPARATOR + memento.substring(modelEnd + 1)));
+	return proj.getPackageFragmentRoot(new Path(Path.SEPARATOR + memento.substring(modelEnd + 1)));
+(819) <-> (819)
+	}
+	}
+(820) <-> (820)
+	String rootName= null;
+	String rootName= null;
+(821) <-> (821)
+	if (rootEnd == projectEnd - 1) {
+	if (rootEnd == projectEnd - 1) {
+(822) <-> (822)
+	//default root
+	//default root
+(823) <-> (823)
+	rootName= IPackageFragmentRoot.DEFAULT_PACKAGEROOT_PATH;
+	rootName= IPackageFragmentRoot.DEFAULT_PACKAGEROOT_PATH;
+(824) <-> (824)
+	} else {
+	} else {
+(825) <-> (825)
+	rootName= memento.substring(projectEnd + 1, rootEnd);
+	rootName= memento.substring(projectEnd + 1, rootEnd);
+(826) <-> (826)
+	}
+	}
+(827) <-> (827)
+	IPath rootPath= new Path(rootName);
+	IPath rootPath= new Path(rootName);
+(828) <-> (828)
+	IPackageFragmentRoot root= null;
+	IPackageFragmentRoot root= null;
+(829) <-> (829)
+	if (rootPath.isAbsolute()) {
+	if (rootPath.isAbsolute()) {
+(830) <-> (830)
+	root= proj.getPackageFragmentRoot(rootPath);
+	root= proj.getPackageFragmentRoot(rootPath);
+(831) <-> (831)
+	} else {
+	} else {
+(832) <-> (832)
+	root= proj.getPackageFragmentRoot(proj.getProject().getFullPath().append(rootName));
+	root= proj.getPackageFragmentRoot(proj.getProject().getFullPath().append(rootName));
+(833) <-> (833)
+	}
+	}
+(834) <-> (834)
+	if (root == null)
+	if (root == null)
+(835) <-> (835)
+	return null;
+	return null;
+(837) <-> (837)
+	int end= memento.indexOf(JavaElement.JEM_COMPILATIONUNIT, rootEnd);
+	int end= memento.indexOf(JavaElement.JEM_COMPILATIONUNIT, rootEnd);
+(838) <-> (838)
+	if (end == -1) {
+	if (end == -1) {
+(839) <-> (839)
+	end= memento.indexOf(JavaElement.JEM_CLASSFILE, rootEnd);
+	end= memento.indexOf(JavaElement.JEM_CLASSFILE, rootEnd);
+(840) <-> (840)
+	if (end == -1) {
+	if (end == -1) {
+(841) <-> (841)
+	if (rootEnd + 1 == memento.length()) {
+	if (rootEnd + 1 == memento.length()) {
+(842) <-> (842)
+	return root.getPackageFragment(IPackageFragment.DEFAULT_PACKAGE_NAME);
+	return root.getPackageFragment(IPackageFragment.DEFAULT_PACKAGE_NAME);
+(843) <-> (843)
+	} else {
+	} else {
+(844) <-> (844)
+	return root.getPackageFragment(memento.substring(rootEnd + 1));
+	return root.getPackageFragment(memento.substring(rootEnd + 1));
+(845) <-> (845)
+	}
+	}
+(846) <-> (846)
+	}
+	}
+(847) <-> (847)
+	//deal with class file and binary members
+	//deal with class file and binary members
+(848) <-> (848)
+	return model.getHandleFromMementoForBinaryMembers(memento, root, rootEnd, end);
+	return model.getHandleFromMementoForBinaryMembers(memento, root, rootEnd, end);
+(849) <-> (849)
+	}
+	}
+(851) <-> (851)
+	//deal with compilation units and source members
+	//deal with compilation units and source members
+(852) <-> (852)
+	return model.getHandleFromMementoForSourceMembers(memento, root, rootEnd, end);
+	return model.getHandleFromMementoForSourceMembers(memento, root, rootEnd, end);
+(853) <-> (853)
+	}
+	}
+(854) <-> (854)
+	public IndexManager getIndexManager() {
+	public IndexManager getIndexManager() {
+(855) <-> (855)
+	return this.deltaProcessor.indexManager;
+	return this.deltaProcessor.indexManager;
+(856) <-> (856)
+	}
+	}
+(858) <-> (858)
+	/**
+	/**
+(859) <-> (859)
+	* Returns the info for the element.
+	* Returns the info for the element.
+(860) <-> (860)
+	*/
+	*/
+(861) <-> (861)
+	public Object getInfo(IJavaElement element) {
+	public Object getInfo(IJavaElement element) {
+(862) <-> (862)
+	return this.cache.getInfo(element);
+	return this.cache.getInfo(element);
+(863) <-> (863)
+	}
+	}
+(865) <-> (865)
+	/**
+	/**
+(866) <-> (866)
+	* Returns the handle to the active Java Model.
+	* Returns the handle to the active Java Model.
+(867) <-> (867)
+	*/
+	*/
+(868) <-> (868)
+	public final JavaModel getJavaModel() {
+	public final JavaModel getJavaModel() {
+(869) <-> (869)
+	return javaModel;
+	return javaModel;
+(870) <-> (870)
+	}
+	}
+(872) <-> (872)
+	/**
+	/**
+(873) <-> (873)
+	* Returns the singleton JavaModelManager
+	* Returns the singleton JavaModelManager
+(874) <-> (874)
+	*/
+	*/
+(875) <-> (875)
+	public final static JavaModelManager getJavaModelManager() {
+	public final static JavaModelManager getJavaModelManager() {
+(876) <-> (876)
+	return Manager;
+	return Manager;
+(877) <-> (877)
+	}
+	}
+(879) <-> (879)
+	/**
+	/**
+(880) <-> (880)
+	* Returns the last built state for the given project, or null if there is none.
+	* Returns the last built state for the given project, or null if there is none.
+(881) <-> (881)
+	* Deserializes the state if necessary.
+	* Deserializes the state if necessary.
+(882) <-> (882)
+	*
+	*
+(883) <-> (883)
+	* For use by image builder and evaluation support only
+	* For use by image builder and evaluation support only
+(884) <-> (884)
+	*/
+	*/
+(885) <-> (885)
+	public Object getLastBuiltState(IProject project, IProgressMonitor monitor) {
+	public Object getLastBuiltState(IProject project, IProgressMonitor monitor) {
+(886) <-> (886)
+	PerProjectInfo info = getPerProjectInfo(project);
+	PerProjectInfo info = getPerProjectInfo(project);
+(887) <-> (887)
+	if (!info.triedRead) {
+	if (!info.triedRead) {
+(888) <-> (888)
+	info.triedRead = true;
+	info.triedRead = true;
+(889) <-> (889)
+	try {
+	try {
+(890) <-> (890)
+	if (monitor != null)
+	if (monitor != null)
+(891) <-> (891)
+	monitor.subTask(Util.bind("build.readStateProgress", project.getName())); //$NON-NLS-1$
+	monitor.subTask(Util.bind("build.readStateProgress", project.getName())); //$NON-NLS-1$
+(892) <-> (892)
+	info.savedState = readState(project);
+	info.savedState = readState(project);
+(893) <-> (893)
+	} catch (CoreException e) {
+	} catch (CoreException e) {
+(894) <-> (894)
+	e.printStackTrace();
+	e.printStackTrace();
+(895) <-> (895)
+	}
+	}
+(896) <-> (896)
+	}
+	}
+(897) <-> (897)
+	return info.savedState;
+	return info.savedState;
+(898) <-> (898)
+	}
+	}
+(900) <-> (900)
+	/*
+	/*
+(901) <-> (901)
+	* Returns the per-project info for the given project. Create the info if the info doesn't exist.
+	* Returns the per-project info for the given project. Create the info if the info doesn't exist.
+(902) <-> (902)
+	*/
+	*/
+(903) <-> (903)
+	private PerProjectInfo getPerProjectInfo(IProject project) {
+	public PerProjectInfo getPerProjectInfo(IProject project) {
+(904) <-> (904)
+	return getPerProjectInfo(project, true /* create info */);
+	return getPerProjectInfo(project, true /* create info */);
+(905) <-> (905)
+	}
+	}
+(907) <-> (907)
+	/*
+	/*
+(908) <-> (908)
+	* Returns the per-project info for the given project. If specified, create the info if the info doesn't exist.
+	* Returns the per-project info for the given project. If specified, create the info if the info doesn't exist.
+(909) <-> (909)
+	*/
+	*/
+(910) <-> (910)
+	synchronized PerProjectInfo getPerProjectInfo(IProject project, boolean create) {
+	public synchronized PerProjectInfo getPerProjectInfo(IProject project, boolean create) {
+(911) <-> (911)
+	PerProjectInfo info= (PerProjectInfo) perProjectInfo.get(project);
+	PerProjectInfo info= (PerProjectInfo) perProjectInfo.get(project);
+(912) <-> (912)
+	if (info == null && create) {
+	if (info == null && create) {
+(913) <-> (913)
+	info= new PerProjectInfo(project);
+	info= new PerProjectInfo(project);
+(914) <-> (914)
+	perProjectInfo.put(project, info);
+	perProjectInfo.put(project, info);
+(915) <-> (915)
+	}
+	}
+(916) <-> (916)
+	return info;
+	return info;
+(917) <-> (917)
+	}
+	}
+(919) <-> (919)
+	/*
+	/*
+(920) <-> (920)
+	* Returns the per-project info for the given project.
+	* Returns the per-project info for the given project.
+(921) <-> (921)
+	* If the info if the info doesn't exist, check for the project existence and create the info.
+	* If the info if the info doesn't exist, check for the project existence and create the info.
+(922) <-> (922)
+	* @throws JavaModelException if the project doesn't exist.
+	* @throws JavaModelException if the project doesn't exist.
+(923) <-> (923)
+	*/
+	*/
+(924) <-> (924)
+	PerProjectInfo getPerProjectInfoCheckExistence(IProject project) throws JavaModelException {
+	public PerProjectInfo getPerProjectInfoCheckExistence(IProject project) throws JavaModelException {
+(925) <-> (925)
+	JavaModelManager.PerProjectInfo info = getPerProjectInfo(project, false /* don't create info */);
+	JavaModelManager.PerProjectInfo info = getPerProjectInfo(project, false /* don't create info */);
+(926) <-> (926)
+	if (info == null) {
+	if (info == null) {
+(927) <-> (927)
+	if (!project.exists()) {
+	if (!project.exists()) {
+(928) <-> (928)
+	throw ((JavaProject)JavaCore.create(project)).newNotPresentException();
+	throw ((JavaProject)JavaCore.create(project)).newNotPresentException();
+(929) <-> (929)
+	}
+	}
+(930) <-> (930)
+	info = getPerProjectInfo(project, true /* create info */);
+	info = getPerProjectInfo(project, true /* create info */);
+(931) <-> (931)
+	}
+	}
+(932) <-> (932)
+	return info;
+	return info;
+(933) <-> (933)
+	}
+	}
+(934) <-> (934)
+	/**
+	/**
+(935) <-> (935)
+	* Returns the File to use for saving and restoring the last built state for the given project.
+	* Returns the File to use for saving and restoring the last built state for the given project.
+(936) <-> (936)
+	*/
+	*/
+(937) <-> (937)
+	private File getSerializationFile(IProject project) {
+	private File getSerializationFile(IProject project) {
+(938) <-> (938)
+	if (!project.exists()) return null;
+	if (!project.exists()) return null;
+(939) <-> (939)
+	IPluginDescriptor descr= JavaCore.getJavaCore().getDescriptor();
+	IPluginDescriptor descr= JavaCore.getJavaCore().getDescriptor();
+(940) <-> (940)
+	IPath workingLocation= project.getPluginWorkingLocation(descr);
+	IPath workingLocation= project.getPluginWorkingLocation(descr);
+(941) <-> (941)
+	return workingLocation.append("state.dat").toFile(); //$NON-NLS-1$
+	return workingLocation.append("state.dat").toFile(); //$NON-NLS-1$
+(942) <-> (942)
+	}
+	}
+(944) <-> (944)
+	/**
+	/**
+(945) <-> (945)
+	* Returns the open ZipFile at the given location. If the ZipFile
+	* Returns the open ZipFile at the given location. If the ZipFile
+(946) <-> (946)
+	* does not yet exist, it is created, opened, and added to the cache
+	* does not yet exist, it is created, opened, and added to the cache
+(947) <-> (947)
+	* of open ZipFiles. The location must be a absolute path.
+	* of open ZipFiles. The location must be a absolute path.
+(948) <-> (948)
+	*
+	*
+(949) <-> (949)
+	* @exception CoreException If unable to create/open the ZipFile.
+	* @exception CoreException If unable to create/open the ZipFile.
+(950) <-> (950)
+	*/
+	*/
+(951) <-> (951)
+	public synchronized ZipFile getZipFile(IPath path) throws CoreException {
+	public synchronized ZipFile getZipFile(IPath path) throws CoreException {
+(952) <-> (952)
+	Thread currentThread = Thread.currentThread();
+	Thread currentThread = Thread.currentThread();
+(953) <-> (953)
+	HashMap map = null;
+	HashMap map = null;
+(954) <-> (954)
+	ZipFile zipFile;
+	ZipFile zipFile;
+(955) <-> (955)
+	if ((map = (HashMap)this.zipFiles.get(currentThread)) != null
+	if ((map = (HashMap)this.zipFiles.get(currentThread)) != null
+(956) <-> (956)
+	&& (zipFile = (ZipFile)map.get(path)) != null) {
+	&& (zipFile = (ZipFile)map.get(path)) != null) {
+(958) <-> (958)
+	return zipFile;
+	return zipFile;
+(959) <-> (959)
+	}
+	}
+(960) <-> (960)
+	String fileSystemPath= null;
+	String fileSystemPath= null;
+(961) <-> (961)
+	IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+	IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+(962) <-> (962)
+	IResource file = root.findMember(path);
+	IResource file = root.findMember(path);
+(963) <-> (963)
+	if (path.isAbsolute() && file != null) {
+	if (path.isAbsolute() && file != null) {
+(964) <-> (964)
+	if (file == null || file.getType() != IResource.FILE) {
+	if (file == null || file.getType() != IResource.FILE) {
+(965) <-> (965)
+	fileSystemPath= path.toOSString();
+	fileSystemPath= path.toOSString();
+(966) <-> (966)
+	} else {
+	} else {
+(967) <-> (967)
+	fileSystemPath= file.getLocation().toOSString();
+	fileSystemPath= file.getLocation().toOSString();
+(968) <-> (968)
+	}
+	}
+(969) <-> (969)
+	} else if (!path.isAbsolute()) {
+	} else if (!path.isAbsolute()) {
+(970) <-> (970)
+	file= root.getFile(path);
+	file= root.getFile(path);
+(971) <-> (971)
+	if (file == null || file.getType() != IResource.FILE) {
+	if (file == null || file.getType() != IResource.FILE) {
+(972) <-> (972)
+	throw new CoreException(new Status(IStatus.ERROR, JavaCore.PLUGIN_ID, -1, Util.bind("file.notFound"), null)); //$NON-NLS-1$
+	throw new CoreException(new Status(IStatus.ERROR, JavaCore.PLUGIN_ID, -1, Util.bind("file.notFound"), null)); //$NON-NLS-1$
+(973) <-> (973)
+	}
+	}
+(974) <-> (974)
+	fileSystemPath= file.getLocation().toOSString();
+	fileSystemPath= file.getLocation().toOSString();
+(975) <-> (975)
+	} else {
+	} else {
+(976) <-> (976)
+	fileSystemPath= path.toOSString();
+	fileSystemPath= path.toOSString();
+(977) <-> (977)
+	}
+	}
+(979) <-> (979)
+	try {
+	try {
+(980) <-> (980)
+	if (ZIP_ACCESS_VERBOSE) {
+	if (ZIP_ACCESS_VERBOSE) {
+(981) <-> (981)
+	System.out.println("(" + currentThread + ") [JavaModelManager.getZipFile(IPath)] Creating ZipFile on " + fileSystemPath ); //$NON-NLS-1$ //$NON-NLS-2$
+	System.out.println("(" + currentThread + ") [JavaModelManager.getZipFile(IPath)] Creating ZipFile on " + fileSystemPath ); //$NON-NLS-1$ //$NON-NLS-2$
+(982) <-> (982)
+	}
+	}
+(983) <-> (983)
+	zipFile = new ZipFile(fileSystemPath);
+	zipFile = new ZipFile(fileSystemPath);
+(984) <-> (984)
+	if (map != null) {
+	if (map != null) {
+(985) <-> (985)
+	map.put(path, zipFile);
+	map.put(path, zipFile);
+(986) <-> (986)
+	}
+	}
+(987) <-> (987)
+	return zipFile;
+	return zipFile;
+(988) <-> (988)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(989) <-> (989)
+	throw new CoreException(new Status(Status.ERROR, JavaCore.PLUGIN_ID, -1, Util.bind("status.IOException"), e)); //$NON-NLS-1$
+	throw new CoreException(new Status(Status.ERROR, JavaCore.PLUGIN_ID, -1, Util.bind("status.IOException"), e)); //$NON-NLS-1$
+(990) <-> (990)
+	}
+	}
+(991) <-> (991)
+	}
+	}
+(997) <-> (997)
+	public void loadVariables() throws CoreException {
+	public void loadVariables() throws CoreException {
+(999) <-> (999)
+	// backward compatibility, consider persistent property
+	// backward compatibility, consider persistent property
+(1000) <-> (1000)
+	QualifiedName qName = new QualifiedName(JavaCore.PLUGIN_ID, "variables"); //$NON-NLS-1$
+	QualifiedName qName = new QualifiedName(JavaCore.PLUGIN_ID, "variables"); //$NON-NLS-1$
+(1001) <-> (1001)
+	String xmlString = ResourcesPlugin.getWorkspace().getRoot().getPersistentProperty(qName);
+	String xmlString = ResourcesPlugin.getWorkspace().getRoot().getPersistentProperty(qName);
+(1003) <-> (1003)
+	try {
+	try {
+(1004) <-> (1004)
+	if (xmlString != null){
+	if (xmlString != null){
+(1005) <-> (1005)
+	StringReader reader = new StringReader(xmlString);
+	StringReader reader = new StringReader(xmlString);
+(1006) <-> (1006)
+	Element cpElement;
+	Element cpElement;
+(1007) <-> (1007)
+	try {
+	try {
+(1008) <-> (1008)
+	DocumentBuilder parser = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+	DocumentBuilder parser = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+(1009) <-> (1009)
+	cpElement = parser.parse(new InputSource(reader)).getDocumentElement();
+	cpElement = parser.parse(new InputSource(reader)).getDocumentElement();
+(1010) <-> (1010)
+	} catch(SAXException e) {
+	} catch(SAXException e) {
+(1011) <-> (1011)
+	return;
+	return;
+(1012) <-> (1012)
+	} catch(ParserConfigurationException e){
+	} catch(ParserConfigurationException e){
+(1013) <-> (1013)
+	return;
+	return;
+(1014) <-> (1014)
+	} finally {
+	} finally {
+(1015) <-> (1015)
+	reader.close();
+	reader.close();
+(1016) <-> (1016)
+	}
+	}
+(1017) <-> (1017)
+	if (cpElement == null) return;
+	if (cpElement == null) return;
+(1018) <-> (1018)
+	if (!cpElement.getNodeName().equalsIgnoreCase("variables")) { //$NON-NLS-1$
+	if (!cpElement.getNodeName().equalsIgnoreCase("variables")) { //$NON-NLS-1$
+(1019) <-> (1019)
+	return;
+	return;
+(1020) <-> (1020)
+	}
+	}
+(1022) <-> (1022)
+	NodeList list= cpElement.getChildNodes();
+	NodeList list= cpElement.getChildNodes();
+(1023) <-> (1023)
+	int length= list.getLength();
+	int length= list.getLength();
+(1024) <-> (1024)
+	for (int i= 0; i < length; ++i) {
+	for (int i= 0; i < length; ++i) {
+(1025) <-> (1025)
+	Node node= list.item(i);
+	Node node= list.item(i);
+(1026) <-> (1026)
+	short type= node.getNodeType();
+	short type= node.getNodeType();
+(1027) <-> (1027)
+	if (type == Node.ELEMENT_NODE) {
+	if (type == Node.ELEMENT_NODE) {
+(1028) <-> (1028)
+	Element element= (Element) node;
+	Element element= (Element) node;
+(1029) <-> (1029)
+	if (element.getNodeName().equalsIgnoreCase("variable")) { //$NON-NLS-1$
+	if (element.getNodeName().equalsIgnoreCase("variable")) { //$NON-NLS-1$
+(1030) <-> (1030)
+	variablePut(
+	variablePut(
+(1031) <-> (1031)
+	element.getAttribute("name"), //$NON-NLS-1$
+	element.getAttribute("name"), //$NON-NLS-1$
+(1032) <-> (1032)
+	new Path(element.getAttribute("path"))); //$NON-NLS-1$
+	new Path(element.getAttribute("path"))); //$NON-NLS-1$
+(1033) <-> (1033)
+	}
+	}
+(1034) <-> (1034)
+	}
+	}
+(1035) <-> (1035)
+	}
+	}
+(1036) <-> (1036)
+	}
+	}
+(1037) <-> (1037)
+	} catch(IOException e){
+	} catch(IOException e){
+(1038) <-> (1038)
+	} finally {
+	} finally {
+(1039) <-> (1039)
+	if (xmlString != null){
+	if (xmlString != null){
+(1040) <-> (1040)
+	ResourcesPlugin.getWorkspace().getRoot().setPersistentProperty(qName, null); // flush old one
+	ResourcesPlugin.getWorkspace().getRoot().setPersistentProperty(qName, null); // flush old one
+(1041) <-> (1041)
+	}
+	}
+(1043) <-> (1043)
+	}
+	}
+(1045) <-> (1045)
+	// load variables from preferences into cache
+	// load variables from preferences into cache
+(1046) <-> (1046)
+	Preferences preferences = JavaCore.getPlugin().getPluginPreferences();
+	Preferences preferences = JavaCore.getPlugin().getPluginPreferences();
+(1048) <-> (1048)
+	// only get variable from preferences not set to their default
+	// only get variable from preferences not set to their default
+(1049) <-> (1049)
+	String[] propertyNames = preferences.propertyNames();
+	String[] propertyNames = preferences.propertyNames();
+(1050) <-> (1050)
+	int prefixLength = CP_VARIABLE_PREFERENCES_PREFIX.length();
+	int prefixLength = CP_VARIABLE_PREFERENCES_PREFIX.length();
+(1051) <-> (1051)
+	for (int i = 0; i < propertyNames.length; i++){
+	for (int i = 0; i < propertyNames.length; i++){
+(1052) <-> (1052)
+	String propertyName = propertyNames[i];
+	String propertyName = propertyNames[i];
+(1053) <-> (1053)
+	if (propertyName.startsWith(CP_VARIABLE_PREFERENCES_PREFIX)){
+	if (propertyName.startsWith(CP_VARIABLE_PREFERENCES_PREFIX)){
+(1054) <-> (1054)
+	String varName = propertyName.substring(prefixLength);
+	String varName = propertyName.substring(prefixLength);
+(1055) <-> (1055)
+	IPath varPath = new Path(preferences.getString(propertyName).trim());
+	IPath varPath = new Path(preferences.getString(propertyName).trim());
+(1056) <-> (1056)
+	Variables.put(varName, varPath);
+	Variables.put(varName, varPath);
+(1057) <-> (1057)
+	}
+	}
+(1058) <-> (1058)
+	}
+	}
+(1059) <-> (1059)
+	}
+	}
+(1061) <-> (1061)
+	/**
+	/**
+(1062) <-> (1062)
+	* Merged all awaiting deltas.
+	* Merged all awaiting deltas.
+(1063) <-> (1063)
+	*/
+	*/
+(1064) <-> (1064)
+	public void mergeDeltas() {
+	public void mergeDeltas() {
+(1065) <-> (1065)
+	if (this.javaModelDeltas.size() <= 1) return;
+	if (this.javaModelDeltas.size() <= 1) return;
+(1067) <-> (1067)
+	if (DeltaProcessor.VERBOSE) {
+	if (DeltaProcessor.VERBOSE) {
+(1068) <-> (1068)
+	System.out.println("MERGING " + this.javaModelDeltas.size() + " DELTAS ["+Thread.currentThread()+"]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+	System.out.println("MERGING " + this.javaModelDeltas.size() + " DELTAS ["+Thread.currentThread()+"]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+(1069) <-> (1069)
+	}
+	}
+(1071) <-> (1071)
+	Iterator deltas = this.javaModelDeltas.iterator();
+	Iterator deltas = this.javaModelDeltas.iterator();
+(1072) <-> (1072)
+	IJavaElement javaModel = this.getJavaModel();
+	IJavaElement javaModel = this.getJavaModel();
+(1073) <-> (1073)
+	JavaElementDelta rootDelta = new JavaElementDelta(javaModel);
+	JavaElementDelta rootDelta = new JavaElementDelta(javaModel);
+(1074) <-> (1074)
+	boolean insertedTree = false;
+	boolean insertedTree = false;
+(1075) <-> (1075)
+	while (deltas.hasNext()) {
+	while (deltas.hasNext()) {
+(1076) <-> (1076)
+	JavaElementDelta delta = (JavaElementDelta)deltas.next();
+	JavaElementDelta delta = (JavaElementDelta)deltas.next();
+(1077) <-> (1077)
+	if (DeltaProcessor.VERBOSE) {
+	if (DeltaProcessor.VERBOSE) {
+(1078) <-> (1078)
+	System.out.println(delta.toString());
+	System.out.println(delta.toString());
+(1079) <-> (1079)
+	}
+	}
+(1080) <-> (1080)
+	IJavaElement element = delta.getElement();
+	IJavaElement element = delta.getElement();
+(1081) <-> (1081)
+	if (javaModel.equals(element)) {
+	if (javaModel.equals(element)) {
+(1082) <-> (1082)
+	IJavaElementDelta[] children = delta.getAffectedChildren();
+	IJavaElementDelta[] children = delta.getAffectedChildren();
+(1083) <-> (1083)
+	for (int j = 0; j < children.length; j++) {
+	for (int j = 0; j < children.length; j++) {
+(1084) <-> (1084)
+	JavaElementDelta projectDelta = (JavaElementDelta) children[j];
+	JavaElementDelta projectDelta = (JavaElementDelta) children[j];
+(1085) <-> (1085)
+	rootDelta.insertDeltaTree(projectDelta.getElement(), projectDelta);
+	rootDelta.insertDeltaTree(projectDelta.getElement(), projectDelta);
+(1086) <-> (1086)
+	insertedTree = true;
+	insertedTree = true;
+(1087) <-> (1087)
+	}
+	}
+(1088) <-> (1088)
+	} else {
+	} else {
+(1089) <-> (1089)
+	rootDelta.insertDeltaTree(element, delta);
+	rootDelta.insertDeltaTree(element, delta);
+(1090) <-> (1090)
+	insertedTree = true;
+	insertedTree = true;
+(1091) <-> (1091)
+	}
+	}
+(1092) <-> (1092)
+	}
+	}
+(1093) <-> (1093)
+	if (insertedTree){
+	if (insertedTree){
+(1094) <-> (1094)
+	this.javaModelDeltas = new ArrayList(1);
+	this.javaModelDeltas = new ArrayList(1);
+(1095) <-> (1095)
+	this.javaModelDeltas.add(rootDelta);
+	this.javaModelDeltas.add(rootDelta);
+(1096) <-> (1096)
+	}
+	}
+(1097) <-> (1097)
+	else {
+	else {
+(1098) <-> (1098)
+	this.javaModelDeltas = new ArrayList(0);
+	this.javaModelDeltas = new ArrayList(0);
+(1099) <-> (1099)
+	}
+	}
+(1100) <-> (1100)
+	}
+	}
+(1102) <-> (1102)
+	/**
+	/**
+(1103) <-> (1103)
+	* Returns the info for this element without
+	* Returns the info for this element without
+(1104) <-> (1104)
+	* disturbing the cache ordering.
+	* disturbing the cache ordering.
+(1105) <-> (1105)
+	*/
+	*/
+(1106) <-> (1106)
+	protected Object peekAtInfo(IJavaElement element) {
+	protected Object peekAtInfo(IJavaElement element) {
+(1107) <-> (1107)
+	return this.cache.peekAtInfo(element);
+	return this.cache.peekAtInfo(element);
+(1108) <-> (1108)
+	}
+	}
+(1110) <-> (1110)
+	/**
+	/**
+(1111) <-> (1111)
+	* @see ISaveParticipant
+	* @see ISaveParticipant
+(1112) <-> (1112)
+	*/
+	*/
+(1113) <-> (1113)
+	public void prepareToSave(ISaveContext context) throws CoreException {
+	public void prepareToSave(ISaveContext context) throws CoreException {
+(1114) <-> (1114)
+	}
+	}
+(1116) <-> (1116)
+	protected void putInfo(IJavaElement element, Object info) {
+	protected void putInfo(IJavaElement element, Object info) {
+(1117) <-> (1117)
+	this.cache.putInfo(element, info);
+	this.cache.putInfo(element, info);
+(1118) <-> (1118)
+	}
+	}
+(1120) <-> (1120)
+	/**
+	/**
+(1121) <-> (1121)
+	* Reads the build state for the relevant project.
+	* Reads the build state for the relevant project.
+(1122) <-> (1122)
+	*/
+	*/
+(1123) <-> (1123)
+	protected Object readState(IProject project) throws CoreException {
+	protected Object readState(IProject project) throws CoreException {
+(1124) <-> (1124)
+	File file = getSerializationFile(project);
+	File file = getSerializationFile(project);
+(1125) <-> (1125)
+	if (file != null && file.exists()) {
+	if (file != null && file.exists()) {
+(1126) <-> (1126)
+	try {
+	try {
+(1127) <-> (1127)
+	DataInputStream in= new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+	DataInputStream in= new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+(1128) <-> (1128)
+	try {
+	try {
+(1129) <-> (1129)
+	String pluginID= in.readUTF();
+	String pluginID= in.readUTF();
+(1130) <-> (1130)
+	if (!pluginID.equals(JavaCore.PLUGIN_ID))
+	if (!pluginID.equals(JavaCore.PLUGIN_ID))
+(1131) <-> (1131)
+	throw new IOException(Util.bind("build.wrongFileFormat")); //$NON-NLS-1$
+	throw new IOException(Util.bind("build.wrongFileFormat")); //$NON-NLS-1$
+(1132) <-> (1132)
+	String kind= in.readUTF();
+	String kind= in.readUTF();
+(1133) <-> (1133)
+	if (!kind.equals("STATE")) //$NON-NLS-1$
+	if (!kind.equals("STATE")) //$NON-NLS-1$
+(1134) <-> (1134)
+	throw new IOException(Util.bind("build.wrongFileFormat")); //$NON-NLS-1$
+	throw new IOException(Util.bind("build.wrongFileFormat")); //$NON-NLS-1$
+(1135) <-> (1135)
+	if (in.readBoolean())
+	if (in.readBoolean())
+(1136) <-> (1136)
+	return JavaBuilder.readState(in);
+	return JavaBuilder.readState(in);
+(1137) <-> (1137)
+	if (JavaBuilder.DEBUG)
+	if (JavaBuilder.DEBUG)
+(1138) <-> (1138)
+	System.out.println("Saved state thinks last build failed for " + project.getName()); //$NON-NLS-1$
+	System.out.println("Saved state thinks last build failed for " + project.getName()); //$NON-NLS-1$
+(1139) <-> (1139)
+	} finally {
+	} finally {
+(1140) <-> (1140)
+	in.close();
+	in.close();
+(1141) <-> (1141)
+	}
+	}
+(1142) <-> (1142)
+	} catch (Exception e) {
+	} catch (Exception e) {
+(1143) <-> (1143)
+	e.printStackTrace();
+	e.printStackTrace();
+(1144) <-> (1144)
+	throw new CoreException(new Status(IStatus.ERROR, JavaCore.PLUGIN_ID, Platform.PLUGIN_ERROR, "Error reading last build state for project "+ project.getName(), e)); //$NON-NLS-1$
+	throw new CoreException(new Status(IStatus.ERROR, JavaCore.PLUGIN_ID, Platform.PLUGIN_ERROR, "Error reading last build state for project "+ project.getName(), e)); //$NON-NLS-1$
+(1145) <-> (1145)
+	}
+	}
+(1146) <-> (1146)
+	}
+	}
+(1147) <-> (1147)
+	return null;
+	return null;
+(1148) <-> (1148)
+	}
+	}
+(1150) <-> (1150)
+	/**
+	/**
+(1151) <-> (1151)
+	* Registers the given delta with this manager.
+	* Registers the given delta with this manager.
+(1152) <-> (1152)
+	*/
+	*/
+(1153) <-> (1153)
+	protected void registerJavaModelDelta(IJavaElementDelta delta) {
+	protected void registerJavaModelDelta(IJavaElementDelta delta) {
+(1154) <-> (1154)
+	this.javaModelDeltas.add(delta);
+	this.javaModelDeltas.add(delta);
+(1155) <-> (1155)
+	}
+	}
+(1157) <-> (1157)
+	/**
+	/**
+(1158) <-> (1158)
+	* Remembers the given scope in a weak set
+	* Remembers the given scope in a weak set
+(1159) <-> (1159)
+	* (so no need to remove it: it will be removed by the garbage collector)
+	* (so no need to remove it: it will be removed by the garbage collector)
+(1160) <-> (1160)
+	*/
+	*/
+(1161) <-> (1161)
+	public void rememberScope(AbstractSearchScope scope) {
+	public void rememberScope(AbstractSearchScope scope) {
+(1162) <-> (1162)
+	// NB: The value has to be null so as to not create a strong reference on the scope
+	// NB: The value has to be null so as to not create a strong reference on the scope
+(1163) <-> (1163)
+	this.scopes.put(scope, null);
+	this.scopes.put(scope, null);
+(1164) <-> (1164)
+	}
+	}
+(1166) <-> (1166)
+	/**
+	/**
+(1167) <-> (1167)
+	* removeElementChangedListener method comment.
+	* removeElementChangedListener method comment.
+(1168) <-> (1168)
+	*/
+	*/
+(1169) <-> (1169)
+	public void removeElementChangedListener(IElementChangedListener listener) {
+	public void removeElementChangedListener(IElementChangedListener listener) {
+(1171) <-> (1171)
+	for (int i = 0; i < this.elementChangedListenerCount; i++){
+	for (int i = 0; i < this.elementChangedListenerCount; i++){
+(1173) <-> (1173)
+	if (this.elementChangedListeners[i].equals(listener)){
+	if (this.elementChangedListeners[i].equals(listener)){
+(1175) <-> (1175)
+	// need to clone defensively since we might be in the middle of listener notifications (#fire)
+	// need to clone defensively since we might be in the middle of listener notifications (#fire)
+(1176) <-> (1176)
+	int length = this.elementChangedListeners.length;
+	int length = this.elementChangedListeners.length;
+(1177) <-> (1177)
+	IElementChangedListener[] newListeners = new IElementChangedListener[length];
+	IElementChangedListener[] newListeners = new IElementChangedListener[length];
+(1178) <-> (1178)
+	System.arraycopy(this.elementChangedListeners, 0, newListeners, 0, i);
+	System.arraycopy(this.elementChangedListeners, 0, newListeners, 0, i);
+(1179) <-> (1179)
+	int[] newMasks = new int[length];
+	int[] newMasks = new int[length];
+(1180) <-> (1180)
+	System.arraycopy(this.elementChangedListenerMasks, 0, newMasks, 0, i);
+	System.arraycopy(this.elementChangedListenerMasks, 0, newMasks, 0, i);
+(1182) <-> (1182)
+	// copy trailing listeners
+	// copy trailing listeners
+(1183) <-> (1183)
+	int trailingLength = this.elementChangedListenerCount - i - 1;
+	int trailingLength = this.elementChangedListenerCount - i - 1;
+(1184) <-> (1184)
+	if (trailingLength > 0){
+	if (trailingLength > 0){
+(1185) <-> (1185)
+	System.arraycopy(this.elementChangedListeners, i+1, newListeners, i, trailingLength);
+	System.arraycopy(this.elementChangedListeners, i+1, newListeners, i, trailingLength);
+(1186) <-> (1186)
+	System.arraycopy(this.elementChangedListenerMasks, i+1, newMasks, i, trailingLength);
+	System.arraycopy(this.elementChangedListenerMasks, i+1, newMasks, i, trailingLength);
+(1187) <-> (1187)
+	}
+	}
+(1189) <-> (1189)
+	// update manager listener state (#fire need to iterate over original listeners through a local variable to hold onto
+	// update manager listener state (#fire need to iterate over original listeners through a local variable to hold onto
+(1190) <-> (1190)
+	// the original ones)
+	// the original ones)
+(1191) <-> (1191)
+	this.elementChangedListeners = newListeners;
+	this.elementChangedListeners = newListeners;
+(1192) <-> (1192)
+	this.elementChangedListenerMasks = newMasks;
+	this.elementChangedListenerMasks = newMasks;
+(1193) <-> (1193)
+	this.elementChangedListenerCount--;
+	this.elementChangedListenerCount--;
+(1194) <-> (1194)
+	return;
+	return;
+(1195) <-> (1195)
+	}
+	}
+(1196) <-> (1196)
+	}
+	}
+(1197) <-> (1197)
+	}
+	}
+(1199) <-> (1199)
+	protected void removeInfo(IJavaElement element) {
+	protected void removeInfo(IJavaElement element) {
+(1200) <-> (1200)
+	this.cache.removeInfo(element);
+	this.cache.removeInfo(element);
+(1201) <-> (1201)
+	}
+	}
+(1203) <-> (1203)
+	void removePerProjectInfo(JavaProject javaProject) {
+	void removePerProjectInfo(JavaProject javaProject) {
+(1204) <-> (1204)
+	IProject project = javaProject.getProject();
+	IProject project = javaProject.getProject();
+(1205) <-> (1205)
+	PerProjectInfo info= (PerProjectInfo) perProjectInfo.get(project);
+	PerProjectInfo info= (PerProjectInfo) perProjectInfo.get(project);
+(1206) <-> (1206)
+	if (info != null) {
+	if (info != null) {
+(1207) <-> (1207)
+	perProjectInfo.remove(project);
+	perProjectInfo.remove(project);
+(1208) <-> (1208)
+	}
+	}
+(1209) <-> (1209)
+	}
+	}
+(1213) <-> (1213)
+	/**
+	/**
+(1214) <-> (1214)
+	* @see ISaveParticipant
+	* @see ISaveParticipant
+(1215) <-> (1215)
+	*/
+	*/
+(1216) <-> (1216)
+	public void rollback(ISaveContext context){
+	public void rollback(ISaveContext context){
+(1217) <-> (1217)
+	}
+	}
+(1221) <-> (1221)
+	private void saveBuildState() throws CoreException {
+	private void saveBuildState() throws CoreException {
+(1222) <-> (1222)
+	ArrayList vStats= null; // lazy initialized
+	ArrayList vStats= null; // lazy initialized
+(1223) <-> (1223)
+	for (Iterator iter = perProjectInfo.values().iterator(); iter.hasNext();) {
+	for (Iterator iter = perProjectInfo.values().iterator(); iter.hasNext();) {
+(1224) <-> (1224)
+	try {
+	try {
+(1225) <-> (1225)
+	PerProjectInfo info = (PerProjectInfo) iter.next();
+	PerProjectInfo info = (PerProjectInfo) iter.next();
+(1226) <-> (1226)
+	if (info.triedRead)
+	if (info.triedRead)
+(1227) <-> (1227)
+	saveState(info);
+	saveState(info);
+(1228) <-> (1228)
+	} catch (CoreException e) {
+	} catch (CoreException e) {
+(1229) <-> (1229)
+	if (vStats == null)
+	if (vStats == null)
+(1230) <-> (1230)
+	vStats= new ArrayList();
+	vStats= new ArrayList();
+(1231) <-> (1231)
+	vStats.add(e.getStatus());
+	vStats.add(e.getStatus());
+(1232) <-> (1232)
+	}
+	}
+(1233) <-> (1233)
+	}
+	}
+(1234) <-> (1234)
+	if (vStats != null) {
+	if (vStats != null) {
+(1235) <-> (1235)
+	IStatus[] stats= new IStatus[vStats.size()];
+	IStatus[] stats= new IStatus[vStats.size()];
+(1236) <-> (1236)
+	vStats.toArray(stats);
+	vStats.toArray(stats);
+(1237) <-> (1237)
+	throw new CoreException(new MultiStatus(JavaCore.PLUGIN_ID, IStatus.ERROR, stats, Util.bind("build.cannotSaveStates"), null)); //$NON-NLS-1$
+	throw new CoreException(new MultiStatus(JavaCore.PLUGIN_ID, IStatus.ERROR, stats, Util.bind("build.cannotSaveStates"), null)); //$NON-NLS-1$
+(1238) <-> (1238)
+	}
+	}
+(1239) <-> (1239)
+	}
+	}
+(1241) <-> (1241)
+	/**
+	/**
+(1242) <-> (1242)
+	* Saves the built state for the project.
+	* Saves the built state for the project.
+(1243) <-> (1243)
+	*/
+	*/
+(1244) <-> (1244)
+	private void saveState(PerProjectInfo info) throws CoreException {
+	private void saveState(PerProjectInfo info) throws CoreException {
+(1245) <-> (1245)
+	if (JavaBuilder.DEBUG)
+	if (JavaBuilder.DEBUG)
+(1246) <-> (1246)
+	System.out.println(Util.bind("build.saveStateProgress", info.project.getName())); //$NON-NLS-1$
+	System.out.println(Util.bind("build.saveStateProgress", info.project.getName())); //$NON-NLS-1$
+(1247) <-> (1247)
+	File file = getSerializationFile(info.project);
+	File file = getSerializationFile(info.project);
+(1248) <-> (1248)
+	if (file == null) return;
+	if (file == null) return;
+(1249) <-> (1249)
+	long t = System.currentTimeMillis();
+	long t = System.currentTimeMillis();
+(1250) <-> (1250)
+	try {
+	try {
+(1251) <-> (1251)
+	DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+	DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+(1252) <-> (1252)
+	try {
+	try {
+(1253) <-> (1253)
+	out.writeUTF(JavaCore.PLUGIN_ID);
+	out.writeUTF(JavaCore.PLUGIN_ID);
+(1254) <-> (1254)
+	out.writeUTF("STATE"); //$NON-NLS-1$
+	out.writeUTF("STATE"); //$NON-NLS-1$
+(1255) <-> (1255)
+	if (info.savedState == null) {
+	if (info.savedState == null) {
+(1256) <-> (1256)
+	out.writeBoolean(false);
+	out.writeBoolean(false);
+(1257) <-> (1257)
+	} else {
+	} else {
+(1258) <-> (1258)
+	out.writeBoolean(true);
+	out.writeBoolean(true);
+(1259) <-> (1259)
+	JavaBuilder.writeState(info.savedState, out);
+	JavaBuilder.writeState(info.savedState, out);
+(1260) <-> (1260)
+	}
+	}
+(1261) <-> (1261)
+	} finally {
+	} finally {
+(1262) <-> (1262)
+	out.close();
+	out.close();
+(1263) <-> (1263)
+	}
+	}
+(1264) <-> (1264)
+	} catch (RuntimeException e) {
+	} catch (RuntimeException e) {
+(1265) <-> (1265)
+	try {file.delete();} catch(SecurityException se) {}
+	try {file.delete();} catch(SecurityException se) {}
+(1266) <-> (1266)
+	throw new CoreException(
+	throw new CoreException(
+(1267) <-> (1267)
+	new Status(IStatus.ERROR, JavaCore.PLUGIN_ID, Platform.PLUGIN_ERROR,
+	new Status(IStatus.ERROR, JavaCore.PLUGIN_ID, Platform.PLUGIN_ERROR,
+(1268) <-> (1268)
+	Util.bind("build.cannotSaveState", info.project.getName()), e)); //$NON-NLS-1$
+	Util.bind("build.cannotSaveState", info.project.getName()), e)); //$NON-NLS-1$
+(1269) <-> (1269)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1270) <-> (1270)
+	try {file.delete();} catch(SecurityException se) {}
+	try {file.delete();} catch(SecurityException se) {}
+(1271) <-> (1271)
+	throw new CoreException(
+	throw new CoreException(
+(1272) <-> (1272)
+	new Status(IStatus.ERROR, JavaCore.PLUGIN_ID, Platform.PLUGIN_ERROR,
+	new Status(IStatus.ERROR, JavaCore.PLUGIN_ID, Platform.PLUGIN_ERROR,
+(1273) <-> (1273)
+	Util.bind("build.cannotSaveState", info.project.getName()), e)); //$NON-NLS-1$
+	Util.bind("build.cannotSaveState", info.project.getName()), e)); //$NON-NLS-1$
+(1274) <-> (1274)
+	}
+	}
+(1275) <-> (1275)
+	if (JavaBuilder.DEBUG) {
+	if (JavaBuilder.DEBUG) {
+(1276) <-> (1276)
+	t = System.currentTimeMillis() - t;
+	t = System.currentTimeMillis() - t;
+(1277) <-> (1277)
+	System.out.println(Util.bind("build.saveStateComplete", String.valueOf(t))); //$NON-NLS-1$
+	System.out.println(Util.bind("build.saveStateComplete", String.valueOf(t))); //$NON-NLS-1$
+(1278) <-> (1278)
+	}
+	}
+(1279) <-> (1279)
+	}
+	}
+(1281) <-> (1281)
+	/**
+	/**
+(1282) <-> (1282)
+	* @see ISaveParticipant
+	* @see ISaveParticipant
+(1283) <-> (1283)
+	*/
+	*/
+(1284) <-> (1284)
+	public void saving(ISaveContext context) throws CoreException {
+	public void saving(ISaveContext context) throws CoreException {
+(1286) <-> (1286)
+	int k = context.getKind();
+	int k = context.getKind();
+(1287) <-> (1287)
+	if (k == ISaveContext.FULL_SAVE){
+	if (k == ISaveContext.FULL_SAVE){
+(1288) <-> (1288)
+	this.saveBuildState(); // build state
+	this.saveBuildState(); // build state
+(1289) <-> (1289)
+	} else if (k == ISaveContext.PROJECT_SAVE){
+	} else if (k == ISaveContext.PROJECT_SAVE){
+(1290) <-> (1290)
+	PerProjectInfo info = getPerProjectInfo(context.getProject());
+	PerProjectInfo info = getPerProjectInfo(context.getProject());
+(1291) <-> (1291)
+	if (info.triedRead)
+	if (info.triedRead)
+(1292) <-> (1292)
+	saveState(info);
+	saveState(info);
+(1293) <-> (1293)
+	}
+	}
+(1294) <-> (1294)
+	}
+	}
+(1296) <-> (1296)
+	/**
+	/**
+(1297) <-> (1297)
+	* Record the order in which to build the java projects (batch build). This order is based
+	* Record the order in which to build the java projects (batch build). This order is based
+(1298) <-> (1298)
+	* on the projects classpath settings.
+	* on the projects classpath settings.
+(1299) <-> (1299)
+	*/
+	*/
+(1300) <-> (1300)
+	protected void setBuildOrder(String[] javaBuildOrder) throws JavaModelException {
+	protected void setBuildOrder(String[] javaBuildOrder) throws JavaModelException {
+(1302) <-> (1302)
+	// optional behaviour
+	// optional behaviour
+(1303) <-> (1303)
+	// possible value of index 0 is Compute
+	// possible value of index 0 is Compute
+(1304) <-> (1304)
+	if (!JavaCore.COMPUTE.equals(JavaCore.getOption(JavaCore.CORE_JAVA_BUILD_ORDER))) return; // cannot be customized at project level
+	if (!JavaCore.COMPUTE.equals(JavaCore.getOption(JavaCore.CORE_JAVA_BUILD_ORDER))) return; // cannot be customized at project level
+(1306) <-> (1306)
+	if (javaBuildOrder == null || javaBuildOrder.length <= 1) return;
+	if (javaBuildOrder == null || javaBuildOrder.length <= 1) return;
+(1308) <-> (1308)
+	IWorkspace workspace = ResourcesPlugin.getWorkspace();
+	IWorkspace workspace = ResourcesPlugin.getWorkspace();
+(1309) <-> (1309)
+	IWorkspaceDescription description = workspace.getDescription();
+	IWorkspaceDescription description = workspace.getDescription();
+(1310) <-> (1310)
+	String[] wksBuildOrder = description.getBuildOrder();
+	String[] wksBuildOrder = description.getBuildOrder();
+(1312) <-> (1312)
+	String[] newOrder;
+	String[] newOrder;
+(1313) <-> (1313)
+	if (wksBuildOrder == null){
+	if (wksBuildOrder == null){
+(1314) <-> (1314)
+	newOrder = javaBuildOrder;
+	newOrder = javaBuildOrder;
+(1315) <-> (1315)
+	} else {
+	} else {
+(1316) <-> (1316)
+	// remove projects which are already mentionned in java builder order
+	// remove projects which are already mentionned in java builder order
+(1317) <-> (1317)
+	int javaCount = javaBuildOrder.length;
+	int javaCount = javaBuildOrder.length;
+(1318) <-> (1318)
+	HashMap newSet = new HashMap(javaCount); // create a set for fast check
+	HashMap newSet = new HashMap(javaCount); // create a set for fast check
+(1319) <-> (1319)
+	for (int i = 0; i < javaCount; i++){
+	for (int i = 0; i < javaCount; i++){
+(1320) <-> (1320)
+	newSet.put(javaBuildOrder[i], javaBuildOrder[i]);
+	newSet.put(javaBuildOrder[i], javaBuildOrder[i]);
+(1321) <-> (1321)
+	}
+	}
+(1322) <-> (1322)
+	int removed = 0;
+	int removed = 0;
+(1323) <-> (1323)
+	int oldCount = wksBuildOrder.length;
+	int oldCount = wksBuildOrder.length;
+(1324) <-> (1324)
+	for (int i = 0; i < oldCount; i++){
+	for (int i = 0; i < oldCount; i++){
+(1325) <-> (1325)
+	if (newSet.containsKey(wksBuildOrder[i])){
+	if (newSet.containsKey(wksBuildOrder[i])){
+(1326) <-> (1326)
+	wksBuildOrder[i] = null;
+	wksBuildOrder[i] = null;
+(1327) <-> (1327)
+	removed++;
+	removed++;
+(1328) <-> (1328)
+	}
+	}
+(1329) <-> (1329)
+	}
+	}
+(1330) <-> (1330)
+	// add Java ones first
+	// add Java ones first
+(1331) <-> (1331)
+	newOrder = new String[oldCount - removed + javaCount];
+	newOrder = new String[oldCount - removed + javaCount];
+(1332) <-> (1332)
+	System.arraycopy(javaBuildOrder, 0, newOrder, 0, javaCount); // java projects are built first
+	System.arraycopy(javaBuildOrder, 0, newOrder, 0, javaCount); // java projects are built first
+(1334) <-> (1334)
+	// copy previous items in their respective order
+	// copy previous items in their respective order
+(1335) <-> (1335)
+	int index = javaCount;
+	int index = javaCount;
+(1336) <-> (1336)
+	for (int i = 0; i < oldCount; i++){
+	for (int i = 0; i < oldCount; i++){
+(1337) <-> (1337)
+	if (wksBuildOrder[i] != null){
+	if (wksBuildOrder[i] != null){
+(1338) <-> (1338)
+	newOrder[index++] = wksBuildOrder[i];
+	newOrder[index++] = wksBuildOrder[i];
+(1339) <-> (1339)
+	}
+	}
+(1340) <-> (1340)
+	}
+	}
+(1341) <-> (1341)
+	}
+	}
+(1342) <-> (1342)
+	// commit the new build order out
+	// commit the new build order out
+(1343) <-> (1343)
+	description.setBuildOrder(newOrder);
+	description.setBuildOrder(newOrder);
+(1344) <-> (1344)
+	try {
+	try {
+(1345) <-> (1345)
+	workspace.setDescription(description);
+	workspace.setDescription(description);
+(1346) <-> (1346)
+	} catch(CoreException e){
+	} catch(CoreException e){
+(1347) <-> (1347)
+	throw new JavaModelException(e);
+	throw new JavaModelException(e);
+(1348) <-> (1348)
+	}
+	}
+(1349) <-> (1349)
+	}
+	}
+(1351) <-> (1351)
+	/**
+	/**
+(1352) <-> (1352)
+	* Sets the last built state for the given project, or null to reset it.
+	* Sets the last built state for the given project, or null to reset it.
+(1353) <-> (1353)
+	*/
+	*/
+(1354) <-> (1354)
+	public void setLastBuiltState(IProject project, Object state) {
+	public void setLastBuiltState(IProject project, Object state) {
+(1355) <-> (1355)
+	PerProjectInfo info = getPerProjectInfo(project);
+	PerProjectInfo info = getPerProjectInfo(project);
+(1356) <-> (1356)
+	info.triedRead = true; // no point trying to re-read once using setter
+	info.triedRead = true; // no point trying to re-read once using setter
+(1357) <-> (1357)
+	info.savedState = state;
+	info.savedState = state;
+(1358) <-> (1358)
+	if (state == null) { // delete state file to ensure a full build happens if the workspace crashes
+	if (state == null) { // delete state file to ensure a full build happens if the workspace crashes
+(1359) <-> (1359)
+	try {
+	try {
+(1360) <-> (1360)
+	File file = getSerializationFile(project);
+	File file = getSerializationFile(project);
+(1361) <-> (1361)
+	if (file != null && file.exists())
+	if (file != null && file.exists())
+(1362) <-> (1362)
+	file.delete();
+	file.delete();
+(1363) <-> (1363)
+	} catch(SecurityException se) {}
+	} catch(SecurityException se) {}
+(1364) <-> (1364)
+	}
+	}
+(1365) <-> (1365)
+	}
+	}
+(1367) <-> (1367)
+	public void shutdown () {
+	public void shutdown () {
+(1368) <-> (1368)
+	if (this.deltaProcessor.indexManager != null){ // no more indexing
+	if (this.deltaProcessor.indexManager != null){ // no more indexing
+(1369) <-> (1369)
+	this.deltaProcessor.indexManager.shutdown();
+	this.deltaProcessor.indexManager.shutdown();
+(1370) <-> (1370)
+	}
+	}
+(1371) <-> (1371)
+	try {
+	try {
+(1372) <-> (1372)
+	IJavaModel model = this.getJavaModel();
+	IJavaModel model = this.getJavaModel();
+(1373) <-> (1373)
+	if (model != null) {
+	if (model != null) {
+(1374) <-> (1374)
+	model.close();
+	model.close();
+(1375) <-> (1375)
+	}
+	}
+(1376) <-> (1376)
+	} catch (JavaModelException e) {
+	} catch (JavaModelException e) {
+(1377) <-> (1377)
+	}
+	}
+(1378) <-> (1378)
+	}
+	}
+(1380) <-> (1380)
+	/**
+	/**
+(1381) <-> (1381)
+	* Turns the firing mode to on. That is, deltas that are/have been
+	* Turns the firing mode to on. That is, deltas that are/have been
+(1382) <-> (1382)
+	* registered will be fired.
+	* registered will be fired.
+(1383) <-> (1383)
+	*/
+	*/
+(1384) <-> (1384)
+	public void startDeltas() {
+	public void startDeltas() {
+(1385) <-> (1385)
+	this.isFiring= true;
+	this.isFiring= true;
+(1386) <-> (1386)
+	}
+	}
+(1388) <-> (1388)
+	/**
+	/**
+(1389) <-> (1389)
+	* Turns the firing mode to off. That is, deltas that are/have been
+	* Turns the firing mode to off. That is, deltas that are/have been
+(1390) <-> (1390)
+	* registered will not be fired until deltas are started again.
+	* registered will not be fired until deltas are started again.
+(1391) <-> (1391)
+	*/
+	*/
+(1392) <-> (1392)
+	public void stopDeltas() {
+	public void stopDeltas() {
+(1393) <-> (1393)
+	this.isFiring= false;
+	this.isFiring= false;
+(1394) <-> (1394)
+	}
+	}
+(1396) <-> (1396)
+	/**
+	/**
+(1397) <-> (1397)
+	* Update Java Model given some delta
+	* Update Java Model given some delta
+(1398) <-> (1398)
+	*/
+	*/
+(1399) <-> (1399)
+	public void updateJavaModel(IJavaElementDelta customDelta) {
+	public void updateJavaModel(IJavaElementDelta customDelta) {
+(1401) <-> (1401)
+	if (customDelta == null){
+	if (customDelta == null){
+(1402) <-> (1402)
+	for (int i = 0, length = this.javaModelDeltas.size(); i < length; i++){
+	for (int i = 0, length = this.javaModelDeltas.size(); i < length; i++){
+(1403) <-> (1403)
+	IJavaElementDelta delta = (IJavaElementDelta)this.javaModelDeltas.get(i);
+	IJavaElementDelta delta = (IJavaElementDelta)this.javaModelDeltas.get(i);
+(1404) <-> (1404)
+	this.modelUpdater.processJavaDelta(delta);
+	this.modelUpdater.processJavaDelta(delta);
+(1405) <-> (1405)
+	}
+	}
+(1406) <-> (1406)
+	} else {
+	} else {
+(1407) <-> (1407)
+	this.modelUpdater.processJavaDelta(customDelta);
+	this.modelUpdater.processJavaDelta(customDelta);
+(1408) <-> (1408)
+	}
+	}
+(1409) <-> (1409)
+	}
+	}
+(1411) <-> (1411)
+	public static IPath variableGet(String varName){
+	public static IPath variableGet(String varName){
+(1412) <-> (1412)
+	return (IPath)Variables.get(varName);
+	return (IPath)Variables.get(varName);
+(1413) <-> (1413)
+	}
+	}
+(1415) <-> (1415)
+	public static String[] variableNames(){
+	public static String[] variableNames(){
+(1416) <-> (1416)
+	int length = Variables.size();
+	int length = Variables.size();
+(1417) <-> (1417)
+	String[] result = new String[length];
+	String[] result = new String[length];
+(1418) <-> (1418)
+	Iterator vars = Variables.keySet().iterator();
+	Iterator vars = Variables.keySet().iterator();
+(1419) <-> (1419)
+	int index = 0;
+	int index = 0;
+(1420) <-> (1420)
+	while (vars.hasNext()) {
+	while (vars.hasNext()) {
+(1421) <-> (1421)
+	result[index++] = (String) vars.next();
+	result[index++] = (String) vars.next();
+(1422) <-> (1422)
+	}
+	}
+(1423) <-> (1423)
+	return result;
+	return result;
+(1424) <-> (1424)
+	}
+	}
+(1426) <-> (1426)
+	public static void variablePut(String varName, IPath varPath){
+	public static void variablePut(String varName, IPath varPath){
+(1428) <-> (1428)
+	// do not write out intermediate initialization value
+	// do not write out intermediate initialization value
+(1429) <-> (1429)
+	if (varPath == JavaModelManager.VariableInitializationInProgress){
+	if (varPath == JavaModelManager.VariableInitializationInProgress){
+(1430) <-> (1430)
+	Variables.put(varName, varPath);
+	Variables.put(varName, varPath);
+(1431) <-> (1431)
+	return;
+	return;
+(1432) <-> (1432)
+	}
+	}
+(1433) <-> (1433)
+	Preferences preferences = JavaCore.getPlugin().getPluginPreferences();
+	Preferences preferences = JavaCore.getPlugin().getPluginPreferences();
+(1434) <-> (1434)
+	String varPref = CP_VARIABLE_PREFERENCES_PREFIX+varName;
+	String varPref = CP_VARIABLE_PREFERENCES_PREFIX+varName;
+(1435) <-> (1435)
+	String varString = varPath == null ? CP_VARIABLE_IGNORE : varPath.toString();
+	String varString = varPath == null ? CP_VARIABLE_IGNORE : varPath.toString();
+(1436) <-> (1436)
+	preferences.setDefault(varPref, CP_VARIABLE_IGNORE); // use this default to get rid of removed ones
+	preferences.setDefault(varPref, CP_VARIABLE_IGNORE); // use this default to get rid of removed ones
+(1437) <-> (1437)
+	preferences.setValue(varPref, varString);
+	preferences.setValue(varPref, varString);
+(1438) <-> (1438)
+	JavaCore.getPlugin().savePluginPreferences();
+	JavaCore.getPlugin().savePluginPreferences();
+(1439) <-> (1439)
+	}
+	}
+(1440) <-> (1440)
+	}
+	}
+Number of lines in left file: 1284
+Number of lines in right file: 1284
+Number of lines matched: 1284

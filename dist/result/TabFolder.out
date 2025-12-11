@@ -1,0 +1,1699 @@
+Diff: ./reference/dataset/TabFolder_1.java ./reference/dataset/TabFolder_2.java
+(1) <-> (1)
+	package org.eclipse.swt.widgets;
+	package org.eclipse.swt.widgets;
+(3) <-> (3)
+	/*
+	/*
+(4) <-> (4)
+	* (c) Copyright IBM Corp. 2000, 2001.
+	* (c) Copyright IBM Corp. 2000, 2001.
+(5) <-> (5)
+	* All Rights Reserved
+	* All Rights Reserved
+(6) <-> (6)
+	*/
+	*/
+(8) <-> (8)
+	import org.eclipse.swt.internal.*;
+	import org.eclipse.swt.internal.*;
+(9) <-> (9)
+	import org.eclipse.swt.internal.photon.*;
+	import org.eclipse.swt.internal.photon.*;
+(10) <-> (10)
+	import org.eclipse.swt.*;
+	import org.eclipse.swt.*;
+(11) <-> (11)
+	import org.eclipse.swt.graphics.*;
+	import org.eclipse.swt.graphics.*;
+(12) <-> (12)
+	import org.eclipse.swt.events.*;
+	import org.eclipse.swt.events.*;
+(14) <-> (14)
+	/**
+	/**
+(15) <-> (15)
+	* Instances of this class implement the notebook user interface
+	* Instances of this class implement the notebook user interface
+(16) <-> (16)
+	* metaphor. It allows the user to select a notebook page from
+	* metaphor. It allows the user to select a notebook page from
+(17) <-> (17)
+	* set of pages.
+	* set of pages.
+(18) <-> (18)
+	* <p>
+	* <p>
+(19) <-> (19)
+	* The item children that may be added to instances of this class
+	* The item children that may be added to instances of this class
+(20) <-> (20)
+	* must be of type <code>TabItem</code>.
+	* must be of type <code>TabItem</code>.
+(21) <-> (21)
+	* <code>Control</code> children are created and then set into a
+	* <code>Control</code> children are created and then set into a
+(22) <-> (22)
+	* tab item using <code>TabItem#setControl</code>.
+	* tab item using <code>TabItem#setControl</code>.
+(23) <-> (23)
+	* </p><p>
+	* </p><p>
+(24) <-> (24)
+	* Note that although this class is a subclass of <code>Composite</code>,
+	* Note that although this class is a subclass of <code>Composite</code>,
+(25) <-> (25)
+	* it does not make sense to set a layout on it.
+	* it does not make sense to set a layout on it.
+(26) <-> (26)
+	* </p><p>
+	* </p><p>
+(27) <-> (27)
+	* <dl>
+	* <dl>
+(28) <-> (28)
+	* <dt><b>Styles:</b></dt>
+	* <dt><b>Styles:</b></dt>
+(29) <-> (29)
+	* <dd>(none)</dd>
+	* <dd>(none)</dd>
+(30) <-> (30)
+	* <dt><b>Events:</b></dt>
+	* <dt><b>Events:</b></dt>
+(31) <-> (31)
+	* <dd>Selection</dd>
+	* <dd>Selection</dd>
+(32) <-> (32)
+	* </dl>
+	* </dl>
+(33) <-> (33)
+	* <p>
+	* <p>
+(34) <-> (34)
+	* IMPORTANT: This class is <em>not</em> intended to be subclassed.
+	* IMPORTANT: This class is <em>not</em> intended to be subclassed.
+(35) <-> (35)
+	* </p>
+	* </p>
+(36) <-> (36)
+	*/
+	*/
+(37) <-> (37)
+	public class TabFolder extends Composite {
+	public class TabFolder extends Composite {
+(38) <-> (38)
+	int parentingHandle;
+	int parentingHandle;
+(39) <-> (39)
+	TabItem [] items;
+	TabItem [] items;
+(40) <-> (40)
+	int itemCount;
+	int itemCount;
+(42) <-> (42)
+	/**
+	/**
+(43) <-> (43)
+	* Constructs a new instance of this class given its parent
+	* Constructs a new instance of this class given its parent
+(44) <-> (44)
+	* and a style value describing its behavior and appearance.
+	* and a style value describing its behavior and appearance.
+(45) <-> (45)
+	* <p>
+	* <p>
+(46) <-> (46)
+	* The style value is either one of the style constants defined in
+	* The style value is either one of the style constants defined in
+(47) <-> (47)
+	* class <code>SWT</code> which is applicable to instances of this
+	* class <code>SWT</code> which is applicable to instances of this
+(48) <-> (48)
+	* class, or must be built by <em>bitwise OR</em>'ing together
+	* class, or must be built by <em>bitwise OR</em>'ing together
+(49) <-> (49)
+	* (that is, using the <code>int</code> "|" operator) two or more
+	* (that is, using the <code>int</code> "|" operator) two or more
+(50) <-> (50)
+	* of those <code>SWT</code> style constants. The class description
+	* of those <code>SWT</code> style constants. The class description
+(51) <-> (51)
+	* for all SWT widget classes should include a comment which
+	* for all SWT widget classes should include a comment which
+(52) <-> (52)
+	* describes the style constants which are applicable to the class.
+	* describes the style constants which are applicable to the class.
+(53) <-> (53)
+	* </p>
+	* </p>
+(54) <-> (54)
+	*
+	*
+(55) <-> (55)
+	* @param parent a composite control which will be the parent of the new instance (cannot be null)
+	* @param parent a composite control which will be the parent of the new instance (cannot be null)
+(56) <-> (56)
+	* @param style the style of control to construct
+	* @param style the style of control to construct
+(57) <-> (57)
+	*
+	*
+(58) <-> (58)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(59) <-> (59)
+	* <li>ERROR_NULL_ARGUMENT - if the parent is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the parent is null</li>
+(60) <-> (60)
+	* </ul>
+	* </ul>
+(61) <-> (61)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(62) <-> (62)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the parent</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the parent</li>
+(63) <-> (63)
+	* <li>ERROR_INVALID_SUBCLASS - if this class is not an allowed subclass</li>
+	* <li>ERROR_INVALID_SUBCLASS - if this class is not an allowed subclass</li>
+(64) <-> (64)
+	* </ul>
+	* </ul>
+(65) <-> (65)
+	*
+	*
+(66) <-> (66)
+	* @see SWT
+	* @see SWT
+(67) <-> (67)
+	* @see Widget#checkSubclass
+	* @see Widget#checkSubclass
+(68) <-> (68)
+	* @see Widget#getStyle
+	* @see Widget#getStyle
+(69) <-> (69)
+	*/
+	*/
+(70) <-> (70)
+	public TabFolder (Composite parent, int style) {
+	public TabFolder (Composite parent, int style) {
+(71) <-> (71)
+	super (parent, checkStyle (style));
+	super (parent, checkStyle (style));
+(72) <-> (72)
+	}
+	}
+(74) <-> (74)
+	static int checkStyle (int style) {
+	static int checkStyle (int style) {
+(75) <-> (75)
+	/*
+	/*
+(76) <-> (76)
+	* Even though it is legal to create this widget
+	* Even though it is legal to create this widget
+(77) <-> (77)
+	* with scroll bars, they serve no useful purpose
+	* with scroll bars, they serve no useful purpose
+(78) <-> (78)
+	* because they do not automatically scroll the
+	* because they do not automatically scroll the
+(79) <-> (79)
+	* widget's client area. The fix is to clear
+	* widget's client area. The fix is to clear
+(80) <-> (80)
+	* the SWT style.
+	* the SWT style.
+(81) <-> (81)
+	*/
+	*/
+(82) <-> (82)
+	return style & ~(SWT.H_SCROLL | SWT.V_SCROLL);
+	return style & ~(SWT.H_SCROLL | SWT.V_SCROLL);
+(83) <-> (83)
+	}
+	}
+(85) <-> (85)
+	/**
+	/**
+(86) <-> (86)
+	* Adds the listener to the collection of listeners who will
+	* Adds the listener to the collection of listeners who will
+(87) <-> (87)
+	* be notified when the receiver's selection changes, by sending
+	* be notified when the receiver's selection changes, by sending
+(88) <-> (88)
+	* it one of the messages defined in the <code>SelectionListener</code>
+	* it one of the messages defined in the <code>SelectionListener</code>
+(89) <-> (89)
+	* interface.
+	* interface.
+(90) <-> (90)
+	* <p>
+	* <p>
+(91) <-> (91)
+	* When <code>widgetSelected</code> is called, the item field of the event object is valid.
+	* When <code>widgetSelected</code> is called, the item field of the event object is valid.
+(92) <-> (92)
+	* <code>widgetDefaultSelected</code> is not called.
+	* <code>widgetDefaultSelected</code> is not called.
+(93) <-> (93)
+	* </p>
+	* </p>
+(94) <-> (94)
+	*
+	*
+(95) <-> (95)
+	* @param listener the listener which should be notified
+	* @param listener the listener which should be notified
+(96) <-> (96)
+	*
+	*
+(97) <-> (97)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(98) <-> (98)
+	* <li>ERROR_NULL_ARGUMENT - if the listener is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the listener is null</li>
+(99) <-> (99)
+	* </ul>
+	* </ul>
+(100) <-> (100)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(101) <-> (101)
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+(102) <-> (102)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+(103) <-> (103)
+	* </ul>
+	* </ul>
+(104) <-> (104)
+	*
+	*
+(105) <-> (105)
+	* @see SelectionListener
+	* @see SelectionListener
+(106) <-> (106)
+	* @see #removeSelectionListener
+	* @see #removeSelectionListener
+(107) <-> (107)
+	* @see SelectionEvent
+	* @see SelectionEvent
+(108) <-> (108)
+	*/
+	*/
+(109) <-> (109)
+	public void addSelectionListener(SelectionListener listener) {
+	public void addSelectionListener(SelectionListener listener) {
+(110) <-> (110)
+	checkWidget();
+	checkWidget();
+(111) <-> (111)
+	if (listener == null) error (SWT.ERROR_NULL_ARGUMENT);
+	if (listener == null) error (SWT.ERROR_NULL_ARGUMENT);
+(112) <-> (112)
+	TypedListener typedListener = new TypedListener(listener);
+	TypedListener typedListener = new TypedListener(listener);
+(113) <-> (113)
+	addListener(SWT.Selection,typedListener);
+	addListener(SWT.Selection,typedListener);
+(114) <-> (114)
+	addListener(SWT.DefaultSelection,typedListener);
+	addListener(SWT.DefaultSelection,typedListener);
+(115) <-> (115)
+	}
+	}
+(117) <-> (117)
+	protected void checkSubclass () {
+	protected void checkSubclass () {
+(118) <-> (118)
+	if (!isValidSubclass ()) error (SWT.ERROR_INVALID_SUBCLASS);
+	if (!isValidSubclass ()) error (SWT.ERROR_INVALID_SUBCLASS);
+(119) <-> (119)
+	}
+	}
+(121) <-> (121)
+	public Point computeSize (int wHint, int hHint, boolean changed) {
+	public Point computeSize (int wHint, int hHint, boolean changed) {
+(122) <-> (122)
+	checkWidget();
+	checkWidget();
+(123) <-> (123)
+	PhDim_t dim = new PhDim_t();
+	PhDim_t dim = new PhDim_t();
+(124) <-> (124)
+	if (!OS.PtWidgetIsRealized (handle)) OS.PtExtentWidget (handle);
+	if (!OS.PtWidgetIsRealized (handle)) OS.PtExtentWidget (handle);
+(125) <-> (125)
+	OS.PtWidgetPreferredSize(handle, dim);
+	OS.PtWidgetPreferredSize(handle, dim);
+(126) <-> (126)
+	int width = dim.w, height = dim.h;
+	int width = dim.w, height = dim.h;
+(127) <-> (127)
+	Point size;
+	Point size;
+(128) <-> (128)
+	if (layout != null) {
+	if (layout != null) {
+(129) <-> (129)
+	size = layout.computeSize (this, wHint, hHint, changed);
+	size = layout.computeSize (this, wHint, hHint, changed);
+(130) <-> (130)
+	} else {
+	} else {
+(131) <-> (131)
+	size = minimumSize ();
+	size = minimumSize ();
+(132) <-> (132)
+	}
+	}
+(133) <-> (133)
+	if (size.x == 0) size.x = DEFAULT_WIDTH;
+	if (size.x == 0) size.x = DEFAULT_WIDTH;
+(134) <-> (134)
+	if (size.y == 0) size.y = DEFAULT_HEIGHT;
+	if (size.y == 0) size.y = DEFAULT_HEIGHT;
+(135) <-> (135)
+	if (wHint != SWT.DEFAULT) size.x = wHint;
+	if (wHint != SWT.DEFAULT) size.x = wHint;
+(136) <-> (136)
+	if (hHint != SWT.DEFAULT) size.y = hHint;
+	if (hHint != SWT.DEFAULT) size.y = hHint;
+(137) <-> (137)
+	width = Math.max (width, size.x);
+	width = Math.max (width, size.x);
+(138) <-> (138)
+	height = Math.max (height, size.y);
+	height = Math.max (height, size.y);
+(139) <-> (139)
+	Rectangle trim = computeTrim (0, 0, width, height);
+	Rectangle trim = computeTrim (0, 0, width, height);
+(140) <-> (140)
+	width = trim.width; height = trim.height;
+	width = trim.width; height = trim.height;
+(141) <-> (141)
+	return new Point (width, height);
+	return new Point (width, height);
+(142) <-> (142)
+	}
+	}
+(144) <-> (144)
+	public Rectangle computeTrim (int x, int y, int width, int height) {
+	public Rectangle computeTrim (int x, int y, int width, int height) {
+(145) <-> (145)
+	checkWidget();
+	checkWidget();
+(146) <-> (146)
+	PhDim_t dim = new PhDim_t();
+	PhDim_t dim = new PhDim_t();
+(147) <-> (147)
+	if (!OS.PtWidgetIsRealized (handle)) OS.PtExtentWidget (handle);
+	if (!OS.PtWidgetIsRealized (handle)) OS.PtExtentWidget (handle);
+(148) <-> (148)
+	OS.PtWidgetPreferredSize(handle, dim);
+	OS.PtWidgetPreferredSize(handle, dim);
+(149) <-> (149)
+	int [] args = {
+	int [] args = {
+(150) <-> (150)
+	OS.Pt_ARG_MARGIN_BOTTOM, 0, 0, // 1
+	OS.Pt_ARG_MARGIN_BOTTOM, 0, 0, // 1
+(151) <-> (151)
+	OS.Pt_ARG_MARGIN_TOP, 0, 0, // 4
+	OS.Pt_ARG_MARGIN_TOP, 0, 0, // 4
+(152) <-> (152)
+	OS.Pt_ARG_MARGIN_RIGHT, 0, 0, // 7
+	OS.Pt_ARG_MARGIN_RIGHT, 0, 0, // 7
+(153) <-> (153)
+	OS.Pt_ARG_MARGIN_LEFT, 0, 0, // 10
+	OS.Pt_ARG_MARGIN_LEFT, 0, 0, // 10
+(154) <-> (154)
+	// OS.Pt_ARG_BASIC_FLAGS, 0, 0, // 13
+	// OS.Pt_ARG_BASIC_FLAGS, 0, 0, // 13
+(155) <-> (155)
+	};
+	};
+(156) <-> (156)
+	OS.PtGetResources(handle, args.length / 3, args);
+	OS.PtGetResources(handle, args.length / 3, args);
+(157) <-> (157)
+	int trimX = x - args [10];
+	int trimX = x - args [10];
+(158) <-> (158)
+	int trimY = y - (dim.h - args [1]);
+	int trimY = y - (dim.h - args [1]);
+(159) <-> (159)
+	int trimWidth = width + args [7] + args [10];
+	int trimWidth = width + args [7] + args [10];
+(160) <-> (160)
+	int trimHeight = height + dim.h;
+	int trimHeight = height + dim.h;
+(161) <-> (161)
+	return new Rectangle (trimX, trimY, trimWidth, trimHeight);
+	return new Rectangle (trimX, trimY, trimWidth, trimHeight);
+(162) <-> (162)
+	}
+	}
+(164) <-> (164)
+	void createHandle (int index) {
+	void createHandle (int index) {
+(165) <-> (165)
+	state |= HANDLE;
+	state |= HANDLE;
+(166) <-> (166)
+	Display display = getDisplay ();
+	Display display = getDisplay ();
+(167) <-> (167)
+	int parentHandle = parent.parentingHandle ();
+	int parentHandle = parent.parentingHandle ();
+(168) <-> (168)
+	int [] args = {
+	int [] args = {
+(169) <-> (169)
+	OS.Pt_ARG_RESIZE_FLAGS, 0, OS.Pt_RESIZE_XY_BITS,
+	OS.Pt_ARG_RESIZE_FLAGS, 0, OS.Pt_RESIZE_XY_BITS,
+(170) <-> (170)
+	};
+	};
+(171) <-> (171)
+	parentingHandle = OS.PtCreateWidget (OS.PtContainer (), parentHandle, args.length / 3, args);
+	parentingHandle = OS.PtCreateWidget (OS.PtContainer (), parentHandle, args.length / 3, args);
+(172) <-> (172)
+	if (parentingHandle == 0) error (SWT.ERROR_NO_HANDLES);
+	if (parentingHandle == 0) error (SWT.ERROR_NO_HANDLES);
+(173) <-> (173)
+	int clazz = display.PtPanelGroup;
+	int clazz = display.PtPanelGroup;
+(174) <-> (174)
+	args = new int []{
+	args = new int []{
+(175) <-> (175)
+	OS.Pt_ARG_RESIZE_FLAGS, 0, OS.Pt_RESIZE_XY_BITS,
+	OS.Pt_ARG_RESIZE_FLAGS, 0, OS.Pt_RESIZE_XY_BITS,
+(176) <-> (176)
+	};
+	};
+(177) <-> (177)
+	handle = OS.PtCreateWidget (clazz, parentingHandle, args.length / 3, args);
+	handle = OS.PtCreateWidget (clazz, parentingHandle, args.length / 3, args);
+(178) <-> (178)
+	if (handle == 0) error (SWT.ERROR_NO_HANDLES);
+	if (handle == 0) error (SWT.ERROR_NO_HANDLES);
+(179) <-> (179)
+	}
+	}
+(181) <-> (181)
+	void createWidget (int index) {
+	void createWidget (int index) {
+(182) <-> (182)
+	super.createWidget (index);
+	super.createWidget (index);
+(183) <-> (183)
+	items = new TabItem [4];
+	items = new TabItem [4];
+(184) <-> (184)
+	}
+	}
+(186) <-> (186)
+	void createItem (TabItem item, int index) {
+	void createItem (TabItem item, int index) {
+(187) <-> (187)
+	int count = itemCount;
+	int count = itemCount;
+(188) <-> (188)
+	if (!(0 <= index && index <= count)) error (SWT.ERROR_INVALID_RANGE);
+	if (!(0 <= index && index <= count)) error (SWT.ERROR_INVALID_RANGE);
+(189) <-> (189)
+	if (count == items.length) {
+	if (count == items.length) {
+(190) <-> (190)
+	TabItem [] newItems = new TabItem [items.length + 4];
+	TabItem [] newItems = new TabItem [items.length + 4];
+(191) <-> (191)
+	System.arraycopy (items, 0, newItems, 0, items.length);
+	System.arraycopy (items, 0, newItems, 0, items.length);
+(192) <-> (192)
+	items = newItems;
+	items = newItems;
+(193) <-> (193)
+	}
+	}
+(194) <-> (194)
+	int [] args = {OS.Pt_ARG_PG_PANEL_TITLES, 0, 0};
+	int [] args = {OS.Pt_ARG_PG_PANEL_TITLES, 0, 0};
+(195) <-> (195)
+	OS.PtGetResources (handle, args.length / 3, args);
+	OS.PtGetResources (handle, args.length / 3, args);
+(196) <-> (196)
+	int oldPtr = args [1];
+	int oldPtr = args [1];
+(197) <-> (197)
+	int newPtr = OS.malloc ((count + 1) * 4);
+	int newPtr = OS.malloc ((count + 1) * 4);
+(198) <-> (198)
+	if (newPtr == 0) error (SWT.ERROR_ITEM_NOT_ADDED);
+	if (newPtr == 0) error (SWT.ERROR_ITEM_NOT_ADDED);
+(199) <-> (199)
+	int offset = 0;
+	int j = 0;
+(200) <-> (243)
+	for (int i=0; i<count; i++) {
+	for (int i=0; i<count; i++) {
+(201) <-> (244)
+	if (i == index) offset = 1;
+	if (i == index) continue;
+(202) <-> (201)
+	int [] address = new int [1];
+	int [] address = new int [1];
+(203) <-> (206)
+	OS.memmove (address, oldPtr + (i * 4), 4);
+	OS.memmove (address, oldPtr + (j++ * 4), 4);
+(204) <-> (246)
+	int length = OS.strlen (address [0]);
+	str [0] = OS.strdup (address [0]);
+(209) <-> (208)
+	}
+	}
+(210) <-> (204)
+	int str = OS.malloc (1);
+	str [0] = OS.malloc (1);
+(211) <-> (247)
+	if (str == 0) error (SWT.ERROR_ITEM_NOT_ADDED);
+	if (str [0] == 0) error (SWT.ERROR_ITEM_NOT_ADDED);
+(212) <-> (248)
+	OS.memmove (newPtr + (index * 4), new int [] {str}, 4);
+	OS.memmove (newPtr + (j++ * 4), str, 4);
+(213) <-> (212)
+	OS.PtSetResource (handle, OS.Pt_ARG_PG_PANEL_TITLES, newPtr, count + 1);
+	OS.PtSetResource (handle, OS.Pt_ARG_PG_PANEL_TITLES, newPtr, count + 1);
+(214) <-> (213)
+	for (int i=0; i<count+1; i++) {
+	for (int i=0; i<=count; i++) {
+(215) <-> (241)
+	int [] address = new int [1];
+	int [] str = new int [1];
+(216) <-> (214)
+	OS.memmove (address, newPtr + (i * 4), 4);
+	OS.memmove (address, newPtr + (i * 4), 4);
+(217) <-> (215)
+	OS.free (address [0]);
+	OS.free (address [0]);
+(218) <-> (216)
+	}
+	}
+(219) <-> (217)
+	OS.free (newPtr);
+	OS.free (newPtr);
+(220) <-> (218)
+	System.arraycopy (items, index, items, index + 1, count - index);
+	System.arraycopy (items, index, items, index + 1, count - index);
+(221) <-> (219)
+	items [index] = item;
+	items [index] = item;
+(222) <-> (220)
+	itemCount++;
+	itemCount++;
+(223) <-> (221)
+	}
+	}
+(225) <-> (223)
+	void deregister () {
+	void deregister () {
+(226) <-> (224)
+	super.deregister ();
+	super.deregister ();
+(227) <-> (225)
+	if (parentingHandle != 0) WidgetTable.remove (parentingHandle);
+	if (parentingHandle != 0) WidgetTable.remove (parentingHandle);
+(228) <-> (226)
+	}
+	}
+(230) <-> (228)
+	void destroyItem (TabItem item) {
+	void destroyItem (TabItem item) {
+(231) <-> (229)
+	int count = itemCount;
+	int count = itemCount;
+(232) <-> (230)
+	int index = 0;
+	int index = 0;
+(233) <-> (231)
+	while (index < count) {
+	while (index < count) {
+(234) <-> (232)
+	if (items [index] == item) break;
+	if (items [index] == item) break;
+(235) <-> (233)
+	index++;
+	index++;
+(236) <-> (234)
+	}
+	}
+(237) <-> (235)
+	int [] args = {OS.Pt_ARG_PG_PANEL_TITLES, 0, 0};
+	int [] args = {OS.Pt_ARG_PG_PANEL_TITLES, 0, 0};
+(238) <-> (236)
+	OS.PtGetResources (handle, args.length / 3, args);
+	OS.PtGetResources (handle, args.length / 3, args);
+(239) <-> (237)
+	int oldPtr = args [1];
+	int oldPtr = args [1];
+(240) <-> (238)
+	int newPtr = OS.malloc ((count - 1) * 4);
+	int newPtr = OS.malloc ((count - 1) * 4);
+(241) <-> (239)
+	if (newPtr == 0) error (SWT.ERROR_ITEM_NOT_ADDED);
+	if (newPtr == 0) error (SWT.ERROR_ITEM_NOT_ADDED);
+(242) <-> (240)
+	int offset = 0;
+	int j = 0;
+(243) <-> (202)
+	for (int i=0; i<count; i++) {
+	for (int i=0; i<=count; i++) {
+(244) <-> (203)
+	if (i == index) {
+	if (i == index) {
+(247) <-> (211)
+	}
+	}
+(248) <-> (242)
+	int [] address = new int [1];
+	int [] address = new int [1];
+(249) <-> (245)
+	OS.memmove (address, oldPtr + (i * 4), 4);
+	OS.memmove (address, oldPtr + (i * 4), 4);
+(250) <-> (207)
+	int length = OS.strlen (address [0]);
+	str [0] = OS.strdup (address [0]);
+(252) <-> (209)
+	if (str == 0) error (SWT.ERROR_ITEM_NOT_ADDED);
+	if (str [0] == 0) error (SWT.ERROR_ITEM_NOT_ADDED);
+(254) <-> (210)
+	OS.memmove (newPtr + ((i + offset) * 4), new int [] {str}, 4);
+	OS.memmove (newPtr + (i * 4), str, 4);
+(255) <-> (249)
+	}
+	}
+(256) <-> (250)
+	OS.PtSetResource (handle, OS.Pt_ARG_PG_PANEL_TITLES, newPtr, count - 1);
+	OS.PtSetResource (handle, OS.Pt_ARG_PG_PANEL_TITLES, newPtr, count - 1);
+(257) <-> (251)
+	for (int i=0; i<count-1; i++) {
+	for (int i=0; i<count-1; i++) {
+(258) <-> (200)
+	int [] address = new int [1];
+	int [] str = new int [1];
+(259) <-> (252)
+	OS.memmove (address, newPtr + (i * 4), 4);
+	OS.memmove (address, newPtr + (i * 4), 4);
+(260) <-> (253)
+	OS.free (address [0]);
+	OS.free (address [0]);
+(261) <-> (254)
+	}
+	}
+(262) <-> (255)
+	OS.free (newPtr);
+	OS.free (newPtr);
+(263) <-> (256)
+	if (index != count) {
+	if (index != count) {
+(264) <-> (257)
+	System.arraycopy (items, index + 1, items, index, --count - index);
+	System.arraycopy (items, index + 1, items, index, --count - index);
+(265) <-> (258)
+	}
+	}
+(266) <-> (259)
+	items [count] = null;
+	items [count] = null;
+(267) <-> (260)
+	itemCount--;
+	itemCount--;
+(268) <-> (261)
+	}
+	}
+(270) <-> (263)
+	public Rectangle getClientArea () {
+	public Rectangle getClientArea () {
+(271) <-> (264)
+	checkWidget();
+	checkWidget();
+(272) <-> (265)
+	PhArea_t area = new PhArea_t ();
+	PhArea_t area = new PhArea_t ();
+(273) <-> (266)
+	if (!OS.PtWidgetIsRealized (handle)) OS.PtExtentWidgetFamily (handle);
+	if (!OS.PtWidgetIsRealized (handle)) OS.PtExtentWidgetFamily (handle);
+(274) <-> (267)
+	int clientHandle = OS.PtWidgetChildBack (handle);
+	int clientHandle = OS.PtWidgetChildBack (handle);
+(275) <-> (268)
+	OS.PtWidgetArea (clientHandle, area);
+	OS.PtWidgetArea (clientHandle, area);
+(276) <-> (269)
+	return new Rectangle (area.pos_x, area.pos_y, area.size_w, area.size_h);
+	return new Rectangle (area.pos_x, area.pos_y, area.size_w, area.size_h);
+(277) <-> (270)
+	}
+	}
+(279) <-> (272)
+	/**
+	/**
+(280) <-> (273)
+	* Returns the item at the given, zero-relative index in the
+	* Returns the item at the given, zero-relative index in the
+(281) <-> (274)
+	* receiver. Throws an exception if the index is out of range.
+	* receiver. Throws an exception if the index is out of range.
+(282) <-> (275)
+	*
+	*
+(283) <-> (276)
+	* @param index the index of the item to return
+	* @param index the index of the item to return
+(284) <-> (277)
+	* @return the item at the given index
+	* @return the item at the given index
+(285) <-> (278)
+	*
+	*
+(286) <-> (279)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(287) <-> (280)
+	* <li>ERROR_INVALID_RANGE - if the index is not between 0 and the number of elements in the list minus 1 (inclusive)</li>
+	* <li>ERROR_INVALID_RANGE - if the index is not between 0 and the number of elements in the list minus 1 (inclusive)</li>
+(288) <-> (281)
+	* </ul>
+	* </ul>
+(289) <-> (282)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(290) <-> (283)
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+(291) <-> (284)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+(292) <-> (285)
+	* </ul>
+	* </ul>
+(293) <-> (286)
+	*/
+	*/
+(294) <-> (287)
+	public TabItem getItem (int index) {
+	public TabItem getItem (int index) {
+(295) <-> (288)
+	checkWidget();
+	checkWidget();
+(296) <-> (289)
+	if (!(0 <= index && index < itemCount)) error (SWT.ERROR_INVALID_RANGE);
+	if (!(0 <= index && index < itemCount)) error (SWT.ERROR_INVALID_RANGE);
+(297) <-> (290)
+	return items [index];
+	return items [index];
+(298) <-> (291)
+	}
+	}
+(300) <-> (293)
+	/**
+	/**
+(301) <-> (294)
+	* Returns an array of <code>TabItem</code>s which are the items
+	* Returns an array of <code>TabItem</code>s which are the items
+(302) <-> (295)
+	* in the receiver.
+	* in the receiver.
+(303) <-> (296)
+	* <p>
+	* <p>
+(304) <-> (297)
+	* Note: This is not the actual structure used by the receiver
+	* Note: This is not the actual structure used by the receiver
+(305) <-> (298)
+	* to maintain its list of items, so modifying the array will
+	* to maintain its list of items, so modifying the array will
+(306) <-> (299)
+	* not affect the receiver.
+	* not affect the receiver.
+(307) <-> (300)
+	* </p>
+	* </p>
+(308) <-> (301)
+	*
+	*
+(309) <-> (302)
+	* @return the items in the receiver
+	* @return the items in the receiver
+(310) <-> (303)
+	*
+	*
+(311) <-> (304)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(312) <-> (305)
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+(313) <-> (306)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+(314) <-> (307)
+	* </ul>
+	* </ul>
+(315) <-> (308)
+	*/
+	*/
+(316) <-> (309)
+	public TabItem [] getItems () {
+	public TabItem [] getItems () {
+(317) <-> (310)
+	checkWidget();
+	checkWidget();
+(318) <-> (311)
+	TabItem [] result = new TabItem [itemCount];
+	TabItem [] result = new TabItem [itemCount];
+(319) <-> (312)
+	System.arraycopy (items, 0, result, 0, result.length);
+	System.arraycopy (items, 0, result, 0, result.length);
+(320) <-> (313)
+	return result;
+	return result;
+(321) <-> (314)
+	}
+	}
+(323) <-> (316)
+	/**
+	/**
+(324) <-> (317)
+	* Returns the number of items contained in the receiver.
+	* Returns the number of items contained in the receiver.
+(325) <-> (318)
+	*
+	*
+(326) <-> (319)
+	* @return the number of items
+	* @return the number of items
+(327) <-> (320)
+	*
+	*
+(328) <-> (321)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(329) <-> (322)
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+(330) <-> (323)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+(331) <-> (324)
+	* </ul>
+	* </ul>
+(332) <-> (325)
+	*/
+	*/
+(333) <-> (326)
+	public int getItemCount () {
+	public int getItemCount () {
+(334) <-> (327)
+	checkWidget();
+	checkWidget();
+(335) <-> (328)
+	return itemCount;
+	return itemCount;
+(336) <-> (329)
+	}
+	}
+(338) <-> (331)
+	/**
+	/**
+(339) <-> (332)
+	* Returns an array of <code>TabItem</code>s that are currently
+	* Returns an array of <code>TabItem</code>s that are currently
+(340) <-> (333)
+	* selected in the receiver. An empty array indicates that no
+	* selected in the receiver. An empty array indicates that no
+(341) <-> (334)
+	* items are selected.
+	* items are selected.
+(342) <-> (335)
+	* <p>
+	* <p>
+(343) <-> (336)
+	* Note: This is not the actual structure used by the receiver
+	* Note: This is not the actual structure used by the receiver
+(344) <-> (337)
+	* to maintain its selection, so modifying the array will
+	* to maintain its selection, so modifying the array will
+(345) <-> (338)
+	* not affect the receiver.
+	* not affect the receiver.
+(346) <-> (339)
+	* </p>
+	* </p>
+(347) <-> (340)
+	* @return an array representing the selection
+	* @return an array representing the selection
+(348) <-> (341)
+	*
+	*
+(349) <-> (342)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(350) <-> (343)
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+(351) <-> (344)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+(352) <-> (345)
+	* </ul>
+	* </ul>
+(353) <-> (346)
+	*/
+	*/
+(354) <-> (347)
+	public TabItem [] getSelection () {
+	public TabItem [] getSelection () {
+(355) <-> (348)
+	checkWidget();
+	checkWidget();
+(356) <-> (349)
+	int index = getSelectionIndex ();
+	int index = getSelectionIndex ();
+(357) <-> (350)
+	if (index == -1) return new TabItem [0];
+	if (index == -1) return new TabItem [0];
+(358) <-> (351)
+	return new TabItem [] {items [index]};
+	return new TabItem [] {items [index]};
+(359) <-> (352)
+	}
+	}
+(361) <-> (354)
+	/**
+	/**
+(362) <-> (355)
+	* Returns the zero-relative index of the item which is currently
+	* Returns the zero-relative index of the item which is currently
+(363) <-> (356)
+	* selected in the receiver, or -1 if no item is selected.
+	* selected in the receiver, or -1 if no item is selected.
+(364) <-> (357)
+	*
+	*
+(365) <-> (358)
+	* @return the index of the selected item
+	* @return the index of the selected item
+(366) <-> (359)
+	*
+	*
+(367) <-> (360)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(368) <-> (361)
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+(369) <-> (362)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+(370) <-> (363)
+	* </ul>
+	* </ul>
+(371) <-> (364)
+	*/
+	*/
+(372) <-> (365)
+	public int getSelectionIndex () {
+	public int getSelectionIndex () {
+(373) <-> (366)
+	checkWidget();
+	checkWidget();
+(374) <-> (367)
+	int [] args = {OS.Pt_ARG_PG_CURRENT_INDEX, 0, 0};
+	int [] args = {OS.Pt_ARG_PG_CURRENT_INDEX, 0, 0};
+(375) <-> (368)
+	OS.PtGetResources (handle, args.length / 3, args);
+	OS.PtGetResources (handle, args.length / 3, args);
+(376) <-> (369)
+	return args [1] == OS.Pt_PG_INVALID ? -1 : args [1];
+	return args [1] == OS.Pt_PG_INVALID ? -1 : args [1];
+(377) <-> (370)
+	}
+	}
+(379) <-> (372)
+	void hookEvents () {
+	void hookEvents () {
+(380) <-> (373)
+	super.hookEvents ();
+	super.hookEvents ();
+(381) <-> (374)
+	int windowProc = getDisplay ().windowProc;
+	int windowProc = getDisplay ().windowProc;
+(382) <-> (375)
+	OS.PtAddCallback (handle, OS.Pt_CB_PG_PANEL_SWITCHING, windowProc, SWT.Selection);
+	OS.PtAddCallback (handle, OS.Pt_CB_PG_PANEL_SWITCHING, windowProc, SWT.Selection);
+(383) <-> (376)
+	}
+	}
+(385) <-> (378)
+	/**
+	/**
+(386) <-> (379)
+	* Searches the receiver's list starting at the first item
+	* Searches the receiver's list starting at the first item
+(387) <-> (380)
+	* (index 0) until an item is found that is equal to the
+	* (index 0) until an item is found that is equal to the
+(388) <-> (381)
+	* argument, and returns the index of that item. If no item
+	* argument, and returns the index of that item. If no item
+(389) <-> (382)
+	* is found, returns -1.
+	* is found, returns -1.
+(390) <-> (383)
+	*
+	*
+(391) <-> (384)
+	* @param item the search item
+	* @param item the search item
+(392) <-> (385)
+	* @return the index of the item
+	* @return the index of the item
+(393) <-> (386)
+	*
+	*
+(394) <-> (387)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(395) <-> (388)
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+(396) <-> (389)
+	* </ul>
+	* </ul>
+(397) <-> (390)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(398) <-> (391)
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+(399) <-> (392)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+(400) <-> (393)
+	* </ul>
+	* </ul>
+(401) <-> (394)
+	*/
+	*/
+(402) <-> (395)
+	public int indexOf (TabItem item) {
+	public int indexOf (TabItem item) {
+(403) <-> (396)
+	checkWidget();
+	checkWidget();
+(404) <-> (397)
+	if (item == null) error (SWT.ERROR_NULL_ARGUMENT);
+	if (item == null) error (SWT.ERROR_NULL_ARGUMENT);
+(405) <-> (398)
+	for (int i=0; i<itemCount; i++) {
+	for (int i=0; i<itemCount; i++) {
+(406) <-> (399)
+	if (items [i] == item) return i;
+	if (items [i] == item) return i;
+(407) <-> (400)
+	}
+	}
+(408) <-> (401)
+	return -1;
+	return -1;
+(409) <-> (402)
+	}
+	}
+(411) <-> (404)
+	void moveToBack (int child) {
+	void moveToBack (int child) {
+(412) <-> (405)
+	OS.PtWidgetInsert (child, handle, 0);
+	OS.PtWidgetInsert (child, handle, 0);
+(413) <-> (406)
+	}
+	}
+(415) <-> (408)
+	int parentingHandle () {
+	int parentingHandle () {
+(416) <-> (409)
+	return parentingHandle;
+	return parentingHandle;
+(417) <-> (410)
+	}
+	}
+(419) <-> (412)
+	int processPaint (int damage) {
+	int processPaint (int damage) {
+(420) <-> (413)
+	OS.PtSuperClassDraw (OS.PtPanelGroup (), handle, damage);
+	OS.PtSuperClassDraw (OS.PtPanelGroup (), handle, damage);
+(421) <-> (414)
+	sendPaintEvent (damage);
+	sendPaintEvent (damage);
+(422) <-> (415)
+	return OS.Pt_CONTINUE;
+	return OS.Pt_CONTINUE;
+(423) <-> (416)
+	}
+	}
+(425) <-> (418)
+	int processSelection (int info) {
+	int processSelection (int info) {
+(426) <-> (419)
+	if (info == 0) return OS.Pt_CONTINUE;
+	if (info == 0) return OS.Pt_CONTINUE;
+(427) <-> (420)
+	PtCallbackInfo_t cbinfo = new PtCallbackInfo_t ();
+	PtCallbackInfo_t cbinfo = new PtCallbackInfo_t ();
+(428) <-> (421)
+	OS.memmove (cbinfo, info, PtCallbackInfo_t.sizeof);
+	OS.memmove (cbinfo, info, PtCallbackInfo_t.sizeof);
+(429) <-> (422)
+	short[] oldIndex = new short[1];
+	short[] oldIndex = new short[1];
+(430) <-> (423)
+	short[] newIndex = new short[1];
+	short[] newIndex = new short[1];
+(431) <-> (424)
+	OS.memmove(oldIndex, cbinfo.cbdata + 8, 2);
+	OS.memmove(oldIndex, cbinfo.cbdata + 8, 2);
+(432) <-> (425)
+	OS.memmove(newIndex, cbinfo.cbdata + 10, 2);
+	OS.memmove(newIndex, cbinfo.cbdata + 10, 2);
+(433) <-> (426)
+	Control oldControl = null;
+	Control oldControl = null;
+(434) <-> (427)
+	int index = oldIndex [0];
+	int index = oldIndex [0];
+(435) <-> (428)
+	TabItem oldItem = items [index];
+	TabItem oldItem = items [index];
+(436) <-> (429)
+	if (0 <= index && index < itemCount) oldControl = oldItem.control;
+	if (0 <= index && index < itemCount) oldControl = oldItem.control;
+(437) <-> (430)
+	Control newControl = null;
+	Control newControl = null;
+(438) <-> (431)
+	index = newIndex [0];
+	index = newIndex [0];
+(439) <-> (432)
+	TabItem newItem = items [index];
+	TabItem newItem = items [index];
+(440) <-> (433)
+	if (0 <= index && index < itemCount) newControl = newItem.control;
+	if (0 <= index && index < itemCount) newControl = newItem.control;
+(441) <-> (434)
+	if (oldControl != null && !oldControl.isDisposed()) oldControl.setVisible (false);
+	if (oldControl != null && !oldControl.isDisposed()) oldControl.setVisible (false);
+(442) <-> (435)
+	if (newControl != null && !newControl.isDisposed()) {
+	if (newControl != null && !newControl.isDisposed()) {
+(443) <-> (436)
+	newControl.setBounds (getClientArea ());
+	newControl.setBounds (getClientArea ());
+(444) <-> (437)
+	newControl.setVisible (true);
+	newControl.setVisible (true);
+(445) <-> (438)
+	}
+	}
+(446) <-> (439)
+	Event event = new Event ();
+	Event event = new Event ();
+(447) <-> (440)
+	event.item = newItem;
+	event.item = newItem;
+(448) <-> (441)
+	postEvent (SWT.Selection, event);
+	postEvent (SWT.Selection, event);
+(449) <-> (442)
+	return OS.Pt_CONTINUE;
+	return OS.Pt_CONTINUE;
+(450) <-> (443)
+	}
+	}
+(452) <-> (445)
+	void register () {
+	void register () {
+(453) <-> (446)
+	super.register ();
+	super.register ();
+(454) <-> (447)
+	if (parentingHandle != 0) WidgetTable.put (parentingHandle, this);
+	if (parentingHandle != 0) WidgetTable.put (parentingHandle, this);
+(455) <-> (448)
+	}
+	}
+(457) <-> (450)
+	void releaseHandle () {
+	void releaseHandle () {
+(458) <-> (451)
+	super.releaseHandle ();
+	super.releaseHandle ();
+(459) <-> (452)
+	parentingHandle = 0;
+	parentingHandle = 0;
+(460) <-> (453)
+	}
+	}
+(462) <-> (455)
+	void releaseWidget () {
+	void releaseWidget () {
+(463) <-> (456)
+	for (int i=0; i<itemCount; i++) {
+	for (int i=0; i<itemCount; i++) {
+(464) <-> (457)
+	TabItem item = items [i];
+	TabItem item = items [i];
+(465) <-> (458)
+	if (!item.isDisposed ()) {
+	if (!item.isDisposed ()) {
+(466) <-> (459)
+	item.releaseWidget ();
+	item.releaseWidget ();
+(467) <-> (460)
+	item.releaseHandle ();
+	item.releaseHandle ();
+(468) <-> (461)
+	}
+	}
+(469) <-> (462)
+	}
+	}
+(470) <-> (463)
+	items = null;
+	items = null;
+(471) <-> (464)
+	super.releaseWidget ();
+	super.releaseWidget ();
+(472) <-> (465)
+	}
+	}
+(474) <-> (467)
+	/**
+	/**
+(475) <-> (468)
+	* Removes the listener from the collection of listeners who will
+	* Removes the listener from the collection of listeners who will
+(476) <-> (469)
+	* be notified when the receiver's selection changes.
+	* be notified when the receiver's selection changes.
+(477) <-> (470)
+	*
+	*
+(478) <-> (471)
+	* @param listener the listener which should no longer be notified
+	* @param listener the listener which should no longer be notified
+(479) <-> (472)
+	*
+	*
+(480) <-> (473)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(481) <-> (474)
+	* <li>ERROR_NULL_ARGUMENT - if the listener is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the listener is null</li>
+(482) <-> (475)
+	* </ul>
+	* </ul>
+(483) <-> (476)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(484) <-> (477)
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+(485) <-> (478)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+(486) <-> (479)
+	* </ul>
+	* </ul>
+(487) <-> (480)
+	*
+	*
+(488) <-> (481)
+	* @see SelectionListener
+	* @see SelectionListener
+(489) <-> (482)
+	* @see #addSelectionListener
+	* @see #addSelectionListener
+(490) <-> (483)
+	*/
+	*/
+(491) <-> (484)
+	public void removeSelectionListener (SelectionListener listener) {
+	public void removeSelectionListener (SelectionListener listener) {
+(492) <-> (485)
+	checkWidget();
+	checkWidget();
+(493) <-> (486)
+	if (listener == null) error (SWT.ERROR_NULL_ARGUMENT);
+	if (listener == null) error (SWT.ERROR_NULL_ARGUMENT);
+(494) <-> (487)
+	if (eventTable == null) return;
+	if (eventTable == null) return;
+(495) <-> (488)
+	eventTable.unhook (SWT.Selection, listener);
+	eventTable.unhook (SWT.Selection, listener);
+(496) <-> (489)
+	eventTable.unhook (SWT.DefaultSelection,listener);
+	eventTable.unhook (SWT.DefaultSelection,listener);
+(497) <-> (490)
+	}
+	}
+(499) <-> (492)
+	boolean setBounds (int x, int y, int width, int height, boolean move, boolean resize) {
+	boolean setBounds (int x, int y, int width, int height, boolean move, boolean resize) {
+(500) <-> (493)
+	boolean changed = super.setBounds (x, y, width, height, move, resize);
+	boolean changed = super.setBounds (x, y, width, height, move, resize);
+(501) <-> (494)
+	if (changed && resize) {
+	if (changed && resize) {
+(502) <-> (495)
+	int [] args = {OS.Pt_ARG_WIDTH, 0, 0, OS.Pt_ARG_HEIGHT, 0, 0};
+	int [] args = {OS.Pt_ARG_WIDTH, 0, 0, OS.Pt_ARG_HEIGHT, 0, 0};
+(503) <-> (496)
+	OS.PtGetResources (parentingHandle, args.length / 3, args);
+	OS.PtGetResources (parentingHandle, args.length / 3, args);
+(504) <-> (497)
+	OS.PtSetResources (handle, args.length / 3, args);
+	OS.PtSetResources (handle, args.length / 3, args);
+(505) <-> (498)
+	args = new int [] {OS.Pt_ARG_PG_CURRENT_INDEX, 0, 0};
+	args = new int [] {OS.Pt_ARG_PG_CURRENT_INDEX, 0, 0};
+(506) <-> (499)
+	OS.PtGetResources (handle, args.length / 3, args);
+	OS.PtGetResources (handle, args.length / 3, args);
+(507) <-> (500)
+	int index = args [1];
+	int index = args [1];
+(508) <-> (501)
+	if (index != OS.Pt_PG_INVALID) {
+	if (index != OS.Pt_PG_INVALID) {
+(509) <-> (502)
+	TabItem item = items [index];
+	TabItem item = items [index];
+(510) <-> (503)
+	Control control = item.control;
+	Control control = item.control;
+(511) <-> (504)
+	if (control != null && !control.isDisposed ()) {
+	if (control != null && !control.isDisposed ()) {
+(512) <-> (505)
+	control.setBounds (getClientArea ());
+	control.setBounds (getClientArea ());
+(513) <-> (506)
+	}
+	}
+(514) <-> (507)
+	}
+	}
+(515) <-> (508)
+	}
+	}
+(516) <-> (509)
+	return changed;
+	return changed;
+(517) <-> (510)
+	}
+	}
+(519) <-> (512)
+	/**
+	/**
+(520) <-> (513)
+	* Selects the item at the given zero-relative index in the receiver.
+	* Selects the item at the given zero-relative index in the receiver.
+(521) <-> (514)
+	* If the item at the index was already selected, it remains selected.
+	* If the item at the index was already selected, it remains selected.
+(522) <-> (515)
+	* The current selected is first cleared, then the new items are
+	* The current selected is first cleared, then the new items are
+(523) <-> (516)
+	* selected. Indices that are out of range are ignored.
+	* selected. Indices that are out of range are ignored.
+(524) <-> (517)
+	*
+	*
+(525) <-> (518)
+	* @param index the index of the item to select
+	* @param index the index of the item to select
+(526) <-> (519)
+	*
+	*
+(527) <-> (520)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(528) <-> (521)
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+(529) <-> (522)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+(530) <-> (523)
+	* </ul>
+	* </ul>
+(531) <-> (524)
+	*/
+	*/
+(532) <-> (525)
+	public void setSelection (int index) {
+	public void setSelection (int index) {
+(533) <-> (526)
+	checkWidget();
+	checkWidget();
+(534) <-> (527)
+	setSelection (index, false);
+	setSelection (index, false);
+(535) <-> (528)
+	}
+	}
+(537) <-> (530)
+	void setSelection (int index, boolean notify) {
+	void setSelection (int index, boolean notify) {
+(538) <-> (531)
+	int [] args = {OS.Pt_ARG_PG_CURRENT_INDEX, 0, 0};
+	int [] args = {OS.Pt_ARG_PG_CURRENT_INDEX, 0, 0};
+(539) <-> (532)
+	OS.PtGetResources (handle, args.length / 3, args);
+	OS.PtGetResources (handle, args.length / 3, args);
+(540) <-> (533)
+	int oldIndex = args [1];
+	int oldIndex = args [1];
+(541) <-> (534)
+	if (oldIndex != OS.Pt_PG_INVALID) {
+	if (oldIndex != OS.Pt_PG_INVALID) {
+(542) <-> (535)
+	TabItem item = items [oldIndex];
+	TabItem item = items [oldIndex];
+(543) <-> (536)
+	Control control = item.control;
+	Control control = item.control;
+(544) <-> (537)
+	if (control != null && !control.isDisposed ()) {
+	if (control != null && !control.isDisposed ()) {
+(545) <-> (538)
+	control.setVisible (false);
+	control.setVisible (false);
+(546) <-> (539)
+	}
+	}
+(547) <-> (540)
+	}
+	}
+(548) <-> (541)
+	OS.PtSetResource (handle, OS.Pt_ARG_PG_CURRENT_INDEX, index, 0);
+	OS.PtSetResource (handle, OS.Pt_ARG_PG_CURRENT_INDEX, index, 0);
+(549) <-> (542)
+	args [1] = 0;
+	args [1] = 0;
+(550) <-> (543)
+	OS.PtGetResources (handle, args.length / 3, args);
+	OS.PtGetResources (handle, args.length / 3, args);
+(551) <-> (544)
+	int newIndex = args [1];
+	int newIndex = args [1];
+(552) <-> (545)
+	if (newIndex != OS.Pt_PG_INVALID) {
+	if (newIndex != OS.Pt_PG_INVALID) {
+(553) <-> (546)
+	TabItem item = items [newIndex];
+	TabItem item = items [newIndex];
+(554) <-> (547)
+	Control control = item.control;
+	Control control = item.control;
+(555) <-> (548)
+	if (control != null && !control.isDisposed ()) {
+	if (control != null && !control.isDisposed ()) {
+(556) <-> (549)
+	control.setBounds (getClientArea ());
+	control.setBounds (getClientArea ());
+(557) <-> (550)
+	control.setVisible (true);
+	control.setVisible (true);
+(558) <-> (551)
+	}
+	}
+(559) <-> (552)
+	if (notify) {
+	if (notify) {
+(560) <-> (553)
+	Event event = new Event ();
+	Event event = new Event ();
+(561) <-> (554)
+	event.item = item;
+	event.item = item;
+(562) <-> (555)
+	postEvent (SWT.Selection, event);
+	postEvent (SWT.Selection, event);
+(563) <-> (556)
+	}
+	}
+(564) <-> (557)
+	}
+	}
+(565) <-> (558)
+	}
+	}
+(567) <-> (560)
+	/**
+	/**
+(568) <-> (561)
+	* Sets the receiver's selection to be the given array of items.
+	* Sets the receiver's selection to be the given array of items.
+(569) <-> (562)
+	* The current selected is first cleared, then the new items are
+	* The current selected is first cleared, then the new items are
+(570) <-> (563)
+	* selected.
+	* selected.
+(571) <-> (564)
+	*
+	*
+(572) <-> (565)
+	* @param items the array of items
+	* @param items the array of items
+(573) <-> (566)
+	*
+	*
+(574) <-> (567)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(575) <-> (568)
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+(576) <-> (569)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+(577) <-> (570)
+	* </ul>
+	* </ul>
+(578) <-> (571)
+	*/
+	*/
+(579) <-> (572)
+	public void setSelection (TabItem [] items) {
+	public void setSelection (TabItem [] items) {
+(580) <-> (573)
+	checkWidget();
+	checkWidget();
+(581) <-> (574)
+	if (items == null) error (SWT.ERROR_NULL_ARGUMENT);
+	if (items == null) error (SWT.ERROR_NULL_ARGUMENT);
+(582) <-> (575)
+	if (items.length == 0) {
+	if (items.length == 0) {
+(583) <-> (576)
+	setSelection (-1);
+	setSelection (-1);
+(584) <-> (577)
+	return;
+	return;
+(585) <-> (578)
+	}
+	}
+(586) <-> (579)
+	for (int i=items.length-1; i>=0; --i) {
+	for (int i=items.length-1; i>=0; --i) {
+(587) <-> (580)
+	int index = indexOf (items [i]);
+	int index = indexOf (items [i]);
+(588) <-> (581)
+	if (index != -1) setSelection (index);
+	if (index != -1) setSelection (index);
+(589) <-> (582)
+	}
+	}
+(590) <-> (583)
+	}
+	}
+(592) <-> (585)
+	boolean traversePage (boolean next) {
+	boolean traversePage (boolean next) {
+(593) <-> (586)
+	int count = getItemCount ();
+	int count = getItemCount ();
+(594) <-> (587)
+	if (count == 0) return false;
+	if (count == 0) return false;
+(595) <-> (588)
+	int index = getSelectionIndex ();
+	int index = getSelectionIndex ();
+(596) <-> (589)
+	if (index == -1) {
+	if (index == -1) {
+(597) <-> (590)
+	index = 0;
+	index = 0;
+(598) <-> (591)
+	} else {
+	} else {
+(599) <-> (592)
+	int offset = next ? 1 : -1;
+	int offset = next ? 1 : -1;
+(600) <-> (593)
+	index = (index + offset + count) % count;
+	index = (index + offset + count) % count;
+(601) <-> (594)
+	}
+	}
+(602) <-> (595)
+	setSelection (index, true);
+	setSelection (index, true);
+(603) <-> (596)
+	return true;
+	return true;
+(604) <-> (597)
+	}
+	}
+(606) <-> (599)
+	int topHandle () {
+	int topHandle () {
+(607) <-> (600)
+	return parentingHandle;
+	return parentingHandle;
+(608) <-> (601)
+	}
+	}
+(610) <-> (603)
+	}
+	}
+Number of lines in left file: 573
+Number of lines in right file: 566
+Number of lines matched: 565

@@ -1,0 +1,505 @@
+Diff: ./reference/dataset/ArrayReference_1.java ./reference/dataset/ArrayReference_2.java
+(1) <-> (1)
+	/*******************************************************************************
+	/*******************************************************************************
+(2) <-> (2)
+	* Copyright (c) 2000, 2001, 2002 International Business Machines Corp. and others.
+	* Copyright (c) 2000, 2001, 2002 International Business Machines Corp. and others.
+(3) <-> (3)
+	* All rights reserved. This program and the accompanying materials
+	* All rights reserved. This program and the accompanying materials
+(4) <-> (4)
+	* are made available under the terms of the Common Public License v0.5
+	* are made available under the terms of the Common Public License v0.5
+(5) <-> (5)
+	* which accompanies this distribution, and is available at
+	* which accompanies this distribution, and is available at
+(6) <-> (6)
+	* http://www.eclipse.org/legal/cpl-v05.html
+	* http://www.eclipse.org/legal/cpl-v05.html
+(7) <-> (7)
+	*
+	*
+(8) <-> (8)
+	* Contributors:
+	* Contributors:
+(9) <-> (9)
+	* IBM Corporation - initial API and implementation
+	* IBM Corporation - initial API and implementation
+(10) <-> (10)
+	******************************************************************************/
+	******************************************************************************/
+(11) <-> (11)
+	package org.eclipse.jdt.internal.compiler.ast;
+	package org.eclipse.jdt.internal.compiler.ast;
+(13) <-> (13)
+	import org.eclipse.jdt.internal.compiler.IAbstractSyntaxTreeVisitor;
+	import org.eclipse.jdt.internal.compiler.IAbstractSyntaxTreeVisitor;
+(14) <-> (14)
+	import org.eclipse.jdt.internal.compiler.impl.*;
+	import org.eclipse.jdt.internal.compiler.impl.*;
+(15) <-> (15)
+	import org.eclipse.jdt.internal.compiler.codegen.*;
+	import org.eclipse.jdt.internal.compiler.codegen.*;
+(16) <-> (16)
+	import org.eclipse.jdt.internal.compiler.flow.*;
+	import org.eclipse.jdt.internal.compiler.flow.*;
+(17) <-> (17)
+	import org.eclipse.jdt.internal.compiler.lookup.*;
+	import org.eclipse.jdt.internal.compiler.lookup.*;
+(19) <-> (19)
+	public class ArrayReference extends Reference {
+	public class ArrayReference extends Reference {
+(21) <-> (21)
+	public Expression receiver;
+	public Expression receiver;
+(22) <-> (22)
+	public Expression position;
+	public Expression position;
+(26) <-> (24)
+	public ArrayReference(Expression rec, Expression pos) {
+	public ArrayReference(Expression rec, Expression pos) {
+(27) <-> (25)
+	this.receiver = rec;
+	this.receiver = rec;
+(28) <-> (26)
+	this.position = pos;
+	this.position = pos;
+(29) <-> (27)
+	sourceStart = rec.sourceStart;
+	sourceStart = rec.sourceStart;
+(30) <-> (28)
+	}
+	}
+(32) <-> (30)
+	public FlowInfo analyseAssignment(
+	public FlowInfo analyseAssignment(
+(33) <-> (31)
+	BlockScope currentScope,
+	BlockScope currentScope,
+(34) <-> (32)
+	FlowContext flowContext,
+	FlowContext flowContext,
+(35) <-> (33)
+	FlowInfo flowInfo,
+	FlowInfo flowInfo,
+(36) <-> (34)
+	Assignment assignment,
+	Assignment assignment,
+(37) <-> (35)
+	boolean compoundAssignment) {
+	boolean compoundAssignment) {
+(39) <-> (37)
+	if (assignment.expression == null) {
+	if (assignment.expression == null) {
+(40) <-> (38)
+	return analyseCode(currentScope, flowContext, flowInfo).unconditionalInits();
+	return analyseCode(currentScope, flowContext, flowInfo).unconditionalInits();
+(41) <-> (39)
+	} else {
+	} else {
+(42) <-> (40)
+	return assignment
+	return assignment
+(43) <-> (41)
+	.expression
+	.expression
+(44) <-> (42)
+	.analyseCode(
+	.analyseCode(
+(45) <-> (43)
+	currentScope,
+	currentScope,
+(46) <-> (44)
+	flowContext,
+	flowContext,
+(47) <-> (45)
+	analyseCode(currentScope, flowContext, flowInfo).unconditionalInits())
+	analyseCode(currentScope, flowContext, flowInfo).unconditionalInits())
+(48) <-> (46)
+	.unconditionalInits();
+	.unconditionalInits();
+(49) <-> (47)
+	}
+	}
+(50) <-> (48)
+	}
+	}
+(52) <-> (50)
+	public FlowInfo analyseCode(
+	public FlowInfo analyseCode(
+(53) <-> (51)
+	BlockScope currentScope,
+	BlockScope currentScope,
+(54) <-> (52)
+	FlowContext flowContext,
+	FlowContext flowContext,
+(55) <-> (53)
+	FlowInfo flowInfo) {
+	FlowInfo flowInfo) {
+(57) <-> (55)
+	return position.analyseCode(
+	return position.analyseCode(
+(58) <-> (56)
+	currentScope,
+	currentScope,
+(59) <-> (57)
+	flowContext,
+	flowContext,
+(60) <-> (58)
+	receiver.analyseCode(currentScope, flowContext, flowInfo));
+	receiver.analyseCode(currentScope, flowContext, flowInfo));
+(61) <-> (59)
+	}
+	}
+(63) <-> (61)
+	public void generateAssignment(
+	public void generateAssignment(
+(64) <-> (62)
+	BlockScope currentScope,
+	BlockScope currentScope,
+(65) <-> (63)
+	CodeStream codeStream,
+	CodeStream codeStream,
+(66) <-> (64)
+	Assignment assignment,
+	Assignment assignment,
+(67) <-> (65)
+	boolean valueRequired) {
+	boolean valueRequired) {
+(69) <-> (67)
+	receiver.generateCode(currentScope, codeStream, true);
+	receiver.generateCode(currentScope, codeStream, true);
+(70) <-> (68)
+	position.generateCode(currentScope, codeStream, true);
+	position.generateCode(currentScope, codeStream, true);
+(71) <-> (69)
+	assignment.expression.generateCode(currentScope, codeStream, true);
+	assignment.expression.generateCode(currentScope, codeStream, true);
+(72) <-> (70)
+	codeStream.arrayAtPut(arrayElementBinding.id, valueRequired);
+	codeStream.arrayAtPut(this.resolvedType.id, valueRequired);
+(73) <-> (71)
+	if (valueRequired) {
+	if (valueRequired) {
+(74) <-> (72)
+	codeStream.generateImplicitConversion(assignment.implicitConversion);
+	codeStream.generateImplicitConversion(assignment.implicitConversion);
+(75) <-> (73)
+	}
+	}
+(76) <-> (74)
+	}
+	}
+(78) <-> (76)
+	/**
+	/**
+(79) <-> (77)
+	* Code generation for a array reference
+	* Code generation for a array reference
+(80) <-> (78)
+	*/
+	*/
+(81) <-> (79)
+	public void generateCode(
+	public void generateCode(
+(82) <-> (80)
+	BlockScope currentScope,
+	BlockScope currentScope,
+(83) <-> (81)
+	CodeStream codeStream,
+	CodeStream codeStream,
+(84) <-> (82)
+	boolean valueRequired) {
+	boolean valueRequired) {
+(86) <-> (84)
+	int pc = codeStream.position;
+	int pc = codeStream.position;
+(87) <-> (85)
+	receiver.generateCode(currentScope, codeStream, true);
+	receiver.generateCode(currentScope, codeStream, true);
+(88) <-> (86)
+	position.generateCode(currentScope, codeStream, true);
+	position.generateCode(currentScope, codeStream, true);
+(89) <-> (87)
+	codeStream.arrayAt(arrayElementBinding.id);
+	codeStream.arrayAt(this.resolvedType.id);
+(90) <-> (88)
+	// Generating code for the potential runtime type checking
+	// Generating code for the potential runtime type checking
+(91) <-> (89)
+	if (valueRequired) {
+	if (valueRequired) {
+(92) <-> (90)
+	codeStream.generateImplicitConversion(implicitConversion);
+	codeStream.generateImplicitConversion(implicitConversion);
+(93) <-> (91)
+	} else {
+	} else {
+(94) <-> (92)
+	if (arrayElementBinding == LongBinding
+	if (this.resolvedType == LongBinding
+(95) <-> (93)
+	|| arrayElementBinding == DoubleBinding) {
+	|| this.resolvedType == DoubleBinding) {
+(96) <-> (94)
+	codeStream.pop2();
+	codeStream.pop2();
+(97) <-> (95)
+	} else {
+	} else {
+(98) <-> (96)
+	codeStream.pop();
+	codeStream.pop();
+(99) <-> (97)
+	}
+	}
+(100) <-> (98)
+	}
+	}
+(101) <-> (99)
+	codeStream.recordPositionsFrom(pc, this.sourceStart);
+	codeStream.recordPositionsFrom(pc, this.sourceStart);
+(102) <-> (100)
+	}
+	}
+(104) <-> (102)
+	public void generateCompoundAssignment(
+	public void generateCompoundAssignment(
+(105) <-> (103)
+	BlockScope currentScope,
+	BlockScope currentScope,
+(106) <-> (104)
+	CodeStream codeStream,
+	CodeStream codeStream,
+(107) <-> (105)
+	Expression expression,
+	Expression expression,
+(108) <-> (106)
+	int operator,
+	int operator,
+(109) <-> (107)
+	int assignmentImplicitConversion,
+	int assignmentImplicitConversion,
+(110) <-> (108)
+	boolean valueRequired) {
+	boolean valueRequired) {
+(112) <-> (110)
+	receiver.generateCode(currentScope, codeStream, true);
+	receiver.generateCode(currentScope, codeStream, true);
+(113) <-> (111)
+	position.generateCode(currentScope, codeStream, true);
+	position.generateCode(currentScope, codeStream, true);
+(114) <-> (112)
+	codeStream.dup2();
+	codeStream.dup2();
+(115) <-> (113)
+	codeStream.arrayAt(arrayElementBinding.id);
+	codeStream.arrayAt(this.resolvedType.id);
+(116) <-> (114)
+	int operationTypeID;
+	int operationTypeID;
+(117) <-> (115)
+	if ((operationTypeID = implicitConversion >> 4) == T_String) {
+	if ((operationTypeID = implicitConversion >> 4) == T_String) {
+(118) <-> (116)
+	codeStream.generateStringAppend(currentScope, null, expression);
+	codeStream.generateStringAppend(currentScope, null, expression);
+(119) <-> (117)
+	} else {
+	} else {
+(120) <-> (118)
+	// promote the array reference to the suitable operation type
+	// promote the array reference to the suitable operation type
+(121) <-> (119)
+	codeStream.generateImplicitConversion(implicitConversion);
+	codeStream.generateImplicitConversion(implicitConversion);
+(122) <-> (120)
+	// generate the increment value (will by itself be promoted to the operation value)
+	// generate the increment value (will by itself be promoted to the operation value)
+(123) <-> (121)
+	if (expression == IntLiteral.One) { // prefix operation
+	if (expression == IntLiteral.One) { // prefix operation
+(124) <-> (122)
+	codeStream.generateConstant(expression.constant, implicitConversion);
+	codeStream.generateConstant(expression.constant, implicitConversion);
+(125) <-> (123)
+	} else {
+	} else {
+(126) <-> (124)
+	expression.generateCode(currentScope, codeStream, true);
+	expression.generateCode(currentScope, codeStream, true);
+(127) <-> (125)
+	}
+	}
+(128) <-> (126)
+	// perform the operation
+	// perform the operation
+(129) <-> (127)
+	codeStream.sendOperator(operator, operationTypeID);
+	codeStream.sendOperator(operator, operationTypeID);
+(130) <-> (128)
+	// cast the value back to the array reference type
+	// cast the value back to the array reference type
+(131) <-> (129)
+	codeStream.generateImplicitConversion(assignmentImplicitConversion);
+	codeStream.generateImplicitConversion(assignmentImplicitConversion);
+(132) <-> (130)
+	}
+	}
+(133) <-> (131)
+	codeStream.arrayAtPut(arrayElementBinding.id, valueRequired);
+	codeStream.arrayAtPut(this.resolvedType.id, valueRequired);
+(134) <-> (132)
+	}
+	}
+(136) <-> (134)
+	public void generatePostIncrement(
+	public void generatePostIncrement(
+(137) <-> (135)
+	BlockScope currentScope,
+	BlockScope currentScope,
+(138) <-> (136)
+	CodeStream codeStream,
+	CodeStream codeStream,
+(139) <-> (137)
+	CompoundAssignment postIncrement,
+	CompoundAssignment postIncrement,
+(140) <-> (138)
+	boolean valueRequired) {
+	boolean valueRequired) {
+(142) <-> (140)
+	receiver.generateCode(currentScope, codeStream, true);
+	receiver.generateCode(currentScope, codeStream, true);
+(143) <-> (141)
+	position.generateCode(currentScope, codeStream, true);
+	position.generateCode(currentScope, codeStream, true);
+(144) <-> (142)
+	codeStream.dup2();
+	codeStream.dup2();
+(145) <-> (143)
+	codeStream.arrayAt(arrayElementBinding.id);
+	codeStream.arrayAt(this.resolvedType.id);
+(146) <-> (144)
+	if (valueRequired) {
+	if (valueRequired) {
+(147) <-> (145)
+	if ((arrayElementBinding == LongBinding)
+	if ((this.resolvedType == LongBinding)
+(148) <-> (146)
+	|| (arrayElementBinding == DoubleBinding)) {
+	|| (this.resolvedType == DoubleBinding)) {
+(149) <-> (147)
+	codeStream.dup2_x2();
+	codeStream.dup2_x2();
+(150) <-> (148)
+	} else {
+	} else {
+(151) <-> (149)
+	codeStream.dup_x2();
+	codeStream.dup_x2();
+(152) <-> (150)
+	}
+	}
+(153) <-> (151)
+	}
+	}
+(154) <-> (152)
+	codeStream.generateConstant(
+	codeStream.generateConstant(
+(155) <-> (153)
+	postIncrement.expression.constant,
+	postIncrement.expression.constant,
+(156) <-> (154)
+	implicitConversion);
+	implicitConversion);
+(157) <-> (155)
+	codeStream.sendOperator(postIncrement.operator, arrayElementBinding.id);
+	codeStream.sendOperator(postIncrement.operator, this.resolvedType.id);
+(158) <-> (156)
+	codeStream.generateImplicitConversion(
+	codeStream.generateImplicitConversion(
+(159) <-> (157)
+	postIncrement.assignmentImplicitConversion);
+	postIncrement.assignmentImplicitConversion);
+(160) <-> (158)
+	codeStream.arrayAtPut(arrayElementBinding.id, false);
+	codeStream.arrayAtPut(this.resolvedType.id, false);
+(161) <-> (159)
+	}
+	}
+(163) <-> (161)
+	public TypeBinding resolveType(BlockScope scope) {
+	public TypeBinding resolveType(BlockScope scope) {
+(165) <-> (163)
+	constant = Constant.NotAConstant;
+	constant = Constant.NotAConstant;
+(166) <-> (164)
+	TypeBinding arrayTb = receiver.resolveType(scope);
+	TypeBinding arrayType = receiver.resolveType(scope);
+(167) <-> (166)
+	if (arrayTb == null)
+	if (arrayType.isArrayType()) {
+(169) <-> (167)
+	if (!arrayTb.isArrayType()) {
+	this.resolvedType = ((ArrayBinding) arrayType).elementsType(scope);
+(170) <-> (169)
+	scope.problemReporter().referenceMustBeArrayTypeAt(arrayTb, this);
+	scope.problemReporter().referenceMustBeArrayTypeAt(arrayType, this);
+(172) <-> (170)
+	}
+	}
+(173) <-> (172)
+	TypeBinding positionTb = position.resolveTypeExpecting(scope, IntBinding);
+	TypeBinding positionType = position.resolveTypeExpecting(scope, IntBinding);
+(174) <-> (173)
+	if (positionTb == null)
+	if (positionType != null) {
+(176) <-> (174)
+	position.implicitWidening(IntBinding, positionTb);
+	position.implicitWidening(IntBinding, positionType);
+(177) <-> (176)
+	return this.expressionType = arrayElementBinding = ((ArrayBinding) arrayTb).elementsType(scope);
+	return this.resolvedType;
+(178) <-> (171)
+	}
+	}
+(180) <-> (179)
+	public String toStringExpression() {
+	public String toStringExpression() {
+(182) <-> (181)
+	return receiver.toStringExpression() + "[" //$NON-NLS-1$
+	return receiver.toStringExpression() + "[" //$NON-NLS-1$
+(183) <-> (182)
+	+position.toStringExpression() + "]"; //$NON-NLS-1$
+	+position.toStringExpression() + "]"; //$NON-NLS-1$
+(184) <-> (183)
+	}
+	}
+(186) <-> (185)
+	public void traverse(IAbstractSyntaxTreeVisitor visitor, BlockScope scope) {
+	public void traverse(IAbstractSyntaxTreeVisitor visitor, BlockScope scope) {
+(188) <-> (187)
+	if (visitor.visit(this, scope)) {
+	if (visitor.visit(this, scope)) {
+(189) <-> (188)
+	receiver.traverse(visitor, scope);
+	receiver.traverse(visitor, scope);
+(190) <-> (189)
+	position.traverse(visitor, scope);
+	position.traverse(visitor, scope);
+(191) <-> (190)
+	}
+	}
+(192) <-> (191)
+	visitor.endVisit(this, scope);
+	visitor.endVisit(this, scope);
+(193) <-> (192)
+	}
+	}
+(194) <-> (193)
+	}
+	}
+Number of lines in left file: 171
+Number of lines in right file: 171
+Number of lines matched: 167

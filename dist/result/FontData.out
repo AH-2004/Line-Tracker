@@ -1,0 +1,832 @@
+Diff: ./reference/dataset/FontData_1.java ./reference/dataset/FontData_2.java
+(1) <-> (1)
+	package org.eclipse.swt.graphics;
+	package org.eclipse.swt.graphics;
+(3) <-> (3)
+	/*
+	/*
+(4) <-> (4)
+	* Copyright (c) 2000, 2002 IBM Corp. All rights reserved.
+	* Copyright (c) 2000, 2002 IBM Corp. All rights reserved.
+(5) <-> (5)
+	* This file is made available under the terms of the Common Public License v1.0
+	* This file is made available under the terms of the Common Public License v1.0
+(6) <-> (6)
+	* which accompanies this distribution, and is available at
+	* which accompanies this distribution, and is available at
+(7) <-> (7)
+	* http://www.eclipse.org/legal/cpl-v10.html
+	* http://www.eclipse.org/legal/cpl-v10.html
+(8) <-> (8)
+	*/
+	*/
+(10) <-> (10)
+	import org.eclipse.swt.*;
+	import org.eclipse.swt.*;
+(12) <-> (12)
+	/**
+	/**
+(13) <-> (13)
+	* Instances of this class describe operating system fonts.
+	* Instances of this class describe operating system fonts.
+(14) <-> (14)
+	* Only the public API of this type is platform independent.
+	* Only the public API of this type is platform independent.
+(15) <-> (15)
+	* <p>
+	* <p>
+(16) <-> (16)
+	* For platform-independent behaviour, use the get and set methods
+	* For platform-independent behaviour, use the get and set methods
+(17) <-> (17)
+	* corresponding to the following properties:
+	* corresponding to the following properties:
+(18) <-> (18)
+	* <dl>
+	* <dl>
+(19) <-> (19)
+	* <dt>height</dt><dd>the height of the font in points</dd>
+	* <dt>height</dt><dd>the height of the font in points</dd>
+(20) <-> (20)
+	* <dt>name</dt><dd>the face name of the font, which may include the foundry</dd>
+	* <dt>name</dt><dd>the face name of the font, which may include the foundry</dd>
+(21) <-> (21)
+	* <dt>style</dt><dd>A bitwise combination of NORMAL, ITALIC and BOLD</dd>
+	* <dt>style</dt><dd>A bitwise combination of NORMAL, ITALIC and BOLD</dd>
+(22) <-> (22)
+	* </dl>
+	* </dl>
+(23) <-> (23)
+	* If extra, platform-dependent functionality is required:
+	* If extra, platform-dependent functionality is required:
+(24) <-> (24)
+	* <ul>
+	* <ul>
+(25) <-> (25)
+	* <li>On <em>Windows</em>, the data member of the <code>FontData</code>
+	* <li>On <em>Windows</em>, the data member of the <code>FontData</code>
+(26) <-> (26)
+	* corresponds to a Windows <code>LOGFONT</code> structure whose fields
+	* corresponds to a Windows <code>LOGFONT</code> structure whose fields
+(27) <-> (27)
+	* may be retrieved and modified.</li>
+	* may be retrieved and modified.</li>
+(28) <-> (28)
+	* <li>On <em>X</em>, the fields of the <code>FontData</code> correspond
+	* <li>On <em>X</em>, the fields of the <code>FontData</code> correspond
+(29) <-> (29)
+	* to the entries in the font's XLFD name and may be retrieved and modified.
+	* to the entries in the font's XLFD name and may be retrieved and modified.
+(30) <-> (30)
+	* </ul>
+	* </ul>
+(31) <-> (31)
+	* Application code does <em>not</em> need to explicitly release the
+	* Application code does <em>not</em> need to explicitly release the
+(32) <-> (32)
+	* resources managed by each instance when those instances are no longer
+	* resources managed by each instance when those instances are no longer
+(33) <-> (33)
+	* required, and thus no <code>dispose()</code> method is provided.
+	* required, and thus no <code>dispose()</code> method is provided.
+(34) <-> (34)
+	*
+	*
+(35) <-> (35)
+	* @see Font
+	* @see Font
+(36) <-> (36)
+	*/
+	*/
+(37) <-> (37)
+	public final class FontData {
+	public final class FontData {
+(38) <-> (38)
+	/**
+	/**
+(39) <-> (39)
+	* The font foundry.
+	* the font name
+(40) <-> (40)
+	* Warning: This field is platform dependent.
+	* (Warning: This field is platform dependent)
+(41) <-> (59)
+	*/
+	*/
+(43) <-> (62)
+	/**
+	/**
+(44) <-> (51)
+	* The font family.
+	* the font style
+(45) <-> (58)
+	* Warning: This field is platform dependent.
+	* (Warning: These fields are platform dependent)
+(46) <-> (41)
+	*/
+	*/
+(47) <-> (42)
+	public String fontFamily;
+	public String name;
+(48) <-> (44)
+	/**
+	/**
+(49) <-> (45)
+	* The height of the font data in points
+	* The height of the font data in points
+(50) <-> (46)
+	* (Warning: This field is platform dependent)
+	* (Warning: This field is platform dependent)
+(51) <-> (47)
+	*/
+	*/
+(52) <-> (48)
+	public int height;
+	public int height;
+(53) <-> (50)
+	/**
+	/**
+(54) <-> (57)
+	* The font style.
+	* The locales of the font
+(55) <-> (52)
+	* Warning: This field is platform dependent.
+	* (Warning: This field is platform dependent)
+(56) <-> (53)
+	*/
+	*/
+(57) <-> (54)
+	public int style;
+	public int style;
+(66) <-> (56)
+	/**
+	/**
+(67) <-> (63)
+	* Constructs a new un-initialized font data.
+	* Constructs a new un-initialized font data.
+(68) <-> (64)
+	*/
+	*/
+(69) <-> (65)
+	public FontData () {
+	public FontData () {
+(70) <-> (67)
+	}
+	}
+(71) <-> (69)
+	/**
+	/**
+(72) <-> (70)
+	* Constructs a new FontData given a string representation
+	* Constructs a new FontData given a string representation
+(73) <-> (71)
+	* in the form generated by the <code>FontData.toString</code>
+	* in the form generated by the <code>FontData.toString</code>
+(74) <-> (72)
+	* method.
+	* method.
+(75) <-> (73)
+	* <p>
+	* <p>
+(76) <-> (74)
+	* Note that the representation varies between platforms,
+	* Note that the representation varies between platforms,
+(77) <-> (75)
+	* and a FontData can only be created from a string that was
+	* and a FontData can only be created from a string that was
+(78) <-> (76)
+	* generated on the same platform.
+	* generated on the same platform.
+(79) <-> (77)
+	* </p>
+	* </p>
+(80) <-> (78)
+	*
+	*
+(81) <-> (79)
+	* @param string the string representation of a <code>FontData</code> (must not be null)
+	* @param string the string representation of a <code>FontData</code> (must not be null)
+(82) <-> (80)
+	*
+	*
+(83) <-> (81)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(84) <-> (82)
+	* <li>ERROR_NULL_ARGUMENT - if the argument is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the argument is null</li>
+(85) <-> (83)
+	* <li>ERROR_INVALID_ARGUMENT - if the argument does not represent a valid description</li>
+	* <li>ERROR_INVALID_ARGUMENT - if the argument does not represent a valid description</li>
+(86) <-> (84)
+	* </ul>
+	* </ul>
+(87) <-> (85)
+	*
+	*
+(88) <-> (86)
+	* @see #toString
+	* @see #toString
+(89) <-> (87)
+	*/
+	*/
+(90) <-> (88)
+	public FontData(String string) {
+	public FontData(String string) {
+(91) <-> (89)
+	if (string == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (string == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(94) <-> (90)
+	int start= 0;
+	int start = 0;
+(95) <-> (121)
+	int stop= string.indexOf("|");
+	end = string.indexOf('|', start);
+(96) <-> (131)
+	String name= string.substring(start, stop);
+	String version2 = string.substring(start, end);
+(97) <-> (128)
+	start= stop+1;
+	start = end + 1;
+(98) <-> (129)
+	stop= string.indexOf("|", start);
+	end = string.indexOf('|', start);
+(99) <-> (103)
+	int height= 0;
+	int height = 0;
+(100) <-> (104)
+	try {
+	try {
+(101) <-> (115)
+	height= Integer.parseInt(string.substring(start, stop));
+	style = Integer.parseInt(string.substring(start, end));
+(102) <-> (116)
+	} catch (NumberFormatException ex) {
+	} catch (NumberFormatException e) {
+(103) <-> (108)
+	}
+	}
+(104) <-> (120)
+	start= stop+1;
+	start = end + 1;
+(105) <-> (113)
+	int style= 0;
+	int style = 0;
+(106) <-> (114)
+	try {
+	try {
+(107) <-> (105)
+	style= Integer.parseInt(string.substring(start));
+	height = Integer.parseInt(string.substring(start, end));
+(108) <-> (106)
+	} catch (NumberFormatException ex) {
+	} catch (NumberFormatException e) {
+(109) <-> (118)
+	}
+	}
+(113) <-> (122)
+	setName(name);
+	setName(name);
+(114) <-> (123)
+	setHeight(height);
+	setHeight(height);
+(115) <-> (124)
+	setStyle(style);
+	setStyle(style);
+(116) <-> (135)
+	}
+	}
+(117) <-> (138)
+	/**
+	/**
+(118) <-> (139)
+	* Constructs a new font data given a font name,
+	* Constructs a new font data given a font name,
+(119) <-> (140)
+	* the height of the desired font in points,
+	* the height of the desired font in points,
+(120) <-> (141)
+	* and a font style.
+	* and a font style.
+(121) <-> (142)
+	*
+	*
+(122) <-> (143)
+	* @param name the name of the font (must not be null)
+	* @param name the name of the font (must not be null)
+(123) <-> (144)
+	* @param height the font height in points
+	* @param height the font height in points
+(124) <-> (145)
+	* @param style a bit or combination of NORMAL, BOLD, ITALIC
+	* @param style a bit or combination of NORMAL, BOLD, ITALIC
+(125) <-> (146)
+	*
+	*
+(126) <-> (147)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(127) <-> (148)
+	* <li>ERROR_NULL_ARGUMENT - when the font name is null</li>
+	* <li>ERROR_NULL_ARGUMENT - when the font name is null</li>
+(128) <-> (149)
+	* <li>ERROR_INVALID_ARGUMENT - if the height is negative</li>
+	* <li>ERROR_INVALID_ARGUMENT - if the height is negative</li>
+(129) <-> (150)
+	* </ul>
+	* </ul>
+(130) <-> (151)
+	*/
+	*/
+(131) <-> (152)
+	public FontData (String name, int height, int style) {
+	public FontData(String name, int height, int style) {
+(133) <-> (153)
+	setName(name);
+	setName(name);
+(134) <-> (154)
+	setHeight(height);
+	setHeight(height);
+(135) <-> (155)
+	setStyle(style);
+	setStyle(style);
+(136) <-> (156)
+	}
+	}
+(137) <-> (158)
+	/**
+	/**
+(138) <-> (159)
+	* Compares the argument to the receiver, and returns true
+	* Compares the argument to the receiver, and returns true
+(139) <-> (160)
+	* if they represent the <em>same</em> object using a class
+	* if they represent the <em>same</em> object using a class
+(140) <-> (161)
+	* specific comparison.
+	* specific comparison.
+(141) <-> (162)
+	*
+	*
+(142) <-> (163)
+	* @param object the object to compare with this object
+	* @param object the object to compare with this object
+(143) <-> (164)
+	* @return <code>true</code> if the object is the same as this object and <code>false</code> otherwise
+	* @return <code>true</code> if the object is the same as this object and <code>false</code> otherwise
+(144) <-> (165)
+	*
+	*
+(145) <-> (166)
+	* @see #hashCode
+	* @see #hashCode
+(146) <-> (167)
+	*/
+	*/
+(147) <-> (168)
+	public boolean equals (Object object) {
+	public boolean equals (Object object) {
+(149) <-> (173)
+	}
+	}
+(150) <-> (175)
+	/**
+	/**
+(151) <-> (176)
+	* Returns the height of the receiver in points.
+	* Returns the height of the receiver in points.
+(152) <-> (177)
+	*
+	*
+(153) <-> (178)
+	* @return the height of this FontData
+	* @return the height of this FontData
+(154) <-> (179)
+	*
+	*
+(155) <-> (180)
+	* @see #setHeight
+	* @see #setHeight
+(156) <-> (181)
+	*/
+	*/
+(157) <-> (182)
+	public int getHeight() {
+	public int getHeight() {
+(158) <-> (183)
+	return height;
+	return height;
+(159) <-> (184)
+	}
+	}
+(160) <-> (186)
+	/**
+	/**
+(161) <-> (187)
+	* Returns the name of the receiver.
+	* Returns the name of the receiver.
+(162) <-> (188)
+	* On platforms that support font foundries, the return value will
+	* On platforms that support font foundries, the return value will
+(163) <-> (189)
+	* be the foundry followed by a dash ("-") followed by the face name.
+	* be the foundry followed by a dash ("-") followed by the face name.
+(164) <-> (190)
+	*
+	*
+(165) <-> (191)
+	* @return the name of this <code>FontData</code>
+	* @return the name of this <code>FontData</code>
+(166) <-> (192)
+	*
+	*
+(167) <-> (193)
+	* @see #setName
+	* @see #setName
+(168) <-> (194)
+	*/
+	*/
+(169) <-> (195)
+	public String getName() {
+	public String getName() {
+(170) <-> (334)
+	StringBuffer buffer = new StringBuffer();
+	StringBuffer buffer = new StringBuffer();
+(171) <-> (263)
+	if (foundry != null) {
+	if (locale != null) {
+(172) <-> (340)
+	buffer.append(foundry);
+	buffer.append(getStyle());
+(173) <-> (341)
+	buffer.append("-");
+	buffer.append("|");
+(174) <-> (278)
+	}
+	}
+(176) <-> (342)
+	buffer.append(fontFamily);
+	buffer.append("CARBON|1|");
+(177) <-> (343)
+	return buffer.toString();
+	return buffer.toString();
+(178) <-> (197)
+	}
+	}
+(179) <-> (199)
+	/**
+	/**
+(180) <-> (200)
+	* Returns the style of the receiver which is a bitwise OR of
+	* Returns the style of the receiver which is a bitwise OR of
+(181) <-> (201)
+	* one or more of the <code>SWT</code> constants NORMAL, BOLD
+	* one or more of the <code>SWT</code> constants NORMAL, BOLD
+(182) <-> (202)
+	* and ITALIC.
+	* and ITALIC.
+(183) <-> (203)
+	*
+	*
+(184) <-> (204)
+	* @return the style of this <code>FontData</code>
+	* @return the style of this <code>FontData</code>
+(185) <-> (205)
+	*
+	*
+(186) <-> (206)
+	* @see #setStyle
+	* @see #setStyle
+(187) <-> (207)
+	*/
+	*/
+(188) <-> (208)
+	public int getStyle() {
+	public int getStyle() {
+(189) <-> (209)
+	return style;
+	return style;
+(190) <-> (210)
+	}
+	}
+(191) <-> (212)
+	/**
+	/**
+(192) <-> (213)
+	* Returns an integer hash code for the receiver. Any two
+	* Returns an integer hash code for the receiver. Any two
+(193) <-> (214)
+	* objects which return <code>true</code> when passed to
+	* objects which return <code>true</code> when passed to
+(194) <-> (215)
+	* <code>equals</code> must return the same value for this
+	* <code>equals</code> must return the same value for this
+(195) <-> (216)
+	* method.
+	* method.
+(196) <-> (217)
+	*
+	*
+(197) <-> (218)
+	* @return the receiver's hash
+	* @return the receiver's hash
+(198) <-> (219)
+	*
+	*
+(199) <-> (220)
+	* @see #equals
+	* @see #equals
+(200) <-> (221)
+	*/
+	*/
+(201) <-> (222)
+	public int hashCode () {
+	public int hashCode () {
+(203) <-> (274)
+	}
+	}
+(205) <-> (223)
+	return new FontData(xlfd);
+	return name.hashCode() ^ height ^ style;
+(206) <-> (224)
+	}
+	}
+(207) <-> (226)
+	/**
+	/**
+(208) <-> (227)
+	* Sets the height of the receiver. The parameter is
+	* Sets the height of the receiver. The parameter is
+(209) <-> (228)
+	* specified in terms of points, where a point is one
+	* specified in terms of points, where a point is one
+(210) <-> (229)
+	* seventy-second of an inch.
+	* seventy-second of an inch.
+(211) <-> (230)
+	*
+	*
+(212) <-> (231)
+	* @param height the height of the <code>FontData</code>
+	* @param height the height of the <code>FontData</code>
+(213) <-> (232)
+	*
+	*
+(214) <-> (233)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(215) <-> (234)
+	* <li>ERROR_INVALID_ARGUMENT - if the height is negative</li>
+	* <li>ERROR_INVALID_ARGUMENT - if the height is negative</li>
+(216) <-> (235)
+	* </ul>
+	* </ul>
+(217) <-> (236)
+	*
+	*
+(218) <-> (237)
+	* @see #getHeight
+	* @see #getHeight
+(219) <-> (238)
+	*/
+	*/
+(220) <-> (239)
+	public void setHeight(int height) {
+	public void setHeight(int height) {
+(221) <-> (240)
+	if (height < 0) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	if (height < 0) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+(222) <-> (241)
+	this.height = height;
+	this.height = height;
+(223) <-> (242)
+	}
+	}
+(224) <-> (244)
+	/**
+	/**
+(225) <-> (282)
+	* Sets the name of the receiver.
+	* Sets the name of the receiver.
+(226) <-> (283)
+	* <p>
+	* <p>
+(227) <-> (284)
+	* Some platforms support font foundries. On these platforms, the name
+	* Some platforms support font foundries. On these platforms, the name
+(228) <-> (285)
+	* of the font specified in setName() may have one of the following forms:
+	* of the font specified in setName() may have one of the following forms:
+(229) <-> (286)
+	* <ol>
+	* <ol>
+(230) <-> (287)
+	* <li>a face name (for example, "courier")</li>
+	* <li>a face name (for example, "courier")</li>
+(231) <-> (288)
+	* <li>a foundry followed by a dash ("-") followed by a face name (for example, "adobe-courier")</li>
+	* <li>a foundry followed by a dash ("-") followed by a face name (for example, "adobe-courier")</li>
+(232) <-> (289)
+	* </ol>
+	* </ol>
+(233) <-> (290)
+	* In either case, the name returned from getName() will include the
+	* In either case, the name returned from getName() will include the
+(234) <-> (291)
+	* foundry.
+	* foundry.
+(235) <-> (292)
+	* </p>
+	* </p>
+(236) <-> (293)
+	* <p>
+	* <p>
+(237) <-> (294)
+	* On platforms that do not support font foundries, only the face name
+	* On platforms that do not support font foundries, only the face name
+(238) <-> (295)
+	* (for example, "courier") is used in <code>setName()</code> and
+	* (for example, "courier") is used in <code>setName()</code> and
+(239) <-> (296)
+	* <code>getName()</code>.
+	* <code>getName()</code>.
+(240) <-> (297)
+	* </p>
+	* </p>
+(241) <-> (298)
+	*
+	*
+(242) <-> (299)
+	* @param name the name of the font data (must not be null)
+	* @param name the name of the font data (must not be null)
+(243) <-> (300)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(244) <-> (301)
+	* <li>ERROR_NULL_ARGUMENT - when the font name is null</li>
+	* <li>ERROR_NULL_ARGUMENT - when the font name is null</li>
+(245) <-> (302)
+	* </ul>
+	* </ul>
+(246) <-> (303)
+	*
+	*
+(247) <-> (304)
+	* @see #getName
+	* @see #getName
+(248) <-> (305)
+	*/
+	*/
+(249) <-> (306)
+	public void setName(String name) {
+	public void setName(String name) {
+(250) <-> (307)
+	if (name == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (name == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(251) <-> (91)
+	int dash = name.indexOf('-');
+	int end = string.indexOf('|');
+(252) <-> (269)
+	if (dash != -1) {
+	if (firstSep == -1) {
+(255) <-> (271)
+	} else {
+	} else {
+(257) <-> (279)
+	}
+	}
+(258) <-> (136)
+	}
+	}
+(259) <-> (281)
+	/**
+	/**
+(260) <-> (245)
+	* Sets the locale of the receiver.
+	* Sets the locale of the receiver.
+(261) <-> (246)
+	* <p>
+	* <p>
+(262) <-> (247)
+	* The locale determines which platform character set this
+	* The locale determines which platform character set this
+(263) <-> (248)
+	* font is going to use. Widgets and graphics operations that
+	* font is going to use. Widgets and graphics operations that
+(264) <-> (249)
+	* use this font will convert UNICODE strings to the platform
+	* use this font will convert UNICODE strings to the platform
+(265) <-> (250)
+	* character set of the specified locale.
+	* character set of the specified locale.
+(266) <-> (251)
+	* </p>
+	* </p>
+(267) <-> (252)
+	* <p>
+	* <p>
+(268) <-> (253)
+	* On platforms which there are multiple character sets for a
+	* On platforms which there are multiple character sets for a
+(269) <-> (254)
+	* given language/country locale, the variant portion of the
+	* given language/country locale, the variant portion of the
+(270) <-> (255)
+	* locale will determine the character set.
+	* locale will determine the character set.
+(271) <-> (256)
+	* </p>
+	* </p>
+(272) <-> (257)
+	*
+	*
+(273) <-> (258)
+	* @param locale the <code>String</code> representing a Locale object
+	* @param locale the <code>String</code> representing a Locale object
+(274) <-> (259)
+	* @see java.util.Locale#toString
+	* @see java.util.Locale#toString
+(275) <-> (260)
+	*/
+	*/
+(276) <-> (261)
+	public void setLocale(String locale) {
+	public void setLocale(String locale) {
+(277) <-> (309)
+	}
+	}
+(278) <-> (311)
+	/**
+	/**
+(279) <-> (312)
+	* Sets the style of the receiver to the argument which must
+	* Sets the style of the receiver to the argument which must
+(280) <-> (313)
+	* be a bitwise OR of one or more of the <code>SWT</code>
+	* be a bitwise OR of one or more of the <code>SWT</code>
+(281) <-> (314)
+	* constants NORMAL, BOLD and ITALIC.
+	* constants NORMAL, BOLD and ITALIC.
+(282) <-> (315)
+	*
+	*
+(283) <-> (316)
+	* @param style the new style for this <code>FontData</code>
+	* @param style the new style for this <code>FontData</code>
+(284) <-> (317)
+	*
+	*
+(285) <-> (318)
+	* @see #getStyle
+	* @see #getStyle
+(286) <-> (319)
+	*/
+	*/
+(287) <-> (320)
+	public void setStyle(int style) {
+	public void setStyle(int style) {
+(288) <-> (321)
+	this.style= style;
+	this.style = style;
+(289) <-> (322)
+	}
+	}
+(290) <-> (324)
+	/**
+	/**
+(291) <-> (325)
+	* Returns a string representation of the receiver which is suitable
+	* Returns a string representation of the receiver which is suitable
+(292) <-> (326)
+	* for constructing an equivalent instance using the
+	* for constructing an equivalent instance using the
+(293) <-> (327)
+	* <code>FontData(String)</code> constructor.
+	* <code>FontData(String)</code> constructor.
+(294) <-> (328)
+	*
+	*
+(295) <-> (329)
+	* @return a string representation of the FontData
+	* @return a string representation of the FontData
+(296) <-> (330)
+	*
+	*
+(297) <-> (331)
+	* @see FontData
+	* @see FontData
+(298) <-> (332)
+	*/
+	*/
+(299) <-> (333)
+	public String toString() {
+	public String toString() {
+(301) <-> (344)
+	}
+	}
+(302) <-> (346)
+	}
+	}
+Number of lines in left file: 294
+Number of lines in right file: 319
+Number of lines matched: 276

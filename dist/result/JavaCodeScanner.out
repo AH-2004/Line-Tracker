@@ -1,0 +1,211 @@
+Diff: ./reference/dataset/JavaCodeScanner_1.java ./reference/dataset/JavaCodeScanner_2.java
+(1) <-> (1)
+	package org.eclipse.jdt.internal.ui.text.java;
+	package org.eclipse.jdt.internal.ui.text.java;
+(3) <-> (3)
+	/*
+	/*
+(4) <-> (4)
+	* (c) Copyright IBM Corp. 2000, 2001.
+	* (c) Copyright IBM Corp. 2000, 2001.
+(5) <-> (5)
+	* All Rights Reserved.
+	* All Rights Reserved.
+(6) <-> (6)
+	*/
+	*/
+(8) <-> (9)
+	import java.util.ArrayList;
+	import java.util.ArrayList;
+(9) <-> (10)
+	import java.util.List;
+	import java.util.List;
+(11) <-> (12)
+	import org.eclipse.jface.text.TextAttribute;
+	import org.eclipse.jface.preference.IPreferenceStore;
+(12) <-> (13)
+	import org.eclipse.jface.text.rules.EndOfLineRule;
+	import org.eclipse.jface.text.rules.EndOfLineRule;
+(15) <-> (22)
+	import org.eclipse.jface.text.rules.RuleBasedScanner;
+	import org.eclipse.jdt.internal.ui.text.AbstractJavaScanner;
+(16) <-> (14)
+	import org.eclipse.jface.text.rules.SingleLineRule;
+	import org.eclipse.jface.text.rules.SingleLineRule;
+(17) <-> (15)
+	import org.eclipse.jface.text.rules.Token;
+	import org.eclipse.jface.text.rules.Token;
+(18) <-> (16)
+	import org.eclipse.jface.text.rules.WhitespaceRule;
+	import org.eclipse.jface.text.rules.WhitespaceRule;
+(19) <-> (17)
+	import org.eclipse.jface.text.rules.WordRule;
+	import org.eclipse.jface.text.rules.WordRule;
+(22) <-> (19)
+	import org.eclipse.jdt.ui.text.IColorManager;
+	import org.eclipse.jdt.ui.text.IColorManager;
+(23) <-> (20)
+	import org.eclipse.jdt.ui.text.IJavaColorConstants;
+	import org.eclipse.jdt.ui.text.IJavaColorConstants;
+(25) <-> (23)
+	import org.eclipse.jdt.internal.ui.text.JavaWhitespaceDetector;
+	import org.eclipse.jdt.internal.ui.text.JavaWhitespaceDetector;
+(26) <-> (24)
+	import org.eclipse.jdt.internal.ui.text.JavaWordDetector;
+	import org.eclipse.jdt.internal.ui.text.JavaWordDetector;
+(29) <-> (27)
+	/**
+	/**
+(30) <-> (28)
+	* A Java code scanner.
+	* A Java code scanner.
+(31) <-> (29)
+	*/
+	*/
+(32) <-> (30)
+	public class JavaCodeScanner extends RuleBasedScanner {
+	public final class JavaCodeScanner extends AbstractJavaScanner {
+(35) <-> (33)
+	private static String[] fgKeywords= {
+	private static String[] fgKeywords= {
+(36) <-> (34)
+	"abstract", //$NON-NLS-1$
+	"abstract", //$NON-NLS-1$
+(37) <-> (35)
+	"break", //$NON-NLS-1$
+	"break", //$NON-NLS-1$
+(38) <-> (36)
+	"case", "catch", "class", "const", "continue", //$NON-NLS-5$ //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+	"case", "catch", "class", "const", "continue", //$NON-NLS-5$ //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+(39) <-> (37)
+	"default", "do", //$NON-NLS-2$ //$NON-NLS-1$
+	"default", "do", //$NON-NLS-2$ //$NON-NLS-1$
+(40) <-> (38)
+	"else", "extends", //$NON-NLS-2$ //$NON-NLS-1$
+	"else", "extends", //$NON-NLS-2$ //$NON-NLS-1$
+(41) <-> (39)
+	"final", "finally", "for", //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+	"final", "finally", "for", //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+(42) <-> (40)
+	"goto", //$NON-NLS-1$
+	"goto", //$NON-NLS-1$
+(43) <-> (41)
+	"if", "implements", "import", "instanceof", "interface", //$NON-NLS-5$ //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+	"if", "implements", "import", "instanceof", "interface", //$NON-NLS-5$ //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+(44) <-> (42)
+	"native", "new", //$NON-NLS-2$ //$NON-NLS-1$
+	"native", "new", //$NON-NLS-2$ //$NON-NLS-1$
+(45) <-> (43)
+	"package", "private", "protected", "public", //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+	"package", "private", "protected", "public", //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+(46) <-> (44)
+	"return", //$NON-NLS-1$
+	"return", //$NON-NLS-1$
+(47) <-> (45)
+	"static", "super", "switch", "synchronized", //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+	"static", "super", "switch", "synchronized", //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+(48) <-> (46)
+	"this", "throw", "throws", "transient", "try", //$NON-NLS-5$ //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+	"this", "throw", "throws", "transient", "try", //$NON-NLS-5$ //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+(49) <-> (47)
+	"volatile", //$NON-NLS-1$
+	"volatile", //$NON-NLS-1$
+(50) <-> (48)
+	"while" //$NON-NLS-1$
+	"while" //$NON-NLS-1$
+(51) <-> (49)
+	};
+	};
+(53) <-> (51)
+	private static String[] fgTypes= { "void", "boolean", "char", "byte", "short", "strictfp", "int", "long", "float", "double" }; //$NON-NLS-1$ //$NON-NLS-5$ //$NON-NLS-7$ //$NON-NLS-6$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-2$
+	private static String[] fgTypes= { "void", "boolean", "char", "byte", "short", "strictfp", "int", "long", "float", "double" }; //$NON-NLS-1$ //$NON-NLS-5$ //$NON-NLS-7$ //$NON-NLS-6$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-2$
+(55) <-> (53)
+	private static String[] fgConstants= { "false", "null", "true" }; //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+	private static String[] fgConstants= { "false", "null", "true" }; //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
+(58) <-> (57)
+	private Token fKeyword;
+	IJavaColorConstants.JAVA_KEYWORD,
+(59) <-> (56)
+	private Token fType;
+	private String[] fgTokenProperties= {
+(65) <-> (63)
+	/**
+	/**
+(66) <-> (64)
+	* Creates a Java code scanner
+	* Creates a Java code scanner
+(67) <-> (65)
+	*/
+	*/
+(68) <-> (66)
+	public JavaCodeScanner(IColorManager manager) {
+	public JavaCodeScanner(IColorManager manager, IPreferenceStore store) {
+(71) <-> (111)
+	setDefaultReturnToken(new Token(new TextAttribute(manager.getColor(IJavaColorConstants.JAVA_DEFAULT))));
+	setDefaultReturnToken(getToken(IJavaColorConstants.JAVA_DEFAULT));
+(80) <-> (68)
+	initializeRules();
+	initialize();
+(82) <-> (69)
+	}
+	}
+(84) <-> (81)
+	private void initializeRules() {
+	protected List createRules() {
+(85) <-> (83)
+	List rules= new ArrayList();
+	List rules= new ArrayList();
+(90) <-> (85)
+	// Add rule for strings and character constants.
+	// Add rule for strings and character constants.
+(91) <-> (87)
+	rules.add(new SingleLineRule("\"", "\"", fString, '\\')); //$NON-NLS-2$ //$NON-NLS-1$
+	rules.add(new SingleLineRule("\"", "\"", token, '\\')); //$NON-NLS-2$ //$NON-NLS-1$
+(92) <-> (88)
+	rules.add(new SingleLineRule("'", "'", fString, '\\')); //$NON-NLS-2$ //$NON-NLS-1$
+	rules.add(new SingleLineRule("'", "'", token, '\\')); //$NON-NLS-2$ //$NON-NLS-1$
+(94) <-> (91)
+	// Add generic whitespace rule.
+	// Add generic whitespace rule.
+(95) <-> (92)
+	rules.add(new WhitespaceRule(new JavaWhitespaceDetector()));
+	rules.add(new WhitespaceRule(new JavaWhitespaceDetector()));
+(97) <-> (95)
+	// Add word rule for keywords, types, and constants.
+	// Add word rule for keywords, types, and constants.
+(98) <-> (97)
+	WordRule wordRule= new WordRule(new JavaWordDetector(), getDefaultReturnToken());
+	WordRule wordRule= new WordRule(new JavaWordDetector(), token);
+(99) <-> (100)
+	for (int i=0; i<fgKeywords.length; i++)
+	for (int i=0; i<fgKeywords.length; i++)
+(100) <-> (101)
+	wordRule.addWord(fgKeywords[i], fKeyword);
+	wordRule.addWord(fgKeywords[i], token);
+(101) <-> (104)
+	for (int i=0; i<fgTypes.length; i++)
+	for (int i=0; i<fgTypes.length; i++)
+(102) <-> (105)
+	wordRule.addWord(fgTypes[i], fType);
+	wordRule.addWord(fgTypes[i], token);
+(103) <-> (106)
+	for (int i=0; i<fgConstants.length; i++)
+	for (int i=0; i<fgConstants.length; i++)
+(104) <-> (107)
+	wordRule.addWord(fgConstants[i], fType);
+	wordRule.addWord(fgConstants[i], token);
+(105) <-> (109)
+	rules.add(wordRule);
+	rules.add(wordRule);
+(110) <-> (76)
+	}
+	}
+(122) <-> (113)
+	}
+	}
+(123) <-> (114)
+	}
+	}
+Number of lines in left file: 94
+Number of lines in right file: 87
+Number of lines matched: 69

@@ -1,0 +1,547 @@
+Diff: ./reference/dataset/ASTResolving_1.java ./reference/dataset/ASTResolving_2.java
+(1) <-> (1)
+	/*******************************************************************************
+	/*******************************************************************************
+(2) <-> (2)
+	* Copyright (c) 2000, 2002 International Business Machines Corp. and others.
+	* Copyright (c) 2000, 2002 International Business Machines Corp. and others.
+(3) <-> (3)
+	* All rights reserved. This program and the accompanying materials
+	* All rights reserved. This program and the accompanying materials
+(4) <-> (4)
+	* are made available under the terms of the Common Public License v0.5
+	* are made available under the terms of the Common Public License v0.5
+(5) <-> (5)
+	* which accompanies this distribution, and is available at
+	* which accompanies this distribution, and is available at
+(6) <-> (6)
+	* http://www.eclipse.org/legal/cpl-v05.html
+	* http://www.eclipse.org/legal/cpl-v05.html
+(7) <-> (7)
+	*
+	*
+(8) <-> (8)
+	* Contributors:
+	* Contributors:
+(9) <-> (9)
+	* IBM Corporation - initial API and implementation
+	* IBM Corporation - initial API and implementation
+(10) <-> (10)
+	******************************************************************************/
+	******************************************************************************/
+(12) <-> (12)
+	package org.eclipse.jdt.internal.ui.text.correction;
+	package org.eclipse.jdt.internal.ui.text.correction;
+(14) <-> (14)
+	import java.util.List;
+	import java.util.List;
+(16) <-> (16)
+	import org.eclipse.jdt.core.IBuffer;
+	import org.eclipse.jdt.core.IBuffer;
+(17) <-> (17)
+	import org.eclipse.jdt.core.ICompilationUnit;
+	import org.eclipse.jdt.core.ICompilationUnit;
+(18) <-> (18)
+	import org.eclipse.jdt.core.JavaModelException;
+	import org.eclipse.jdt.core.JavaModelException;
+(19) <-> (19)
+	import org.eclipse.jdt.core.ToolFactory;
+	import org.eclipse.jdt.core.ToolFactory;
+(20) <-> (20)
+	import org.eclipse.jdt.core.compiler.IScanner;
+	import org.eclipse.jdt.core.compiler.IScanner;
+(21) <-> (21)
+	import org.eclipse.jdt.core.compiler.InvalidInputException;
+	import org.eclipse.jdt.core.compiler.InvalidInputException;
+(22) <-> (22)
+	import org.eclipse.jdt.core.dom.ASTNode;
+	import org.eclipse.jdt.core.dom.ASTNode;
+(23) <-> (23)
+	import org.eclipse.jdt.core.dom.ArrayAccess;
+	import org.eclipse.jdt.core.dom.ArrayAccess;
+(24) <-> (24)
+	import org.eclipse.jdt.core.dom.ArrayCreation;
+	import org.eclipse.jdt.core.dom.ArrayCreation;
+(25) <-> (26)
+	import org.eclipse.jdt.core.dom.ArrayInitializer;
+	import org.eclipse.jdt.core.dom.BodyDeclaration;
+(26) <-> (25)
+	import org.eclipse.jdt.core.dom.Assignment;
+	import org.eclipse.jdt.core.dom.Assignment;
+(27) <-> (27)
+	import org.eclipse.jdt.core.dom.ClassInstanceCreation;
+	import org.eclipse.jdt.core.dom.ClassInstanceCreation;
+(28) <-> (28)
+	import org.eclipse.jdt.core.dom.CompilationUnit;
+	import org.eclipse.jdt.core.dom.CompilationUnit;
+(29) <-> (29)
+	import org.eclipse.jdt.core.dom.ConditionalExpression;
+	import org.eclipse.jdt.core.dom.ConditionalExpression;
+(30) <-> (30)
+	import org.eclipse.jdt.core.dom.ConstructorInvocation;
+	import org.eclipse.jdt.core.dom.ConstructorInvocation;
+(32) <-> (31)
+	import org.eclipse.jdt.core.dom.Expression;
+	import org.eclipse.jdt.core.dom.Expression;
+(33) <-> (33)
+	import org.eclipse.jdt.core.dom.IMethodBinding;
+	import org.eclipse.jdt.core.dom.IMethodBinding;
+(34) <-> (34)
+	import org.eclipse.jdt.core.dom.ITypeBinding;
+	import org.eclipse.jdt.core.dom.ITypeBinding;
+(35) <-> (40)
+	import org.eclipse.jdt.core.dom.IfStatement;
+	import org.eclipse.jdt.core.dom.Statement;
+(36) <-> (35)
+	import org.eclipse.jdt.core.dom.InfixExpression;
+	import org.eclipse.jdt.core.dom.InfixExpression;
+(37) <-> (36)
+	import org.eclipse.jdt.core.dom.MethodDeclaration;
+	import org.eclipse.jdt.core.dom.MethodDeclaration;
+(38) <-> (37)
+	import org.eclipse.jdt.core.dom.MethodInvocation;
+	import org.eclipse.jdt.core.dom.MethodInvocation;
+(40) <-> (32)
+	import org.eclipse.jdt.core.dom.PostfixExpression;
+	import org.eclipse.jdt.core.dom.FieldDeclaration;
+(41) <-> (38)
+	import org.eclipse.jdt.core.dom.PrefixExpression;
+	import org.eclipse.jdt.core.dom.PrefixExpression;
+(43) <-> (39)
+	import org.eclipse.jdt.core.dom.SimpleName;
+	import org.eclipse.jdt.core.dom.SimpleName;
+(44) <-> (41)
+	import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
+	import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
+(45) <-> (42)
+	import org.eclipse.jdt.core.dom.SwitchStatement;
+	import org.eclipse.jdt.core.dom.SwitchStatement;
+(46) <-> (43)
+	import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+	import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+(47) <-> (44)
+	import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+	import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+(50) <-> (46)
+	import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+	import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+(51) <-> (47)
+	import org.eclipse.jdt.internal.corext.dom.Selection;
+	import org.eclipse.jdt.internal.corext.dom.Selection;
+(52) <-> (48)
+	import org.eclipse.jdt.internal.corext.dom.SelectionAnalyzer;
+	import org.eclipse.jdt.internal.corext.dom.SelectionAnalyzer;
+(54) <-> (50)
+	public class ASTResolving {
+	public class ASTResolving {
+(56) <-> (52)
+	public static ASTNode findSelectedNode(CompilationUnit cuNode, int offset, int length) {
+	public static ASTNode findSelectedNode(CompilationUnit cuNode, int offset, int length) {
+(57) <-> (53)
+	SelectionAnalyzer analyzer= new SelectionAnalyzer(Selection.createFromStartLength(offset, length), true);
+	SelectionAnalyzer analyzer= new SelectionAnalyzer(Selection.createFromStartLength(offset, length), true);
+(58) <-> (54)
+	cuNode.accept(analyzer);
+	cuNode.accept(analyzer);
+(60) <-> (56)
+	return analyzer.getFirstSelectedNode();
+	return analyzer.getFirstSelectedNode();
+(61) <-> (57)
+	}
+	}
+(63) <-> (59)
+	public static ITypeBinding getTypeBinding(ASTNode node) {
+	public static ITypeBinding getTypeBinding(ASTNode node) {
+(64) <-> (60)
+	ITypeBinding binding= getPossibleTypeBinding(node);
+	ITypeBinding binding= getPossibleTypeBinding(node);
+(65) <-> (61)
+	if (binding != null) {
+	if (binding != null) {
+(66) <-> (62)
+	if (binding.isAnonymous()) {
+	if (binding.isAnonymous()) {
+(67) <-> (63)
+	return binding.getSuperclass();
+	return binding.getSuperclass();
+(68) <-> (64)
+	} else if (binding.isPrimitive()) {
+	} else if (binding.isPrimitive()) {
+(69) <-> (65)
+	String name= binding.getName();
+	String name= binding.getName();
+(70) <-> (66)
+	if ("void".equals(name) || "null".equals(name)) { //$NON-NLS-1$ //$NON-NLS-2$
+	if ("void".equals(name) || "null".equals(name)) { //$NON-NLS-1$ //$NON-NLS-2$
+(71) <-> (67)
+	return node.getAST().resolveWellKnownType("java.lang.Object"); //$NON-NLS-1$
+	return node.getAST().resolveWellKnownType("java.lang.Object"); //$NON-NLS-1$
+(72) <-> (68)
+	}
+	}
+(73) <-> (69)
+	}
+	}
+(74) <-> (70)
+	}
+	}
+(75) <-> (71)
+	return binding;
+	return binding;
+(76) <-> (72)
+	}
+	}
+(81) <-> (77)
+	private static ITypeBinding getPossibleTypeBinding(ASTNode node) {
+	private static ITypeBinding getPossibleTypeBinding(ASTNode node) {
+(82) <-> (78)
+	ASTNode parent= node.getParent();
+	ASTNode parent= node.getParent();
+(83) <-> (80)
+	if (parent instanceof Assignment) {
+	case ASTNode.ASSIGNMENT:
+(84) <-> (81)
+	Assignment assignment= (Assignment) parent;
+	Assignment assignment= (Assignment) parent;
+(85) <-> (82)
+	if (node.equals(assignment.getLeftHandSide())) {
+	if (node.equals(assignment.getLeftHandSide())) {
+(86) <-> (83)
+	// field write access: xx= expression
+	// field write access: xx= expression
+(87) <-> (84)
+	return assignment.getRightHandSide().resolveTypeBinding();
+	return assignment.getRightHandSide().resolveTypeBinding();
+(88) <-> (85)
+	}
+	}
+(89) <-> (86)
+	// read access
+	// read access
+(90) <-> (87)
+	return assignment.getLeftHandSide().resolveTypeBinding();
+	return assignment.getLeftHandSide().resolveTypeBinding();
+(91) <-> (88)
+	} else if (parent instanceof InfixExpression) {
+	case ASTNode.INFIX_EXPRESSION:
+(92) <-> (89)
+	InfixExpression infix= (InfixExpression) parent;
+	InfixExpression infix= (InfixExpression) parent;
+(93) <-> (90)
+	InfixExpression.Operator op= infix.getOperator();
+	InfixExpression.Operator op= infix.getOperator();
+(94) <-> (91)
+	if (node.equals(infix.getLeftOperand())) {
+	if (node.equals(infix.getLeftOperand())) {
+(95) <-> (92)
+	// xx == expression
+	// xx == expression
+(96) <-> (93)
+	if (op == InfixExpression.Operator.INSTANCEOF) {
+	if (op == InfixExpression.Operator.INSTANCEOF) {
+(97) <-> (94)
+	ASTNode left= infix.getRightOperand();
+	ASTNode left= infix.getRightOperand();
+(98) <-> (95)
+	if (left instanceof SimpleName) {
+	if (left instanceof SimpleName) {
+(99) <-> (96)
+	return ASTNodes.getTypeBinding(((SimpleName) left));
+	return ASTNodes.getTypeBinding(((SimpleName) left));
+(100) <-> (97)
+	}
+	}
+(101) <-> (98)
+	}
+	}
+(102) <-> (99)
+	return infix.getRightOperand().resolveTypeBinding();
+	return infix.getRightOperand().resolveTypeBinding();
+(103) <-> (100)
+	}
+	}
+(104) <-> (101)
+	// expression == xx
+	// expression == xx
+(105) <-> (102)
+	if (op == InfixExpression.Operator.LEFT_SHIFT || op == InfixExpression.Operator.RIGHT_SHIFT_UNSIGNED
+	if (op == InfixExpression.Operator.LEFT_SHIFT || op == InfixExpression.Operator.RIGHT_SHIFT_UNSIGNED
+(106) <-> (103)
+	|| op == InfixExpression.Operator.RIGHT_SHIFT_SIGNED) {
+	|| op == InfixExpression.Operator.RIGHT_SHIFT_SIGNED) {
+(107) <-> (104)
+	return infix.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+	return infix.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+(108) <-> (105)
+	}
+	}
+(109) <-> (106)
+	return infix.getLeftOperand().resolveTypeBinding();
+	return infix.getLeftOperand().resolveTypeBinding();
+(110) <-> (107)
+	} else if (parent instanceof VariableDeclarationFragment) {
+	case ASTNode.VARIABLE_DECLARATION_FRAGMENT:
+(111) <-> (108)
+	VariableDeclarationFragment frag= (VariableDeclarationFragment) parent;
+	VariableDeclarationFragment frag= (VariableDeclarationFragment) parent;
+(112) <-> (109)
+	if (frag.getInitializer().equals(node)) {
+	if (frag.getInitializer().equals(node)) {
+(114) <-> (111)
+	VariableDeclarationStatement stmt= (VariableDeclarationStatement) frag.getParent();
+	if (declaration instanceof VariableDeclarationStatement) {
+(115) <-> (114)
+	return stmt.getType().resolveBinding();
+	return ((FieldDeclaration)declaration).getType().resolveBinding();
+(116) <-> (115)
+	}
+	}
+(117) <-> (113)
+	} else if (parent instanceof MethodInvocation) {
+	} else if (declaration instanceof FieldDeclaration) {
+(118) <-> (119)
+	MethodInvocation invocation= (MethodInvocation) parent;
+	MethodInvocation methodInvocation= (MethodInvocation) parent;
+(119) <-> (120)
+	SimpleName name= invocation.getName();
+	SimpleName name= methodInvocation.getName();
+(120) <-> (121)
+	IMethodBinding binding= ASTNodes.getMethodBinding(name);
+	IMethodBinding methodBinding= ASTNodes.getMethodBinding(name);
+(121) <-> (122)
+	if (binding != null) {
+	if (methodBinding != null) {
+(122) <-> (123)
+	return getParameterTypeBinding(node, invocation.arguments(), binding);
+	return getParameterTypeBinding(node, methodInvocation.arguments(), methodBinding);
+(123) <-> (116)
+	}
+	}
+(125) <-> (127)
+	SuperConstructorInvocation invocation= (SuperConstructorInvocation) parent;
+	SuperConstructorInvocation superInvocation= (SuperConstructorInvocation) parent;
+(126) <-> (128)
+	IMethodBinding binding= invocation.resolveConstructorBinding();
+	IMethodBinding superBinding= superInvocation.resolveConstructorBinding();
+(127) <-> (129)
+	if (binding != null) {
+	if (superBinding != null) {
+(128) <-> (130)
+	return getParameterTypeBinding(node, invocation.arguments(), binding);
+	return getParameterTypeBinding(node, superInvocation.arguments(), superBinding);
+(129) <-> (124)
+	}
+	}
+(131) <-> (134)
+	ConstructorInvocation invocation= (ConstructorInvocation) parent;
+	ConstructorInvocation constrInvocation= (ConstructorInvocation) parent;
+(132) <-> (135)
+	IMethodBinding binding= invocation.resolveConstructorBinding();
+	IMethodBinding constrBinding= constrInvocation.resolveConstructorBinding();
+(133) <-> (136)
+	if (binding != null) {
+	if (constrBinding != null) {
+(134) <-> (137)
+	return getParameterTypeBinding(node, invocation.arguments(), binding);
+	return getParameterTypeBinding(node, constrInvocation.arguments(), constrBinding);
+(135) <-> (131)
+	}
+	}
+(137) <-> (141)
+	ClassInstanceCreation creation= (ClassInstanceCreation) parent;
+	ClassInstanceCreation creation= (ClassInstanceCreation) parent;
+(138) <-> (142)
+	IMethodBinding binding= creation.resolveConstructorBinding();
+	IMethodBinding creationBinding= creation.resolveConstructorBinding();
+(139) <-> (143)
+	if (binding != null) {
+	if (creationBinding != null) {
+(140) <-> (144)
+	return getParameterTypeBinding(node, creation.arguments(), binding);
+	return getParameterTypeBinding(node, creation.arguments(), creationBinding);
+(141) <-> (145)
+	}
+	}
+(143) <-> (148)
+	return getTypeBinding(parent);
+	return getTypeBinding(parent);
+(145) <-> (150)
+	if (((ArrayAccess) parent).getIndex().equals(node)) {
+	if (((ArrayAccess) parent).getIndex().equals(node)) {
+(146) <-> (151)
+	return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+	return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+(147) <-> (152)
+	}
+	}
+(149) <-> (155)
+	if (((ArrayCreation) parent).dimensions().contains(node)) {
+	if (((ArrayCreation) parent).dimensions().contains(node)) {
+(150) <-> (156)
+	return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+	return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+(151) <-> (157)
+	}
+	}
+(153) <-> (229)
+	ASTNode creation= parent.getParent();
+	node= node.getParent();
+(154) <-> (161)
+	if (creation instanceof ArrayCreation) {
+	if (initializerParent instanceof ArrayCreation) {
+(155) <-> (162)
+	return ((ArrayCreation) creation).getType().getElementType().resolveBinding();
+	return ((ArrayCreation) initializerParent).getType().getElementType().resolveBinding();
+(156) <-> (163)
+	}
+	}
+(158) <-> (166)
+	ConditionalExpression expression= (ConditionalExpression) parent;
+	ConditionalExpression expression= (ConditionalExpression) parent;
+(159) <-> (167)
+	if (node.equals(expression.getExpression())) {
+	if (node.equals(expression.getExpression())) {
+(160) <-> (168)
+	return parent.getAST().resolveWellKnownType("boolean"); //$NON-NLS-1$
+	return parent.getAST().resolveWellKnownType("boolean"); //$NON-NLS-1$
+(161) <-> (169)
+	} else {
+	}
+(162) <-> (170)
+	if (node.equals(expression.getElseExpression())) {
+	if (node.equals(expression.getElseExpression())) {
+(163) <-> (171)
+	return expression.getThenExpression().resolveTypeBinding();
+	return expression.getThenExpression().resolveTypeBinding();
+(164) <-> (172)
+	}
+	}
+(165) <-> (173)
+	return expression.getElseExpression().resolveTypeBinding();
+	return expression.getElseExpression().resolveTypeBinding();
+(166) <-> (232)
+	}
+	}
+(168) <-> (175)
+	return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+	return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+(170) <-> (177)
+	if (((PrefixExpression) parent).getOperator() == PrefixExpression.Operator.NOT) {
+	if (((PrefixExpression) parent).getOperator() == PrefixExpression.Operator.NOT) {
+(171) <-> (178)
+	return parent.getAST().resolveWellKnownType("boolean"); //$NON-NLS-1$
+	return parent.getAST().resolveWellKnownType("boolean"); //$NON-NLS-1$
+(173) <-> (180)
+	return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+	return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+(174) <-> (179)
+	}
+	}
+(176) <-> (184)
+	if (node instanceof Expression) {
+	if (node instanceof Expression) {
+(177) <-> (185)
+	return parent.getAST().resolveWellKnownType("boolean"); //$NON-NLS-1$
+	return parent.getAST().resolveWellKnownType("boolean"); //$NON-NLS-1$
+(178) <-> (186)
+	}
+	}
+(180) <-> (189)
+	if (((SwitchStatement) parent).getExpression().equals(node)) {
+	if (((SwitchStatement) parent).getExpression().equals(node)) {
+(181) <-> (190)
+	return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+	return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+(182) <-> (191)
+	}
+	}
+(184) <-> (194)
+	MethodDeclaration decl= findParentMethodDeclaration(parent);
+	MethodDeclaration decl= findParentMethodDeclaration(parent);
+(185) <-> (195)
+	if (decl != null) {
+	if (decl != null) {
+(186) <-> (196)
+	return decl.getReturnType().resolveBinding();
+	return decl.getReturnType().resolveBinding();
+(187) <-> (197)
+	}
+	}
+(188) <-> (199)
+	}
+	}
+(190) <-> (201)
+	return null;
+	return null;
+(191) <-> (202)
+	}
+	}
+(193) <-> (204)
+	private static ITypeBinding getParameterTypeBinding(ASTNode node, List args, IMethodBinding binding) {
+	private static ITypeBinding getParameterTypeBinding(ASTNode node, List args, IMethodBinding binding) {
+(194) <-> (205)
+	ITypeBinding[] paramTypes= binding.getParameterTypes();
+	ITypeBinding[] paramTypes= binding.getParameterTypes();
+(195) <-> (206)
+	int index= args.indexOf(node);
+	int index= args.indexOf(node);
+(196) <-> (207)
+	if (index >= 0 && index < paramTypes.length) {
+	if (index >= 0 && index < paramTypes.length) {
+(197) <-> (208)
+	return paramTypes[index];
+	return paramTypes[index];
+(198) <-> (209)
+	}
+	}
+(199) <-> (210)
+	return null;
+	return null;
+(200) <-> (211)
+	}
+	}
+(202) <-> (213)
+	private static MethodDeclaration findParentMethodDeclaration(ASTNode node) {
+	private static MethodDeclaration findParentMethodDeclaration(ASTNode node) {
+(203) <-> (228)
+	while ((node != null) && !(node instanceof MethodDeclaration)) {
+	while ((node != null) && (!(node instanceof Statement))) {
+(204) <-> (215)
+	node= node.getParent();
+	node= node.getParent();
+(205) <-> (216)
+	}
+	}
+(206) <-> (217)
+	return (MethodDeclaration) node;
+	return (MethodDeclaration) node;
+(207) <-> (218)
+	}
+	}
+(209) <-> (234)
+	public static IScanner createScanner(ICompilationUnit cu, int pos) throws InvalidInputException, JavaModelException {
+	public static IScanner createScanner(ICompilationUnit cu, int pos) throws InvalidInputException, JavaModelException {
+(210) <-> (235)
+	IScanner scanner= ToolFactory.createScanner(false, false, false, false);
+	IScanner scanner= ToolFactory.createScanner(false, false, false, false);
+(211) <-> (236)
+	IBuffer buf= cu.getBuffer();
+	IBuffer buf= cu.getBuffer();
+(212) <-> (237)
+	scanner.setSource(buf.getCharacters());
+	scanner.setSource(buf.getCharacters());
+(213) <-> (238)
+	scanner.resetTo(pos, buf.getLength());
+	scanner.resetTo(pos, buf.getLength());
+(214) <-> (239)
+	return scanner;
+	return scanner;
+(215) <-> (240)
+	}
+	}
+(219) <-> (244)
+	}
+	}
+Number of lines in left file: 200
+Number of lines in right file: 223
+Number of lines matched: 181

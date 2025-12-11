@@ -1,0 +1,631 @@
+Diff: ./reference/dataset/DirectoryDialog_1.java ./reference/dataset/DirectoryDialog_2.java
+(1) <-> (1)
+	package org.eclipse.swt.widgets;
+	package org.eclipse.swt.widgets;
+(3) <-> (3)
+	/*
+	/*
+(4) <-> (4)
+	* (c) Copyright IBM Corp. 2000, 2001.
+	* (c) Copyright IBM Corp. 2000, 2001.
+(5) <-> (5)
+	* All Rights Reserved
+	* All Rights Reserved
+(6) <-> (6)
+	*/
+	*/
+(8) <-> (8)
+	import org.eclipse.swt.internal.*;
+	import org.eclipse.swt.internal.*;
+(9) <-> (9)
+	import org.eclipse.swt.internal.win32.*;
+	import org.eclipse.swt.internal.win32.*;
+(10) <-> (10)
+	import org.eclipse.swt.*;
+	import org.eclipse.swt.*;
+(11) <-> (11)
+	import org.eclipse.swt.widgets.*;
+	import org.eclipse.swt.widgets.*;
+(13) <-> (13)
+	/**
+	/**
+(14) <-> (14)
+	* Instances of this class allow the user to navigate
+	* Instances of this class allow the user to navigate
+(15) <-> (15)
+	* the file system and select a directory.
+	* the file system and select a directory.
+(16) <-> (16)
+	* <p>
+	* <p>
+(17) <-> (17)
+	* IMPORTANT: This class is intended to be subclassed <em>only</em>
+	* IMPORTANT: This class is intended to be subclassed <em>only</em>
+(18) <-> (18)
+	* within the SWT implementation.
+	* within the SWT implementation.
+(19) <-> (19)
+	* </p>
+	* </p>
+(20) <-> (20)
+	*/
+	*/
+(22) <-> (22)
+	public class DirectoryDialog extends Dialog {
+	public class DirectoryDialog extends Dialog {
+(23) <-> (23)
+	String message = "", filterPath = "";
+	String message = "", filterPath = "";
+(24) <-> (24)
+	String directoryPath;
+	String directoryPath;
+(26) <-> (26)
+	/**
+	/**
+(27) <-> (27)
+	* Constructs a new instance of this class given only its
+	* Constructs a new instance of this class given only its
+(28) <-> (28)
+	* parent.
+	* parent.
+(29) <-> (29)
+	* <p>
+	* <p>
+(30) <-> (30)
+	* Note: Currently, null can be passed in for the parent.
+	* Note: Currently, null can be passed in for the parent.
+(31) <-> (31)
+	* This has the effect of creating the dialog on the currently active
+	* This has the effect of creating the dialog on the currently active
+(32) <-> (32)
+	* display if there is one. If there is no current display, the
+	* display if there is one. If there is no current display, the
+(33) <-> (33)
+	* dialog is created on a "default" display. <b>Passing in null as
+	* dialog is created on a "default" display. <b>Passing in null as
+(34) <-> (34)
+	* the parent is not considered to be good coding style,
+	* the parent is not considered to be good coding style,
+(35) <-> (35)
+	* and may not be supported in a future release of SWT.</b>
+	* and may not be supported in a future release of SWT.</b>
+(36) <-> (36)
+	* </p>
+	* </p>
+(37) <-> (37)
+	*
+	*
+(38) <-> (38)
+	* @param parent a shell which will be the parent of the new instance
+	* @param parent a shell which will be the parent of the new instance
+(39) <-> (39)
+	*
+	*
+(40) <-> (40)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(41) <-> (41)
+	* <li>ERROR_NULL_ARGUMENT - if the parent is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the parent is null</li>
+(42) <-> (42)
+	* </ul>
+	* </ul>
+(43) <-> (43)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(44) <-> (44)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the parent</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the parent</li>
+(45) <-> (45)
+	* <li>ERROR_INVALID_SUBCLASS - if this class is not an allowed subclass</li>
+	* <li>ERROR_INVALID_SUBCLASS - if this class is not an allowed subclass</li>
+(46) <-> (46)
+	* </ul>
+	* </ul>
+(47) <-> (47)
+	*/
+	*/
+(48) <-> (48)
+	public DirectoryDialog (Shell parent) {
+	public DirectoryDialog (Shell parent) {
+(49) <-> (49)
+	this (parent, SWT.PRIMARY_MODAL);
+	this (parent, SWT.PRIMARY_MODAL);
+(50) <-> (50)
+	}
+	}
+(52) <-> (52)
+	/**
+	/**
+(53) <-> (53)
+	* Constructs a new instance of this class given its parent
+	* Constructs a new instance of this class given its parent
+(54) <-> (54)
+	* and a style value describing its behavior and appearance.
+	* and a style value describing its behavior and appearance.
+(55) <-> (55)
+	* <p>
+	* <p>
+(56) <-> (56)
+	* The style value is either one of the style constants defined in
+	* The style value is either one of the style constants defined in
+(57) <-> (57)
+	* class <code>SWT</code> which is applicable to instances of this
+	* class <code>SWT</code> which is applicable to instances of this
+(58) <-> (58)
+	* class, or must be built by <em>bitwise OR</em>'ing together
+	* class, or must be built by <em>bitwise OR</em>'ing together
+(59) <-> (59)
+	* (that is, using the <code>int</code> "|" operator) two or more
+	* (that is, using the <code>int</code> "|" operator) two or more
+(60) <-> (60)
+	* of those <code>SWT</code> style constants. The class description
+	* of those <code>SWT</code> style constants. The class description
+(61) <-> (61)
+	* for all SWT dialog classes should include a comment which
+	* for all SWT dialog classes should include a comment which
+(62) <-> (62)
+	* describes the style constants which are applicable to the class.
+	* describes the style constants which are applicable to the class.
+(63) <-> (63)
+	* </p>
+	* </p>
+(64) <-> (64)
+	* Note: Currently, null can be passed in for the parent.
+	* Note: Currently, null can be passed in for the parent.
+(65) <-> (65)
+	* This has the effect of creating the dialog on the currently active
+	* This has the effect of creating the dialog on the currently active
+(66) <-> (66)
+	* display if there is one. If there is no current display, the
+	* display if there is one. If there is no current display, the
+(67) <-> (67)
+	* dialog is created on a "default" display. <b>Passing in null as
+	* dialog is created on a "default" display. <b>Passing in null as
+(68) <-> (68)
+	* the parent is not considered to be good coding style,
+	* the parent is not considered to be good coding style,
+(69) <-> (69)
+	* and may not be supported in a future release of SWT.</b>
+	* and may not be supported in a future release of SWT.</b>
+(70) <-> (70)
+	* </p>
+	* </p>
+(71) <-> (71)
+	*
+	*
+(72) <-> (72)
+	* @param parent a shell which will be the parent of the new instance
+	* @param parent a shell which will be the parent of the new instance
+(73) <-> (73)
+	*
+	*
+(74) <-> (74)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(75) <-> (75)
+	* <li>ERROR_NULL_ARGUMENT - if the parent is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the parent is null</li>
+(76) <-> (76)
+	* </ul>
+	* </ul>
+(77) <-> (77)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(78) <-> (78)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the parent</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the parent</li>
+(79) <-> (79)
+	* <li>ERROR_INVALID_SUBCLASS - if this class is not an allowed subclass</li>
+	* <li>ERROR_INVALID_SUBCLASS - if this class is not an allowed subclass</li>
+(80) <-> (80)
+	* </ul>
+	* </ul>
+(81) <-> (81)
+	*/
+	*/
+(82) <-> (82)
+	public DirectoryDialog (Shell parent, int style) {
+	public DirectoryDialog (Shell parent, int style) {
+(83) <-> (83)
+	super (parent, style);
+	super (parent, style);
+(84) <-> (84)
+	}
+	}
+(86) <-> (86)
+	int BrowseCallbackProc (int hwnd, int uMsg, int lParam, int lpData) {
+	int BrowseCallbackProc (int hwnd, int uMsg, int lParam, int lpData) {
+(87) <-> (87)
+	switch (uMsg) {
+	switch (uMsg) {
+(88) <-> (88)
+	case OS.BFFM_INITIALIZED:
+	case OS.BFFM_INITIALIZED:
+(89) <-> (89)
+	if (filterPath != null && filterPath.length () != 0) {
+	if (filterPath != null && filterPath.length () != 0) {
+(90) <-> (90)
+	/* Use the character encoding for the default locale */
+	/* Use the character encoding for the default locale */
+(91) <-> (96)
+	byte [] buffer = Converter.wcsToMbcs (0, filterPath, true);
+	TCHAR buffer = new TCHAR (0, title, true);
+(92) <-> (92)
+	OS.SendMessage (hwnd, OS.BFFM_SETSELECTION, 1, buffer);
+	OS.SendMessage (hwnd, OS.BFFM_SETSELECTION, 1, buffer);
+(93) <-> (93)
+	}
+	}
+(94) <-> (94)
+	if (title != null && title.length () != 0) {
+	if (title != null && title.length () != 0) {
+(95) <-> (95)
+	/* Use the character encoding for the default locale */
+	/* Use the character encoding for the default locale */
+(96) <-> (161)
+	byte [] buffer = Converter.wcsToMbcs (0, title, true);
+	TCHAR buffer = new TCHAR (0, message, true);
+(97) <-> (97)
+	OS.SetWindowText (hwnd, buffer);
+	OS.SetWindowText (hwnd, buffer);
+(98) <-> (98)
+	}
+	}
+(99) <-> (99)
+	break;
+	break;
+(100) <-> (101)
+	case OS.BFFM_VALIDATEFAILED:
+	case OS.BFFM_VALIDATEFAILEDW:
+(101) <-> (103)
+	byte [] buffer1 = new byte [256];
+	TCHAR buffer = new TCHAR (0, 256);
+(102) <-> (105)
+	OS.MoveMemory (buffer1, lParam, 256);
+	OS.MoveMemory (buffer, lParam, byteCount);
+(103) <-> (102)
+	/* Use the character encoding for the default locale */
+	/* Use the character encoding for the default locale */
+(106) <-> (104)
+	while (length < buffer2.length && buffer2 [length] != 0) length++;
+	int byteCount = buffer.length () * TCHAR.sizeof;
+(107) <-> (106)
+	directoryPath = new String (buffer2, 0, length);
+	directoryPath = buffer.toString (0, buffer.strlen ());
+(108) <-> (107)
+	break;
+	break;
+(109) <-> (108)
+	}
+	}
+(110) <-> (109)
+	return 0;
+	return 0;
+(111) <-> (110)
+	}
+	}
+(113) <-> (112)
+	/**
+	/**
+(114) <-> (113)
+	* Returns the path which the dialog will use to filter
+	* Returns the path which the dialog will use to filter
+(115) <-> (114)
+	* the directories it shows.
+	* the directories it shows.
+(116) <-> (115)
+	*
+	*
+(117) <-> (116)
+	* @return the filter path
+	* @return the filter path
+(118) <-> (117)
+	*/
+	*/
+(119) <-> (118)
+	public String getFilterPath () {
+	public String getFilterPath () {
+(120) <-> (119)
+	return filterPath;
+	return filterPath;
+(121) <-> (120)
+	}
+	}
+(123) <-> (122)
+	/**
+	/**
+(124) <-> (123)
+	* Returns the dialog's message, which is a description of
+	* Returns the dialog's message, which is a description of
+(125) <-> (124)
+	* the purpose for which it was opened. This message will be
+	* the purpose for which it was opened. This message will be
+(126) <-> (125)
+	* visible on the dialog while it is open.
+	* visible on the dialog while it is open.
+(127) <-> (126)
+	*
+	*
+(128) <-> (127)
+	* @return the message
+	* @return the message
+(129) <-> (128)
+	*/
+	*/
+(130) <-> (129)
+	public String getMessage () {
+	public String getMessage () {
+(131) <-> (130)
+	return message;
+	return message;
+(132) <-> (131)
+	}
+	}
+(134) <-> (133)
+	/**
+	/**
+(135) <-> (134)
+	* Makes the dialog visible and brings it to the front
+	* Makes the dialog visible and brings it to the front
+(136) <-> (135)
+	* of the display.
+	* of the display.
+(137) <-> (136)
+	*
+	*
+(138) <-> (137)
+	* @return a string describing the absolute path of the selected directory,
+	* @return a string describing the absolute path of the selected directory,
+(139) <-> (138)
+	* or null if the dialog was cancelled or an error occurred
+	* or null if the dialog was cancelled or an error occurred
+(140) <-> (139)
+	*
+	*
+(141) <-> (140)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(142) <-> (141)
+	* <li>ERROR_WIDGET_DISPOSED - if the dialog has been disposed</li>
+	* <li>ERROR_WIDGET_DISPOSED - if the dialog has been disposed</li>
+(143) <-> (142)
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the dialog</li>
+	* <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the dialog</li>
+(144) <-> (143)
+	* </ul>
+	* </ul>
+(145) <-> (144)
+	*/
+	*/
+(146) <-> (145)
+	public String open () {
+	public String open () {
+(148) <-> (148)
+	/* Initialize OLE */
+	/* Initialize OLE */
+(149) <-> (149)
+	OS.OleInitialize (0);
+	OS.OleInitialize (0);
+(151) <-> (151)
+	int hHeap = OS.GetProcessHeap ();
+	int hHeap = OS.GetProcessHeap ();
+(153) <-> (153)
+	/* Get the owner HWND for the dialog */
+	/* Get the owner HWND for the dialog */
+(154) <-> (154)
+	int hwndOwner = 0;
+	int hwndOwner = 0;
+(155) <-> (155)
+	if (parent != null) hwndOwner = parent.handle;
+	if (parent != null) hwndOwner = parent.handle;
+(157) <-> (157)
+	/* Copy the message to OS memory */
+	/* Copy the message to OS memory */
+(158) <-> (158)
+	int lpszTitle = 0;
+	int lpszTitle = 0;
+(159) <-> (159)
+	if (message != null && message.length () != 0) {
+	if (message != null && message.length () != 0) {
+(160) <-> (160)
+	/* Use the character encoding for the default locale */
+	/* Use the character encoding for the default locale */
+(161) <-> (162)
+	byte [] buffer = Converter.wcsToMbcs (0, message, true);
+	int byteCount = buffer.length () * TCHAR.sizeof;
+(162) <-> (163)
+	lpszTitle = OS.HeapAlloc (hHeap, OS.HEAP_ZERO_MEMORY, buffer.length);
+	lpszTitle = OS.HeapAlloc (hHeap, OS.HEAP_ZERO_MEMORY, byteCount);
+(163) <-> (164)
+	OS.MoveMemory (lpszTitle, buffer, buffer.length);
+	OS.MoveMemory (lpszTitle, buffer, byteCount);
+(164) <-> (165)
+	}
+	}
+(166) <-> (167)
+	/* Create the BrowseCallbackProc */
+	/* Create the BrowseCallbackProc */
+(167) <-> (168)
+	Callback callback = new Callback (this, "BrowseCallbackProc", 4);
+	Callback callback = new Callback (this, "BrowseCallbackProc", 4);
+(168) <-> (169)
+	int address = callback.getAddress ();
+	int address = callback.getAddress ();
+(170) <-> (171)
+	/* Open the dialog */
+	/* Open the dialog */
+(171) <-> (172)
+	directoryPath = null;
+	directoryPath = null;
+(172) <-> (173)
+	BROWSEINFO lpbi = new BROWSEINFO ();
+	BROWSEINFO lpbi = new BROWSEINFO ();
+(173) <-> (174)
+	lpbi.hwndOwner = hwndOwner;
+	lpbi.hwndOwner = hwndOwner;
+(174) <-> (175)
+	lpbi.lpszTitle = lpszTitle;
+	lpbi.lpszTitle = lpszTitle;
+(175) <-> (176)
+	lpbi.ulFlags = OS.BIF_RETURNONLYFSDIRS | OS.BIF_EDITBOX | OS.BIF_VALIDATE;
+	lpbi.ulFlags = OS.BIF_RETURNONLYFSDIRS | OS.BIF_EDITBOX | OS.BIF_VALIDATE;
+(176) <-> (177)
+	lpbi.lpfn = address;
+	lpbi.lpfn = address;
+(177) <-> (178)
+	int lpItemIdList = OS.SHBrowseForFolder (lpbi);
+	int lpItemIdList = OS.SHBrowseForFolder (lpbi);
+(178) <-> (179)
+	if (lpItemIdList != 0) {
+	if (lpItemIdList != 0) {
+(179) <-> (181)
+	byte [] buffer = new byte [256];
+	TCHAR buffer = new TCHAR (0, 256);
+(180) <-> (182)
+	if (OS.SHGetPathFromIDList (lpItemIdList, buffer)) {
+	if (OS.SHGetPathFromIDList (lpItemIdList, buffer)) {
+(181) <-> (180)
+	/* Use the character encoding for the default locale */
+	/* Use the character encoding for the default locale */
+(185) <-> (183)
+	directoryPath = new String (path, 0, length);
+	directoryPath = buffer.toString (0, buffer.strlen ());
+(186) <-> (184)
+	}
+	}
+(187) <-> (185)
+	}
+	}
+(189) <-> (187)
+	/* Free the BrowseCallbackProc */
+	/* Free the BrowseCallbackProc */
+(190) <-> (188)
+	callback.dispose ();
+	callback.dispose ();
+(192) <-> (190)
+	/* Free the OS memory */
+	/* Free the OS memory */
+(193) <-> (191)
+	if (lpszTitle != 0) OS.HeapFree (hHeap, 0, lpszTitle);
+	if (lpszTitle != 0) OS.HeapFree (hHeap, 0, lpszTitle);
+(195) <-> (193)
+	/* Free the pointer to the ITEMIDLIST */
+	/* Free the pointer to the ITEMIDLIST */
+(196) <-> (194)
+	int [] ppMalloc = new int [1];
+	int [] ppMalloc = new int [1];
+(197) <-> (195)
+	if (OS.SHGetMalloc (ppMalloc) == OS.S_OK) {
+	if (OS.SHGetMalloc (ppMalloc) == OS.S_OK) {
+(198) <-> (196)
+	/* void Free (struct IMalloc *this, void *pv); */
+	/* void Free (struct IMalloc *this, void *pv); */
+(199) <-> (197)
+	OS.VtblCall (5, ppMalloc [0], lpItemIdList);
+	OS.VtblCall (5, ppMalloc [0], lpItemIdList);
+(200) <-> (198)
+	}
+	}
+(202) <-> (200)
+	/* Uninitialize OLE */
+	/* Uninitialize OLE */
+(203) <-> (201)
+	OS.OleUninitialize ();
+	OS.OleUninitialize ();
+(205) <-> (203)
+	/*
+	/*
+(206) <-> (204)
+	* This code is intentionally commented. On some
+	* This code is intentionally commented. On some
+(207) <-> (205)
+	* platforms, the owner window is repainted right
+	* platforms, the owner window is repainted right
+(208) <-> (206)
+	* away when a dialog window exits. This behavior
+	* away when a dialog window exits. This behavior
+(209) <-> (207)
+	* is currently unspecified.
+	* is currently unspecified.
+(210) <-> (208)
+	*/
+	*/
+(211) <-> (209)
+	// if (hwndOwner != 0) OS.UpdateWindow (hwndOwner);
+	// if (hwndOwner != 0) OS.UpdateWindow (hwndOwner);
+(213) <-> (211)
+	/* Return the directory path */
+	/* Return the directory path */
+(214) <-> (212)
+	return directoryPath;
+	return directoryPath;
+(215) <-> (213)
+	}
+	}
+(217) <-> (215)
+	/**
+	/**
+(218) <-> (216)
+	* Sets the path which the dialog will use to filter
+	* Sets the path which the dialog will use to filter
+(219) <-> (217)
+	* the directories it shows to the argument, which may be
+	* the directories it shows to the argument, which may be
+(220) <-> (218)
+	* null.
+	* null.
+(221) <-> (219)
+	*
+	*
+(222) <-> (220)
+	* @param string the filter path
+	* @param string the filter path
+(223) <-> (221)
+	*/
+	*/
+(224) <-> (222)
+	public void setFilterPath (String string) {
+	public void setFilterPath (String string) {
+(225) <-> (223)
+	filterPath = string;
+	filterPath = string;
+(226) <-> (224)
+	}
+	}
+(228) <-> (226)
+	/**
+	/**
+(229) <-> (227)
+	* Sets the dialog's message, which is a description of
+	* Sets the dialog's message, which is a description of
+(230) <-> (228)
+	* the purpose for which it was opened. This message will be
+	* the purpose for which it was opened. This message will be
+(231) <-> (229)
+	* visible on the dialog while it is open.
+	* visible on the dialog while it is open.
+(232) <-> (230)
+	*
+	*
+(233) <-> (231)
+	* @param string the message
+	* @param string the message
+(234) <-> (232)
+	*/
+	*/
+(235) <-> (233)
+	public void setMessage (String string) {
+	public void setMessage (String string) {
+(236) <-> (234)
+	message = string;
+	message = string;
+(237) <-> (235)
+	}
+	}
+(239) <-> (237)
+	}
+	}
+Number of lines in left file: 214
+Number of lines in right file: 212
+Number of lines matched: 209

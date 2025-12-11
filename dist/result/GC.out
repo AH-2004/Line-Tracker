@@ -1,0 +1,6106 @@
+Diff: ./reference/dataset/GC_1.java ./reference/dataset/GC_2.java
+(1) <-> (1)
+	package org.eclipse.swt.graphics;
+	package org.eclipse.swt.graphics;
+(3) <-> (3)
+	/*
+	/*
+(4) <-> (4)
+	* Copyright (c) 2000, 2002 IBM Corp. All rights reserved.
+	* Copyright (c) 2000, 2002 IBM Corp. All rights reserved.
+(5) <-> (5)
+	* This file is made available under the terms of the Common Public License v1.0
+	* This file is made available under the terms of the Common Public License v1.0
+(6) <-> (6)
+	* which accompanies this distribution, and is available at
+	* which accompanies this distribution, and is available at
+(7) <-> (7)
+	* http://www.eclipse.org/legal/cpl-v10.html
+	* http://www.eclipse.org/legal/cpl-v10.html
+(8) <-> (8)
+	*/
+	*/
+(10) <-> (11)
+	import org.eclipse.swt.SWT;
+	import org.eclipse.swt.*;
+(14) <-> (10)
+	import org.eclipse.swt.internal.carbon.RGBColor;
+	import org.eclipse.swt.internal.carbon.*;
+(16) <-> (13)
+	/**
+	/**
+(17) <-> (14)
+	* Class <code>GC</code> is where all of the drawing capabilities that are
+	* Class <code>GC</code> is where all of the drawing capabilities that are
+(18) <-> (15)
+	* supported by SWT are located. Instances are used to draw on either an
+	* supported by SWT are located. Instances are used to draw on either an
+(19) <-> (16)
+	* <code>Image</code>, a <code>Control</code>, or directly on a <code>Display</code>.
+	* <code>Image</code>, a <code>Control</code>, or directly on a <code>Display</code>.
+(20) <-> (17)
+	* <p>
+	* <p>
+(21) <-> (18)
+	* Application code must explicitly invoke the <code>GC.dispose()</code>
+	* Application code must explicitly invoke the <code>GC.dispose()</code>
+(22) <-> (19)
+	* method to release the operating system resources managed by each instance
+	* method to release the operating system resources managed by each instance
+(23) <-> (20)
+	* when those instances are no longer required. This is <em>particularly</em>
+	* when those instances are no longer required. This is <em>particularly</em>
+(24) <-> (21)
+	* important on Windows95 and Windows98 where the operating system has a limited
+	* important on Windows95 and Windows98 where the operating system has a limited
+(25) <-> (22)
+	* number of device contexts available.
+	* number of device contexts available.
+(26) <-> (23)
+	* </p>
+	* </p>
+(27) <-> (24)
+	*
+	*
+(28) <-> (25)
+	* @see org.eclipse.swt.events.PaintEvent
+	* @see org.eclipse.swt.events.PaintEvent
+(29) <-> (26)
+	*/
+	*/
+(30) <-> (27)
+	public final class GC {
+	public final class GC {
+(31) <-> (28)
+	/**
+	/**
+(32) <-> (29)
+	* the handle to the OS device context
+	* the handle to the OS device context
+(33) <-> (30)
+	* (Warning: This field is platform dependent)
+	* (Warning: This field is platform dependent)
+(34) <-> (31)
+	*/
+	*/
+(35) <-> (32)
+	public int handle; // a Mac CGrafPort
+	public int handle; // a Mac CGrafPort
+(37) <-> (34)
+	Drawable drawable;
+	Drawable drawable;
+(38) <-> (35)
+	GCData data;
+	GCData data;
+(40) <-> (51)
+	GC() {
+	GC() {
+(41) <-> (52)
+	}
+	}
+(42) <-> (53)
+	/**
+	/**
+(43) <-> (54)
+	* Constructs a new instance of this class which has been
+	* Constructs a new instance of this class which has been
+(44) <-> (55)
+	* configured to draw on the specified drawable. Sets the
+	* configured to draw on the specified drawable. Sets the
+(45) <-> (56)
+	* foreground and background color in the GC to match those
+	* foreground and background color in the GC to match those
+(46) <-> (57)
+	* in the drawable.
+	* in the drawable.
+(47) <-> (58)
+	* <p>
+	* <p>
+(48) <-> (59)
+	* You must dispose the graphics context when it is no longer required.
+	* You must dispose the graphics context when it is no longer required.
+(49) <-> (60)
+	* </p>
+	* </p>
+(50) <-> (61)
+	* @param drawable the drawable to draw on
+	* @param drawable the drawable to draw on
+(51) <-> (62)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(52) <-> (63)
+	* <li>ERROR_NULL_ARGUMENT - if the drawable is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the drawable is null</li>
+(53) <-> (64)
+	* <li>ERROR_NULL_ARGUMENT - if there is no current device</li>
+	* <li>ERROR_NULL_ARGUMENT - if there is no current device</li>
+(54) <-> (65)
+	* <li>ERROR_INVALID_ARGUMENT
+	* <li>ERROR_INVALID_ARGUMENT
+(55) <-> (66)
+	* - if the drawable is an image that is not a bitmap or an icon
+	* - if the drawable is an image that is not a bitmap or an icon
+(56) <-> (67)
+	* - if the drawable is an image or printer that is already selected
+	* - if the drawable is an image or printer that is already selected
+(57) <-> (68)
+	* into another graphics context</li>
+	* into another graphics context</li>
+(58) <-> (69)
+	* </ul>
+	* </ul>
+(59) <-> (70)
+	* @exception SWTError <ul>
+	* @exception SWTError <ul>
+(60) <-> (71)
+	* <li>ERROR_NO_HANDLES if a handle could not be obtained for gc creation</li>
+	* <li>ERROR_NO_HANDLES if a handle could not be obtained for gc creation</li>
+(61) <-> (72)
+	* </ul>
+	* </ul>
+(62) <-> (73)
+	*/
+	*/
+(63) <-> (74)
+	public GC (Drawable drawable) {
+	public GC (Drawable drawable) {
+(64) <-> (75)
+	if (drawable == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (drawable == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(65) <-> (76)
+	GCData data = new GCData();
+	GCData data = new GCData();
+(66) <-> (77)
+	int port = drawable.internal_new_GC(data);
+	int xGC = drawable.internal_new_GC(data);
+(67) <-> (78)
+	init(drawable, data, port);
+	init(drawable, data, xGC);
+(68) <-> (79)
+	}
+	}
+(70) <-> (81)
+	/**
+	/**
+(71) <-> (82)
+	* Copies a rectangular area of the receiver at the source
+	* Copies a rectangular area of the receiver at the source
+(72) <-> (83)
+	* position onto the receiver at the destination position.
+	* position onto the receiver at the destination position.
+(73) <-> (84)
+	*
+	*
+(74) <-> (85)
+	* @param srcX the x coordinate in the receiver of the area to be copied
+	* @param srcX the x coordinate in the receiver of the area to be copied
+(75) <-> (86)
+	* @param srcY the y coordinate in the receiver of the area to be copied
+	* @param srcY the y coordinate in the receiver of the area to be copied
+(76) <-> (87)
+	* @param width the width of the area to copy
+	* @param width the width of the area to copy
+(77) <-> (88)
+	* @param height the height of the area to copy
+	* @param height the height of the area to copy
+(78) <-> (89)
+	* @param destX the x coordinate in the receiver of the area to copy to
+	* @param destX the x coordinate in the receiver of the area to copy to
+(79) <-> (90)
+	* @param destY the y coordinate in the receiver of the area to copy to
+	* @param destY the y coordinate in the receiver of the area to copy to
+(80) <-> (91)
+	*
+	*
+(81) <-> (92)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(82) <-> (93)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(83) <-> (94)
+	* </ul>
+	* </ul>
+(84) <-> (95)
+	*/
+	*/
+(85) <-> (96)
+	public void copyArea(int x, int y, int width, int height, int destX, int destY) {
+	public void copyArea(int x, int y, int width, int height, int destX, int destY) {
+(86) <-> (97)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(87) <-> (98)
+	if (width <= 0 || height <= 0) return;
+	if (width <= 0 || height <= 0) return;
+(88) <-> (99)
+	int deltaX = destX - x, deltaY = destY - y;
+	int deltaX = destX - x, deltaY = destY - y;
+(89) <-> (100)
+	if (deltaX == 0 && deltaY == 0) return;
+	if (deltaX == 0 && deltaY == 0) return;
+(91) <-> (102)
+	Rectangle src= new Rectangle(x, y, width, height);
+	Rectangle src= new Rectangle(x, y, width, height);
+(92) <-> (103)
+	src= src.union(new Rectangle(destX, destY, width, height));
+	src= src.union(new Rectangle(destX, destY, width, height));
+(94) <-> (104)
+	Rect r= new Rect();
+	MacRect r= new MacRect(src);
+(98) <-> (106)
+	try {
+	try {
+(99) <-> (107)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(100) <-> (108)
+	int rgn= OS.NewRgn();
+	int rgn= OS.NewRgn();
+(101) <-> (109)
+	OS.ScrollRect(r, (short)deltaX, (short)deltaY, rgn);
+	OS.ScrollRect(r.getData(), (short)deltaX, (short)deltaY, rgn);
+(103) <-> (110)
+	OS.HIViewSetNeedsDisplayInRegion(data.controlHandle, rgn, true);
+	OS.InvalWindowRgn(OS.GetWindowFromPort(handle), rgn);
+(104) <-> (111)
+	OS.DisposeRgn(rgn);
+	OS.DisposeRgn(rgn);
+(105) <-> (112)
+	}
+	}
+(106) <-> (113)
+	} finally {
+	} finally {
+(107) <-> (114)
+	unfocus(true);
+	unfocus(true);
+(108) <-> (115)
+	}
+	}
+(109) <-> (116)
+	}
+	}
+(110) <-> (117)
+	/**
+	/**
+(111) <-> (118)
+	* Copies a rectangular area of the receiver at the specified
+	* Copies a rectangular area of the receiver at the specified
+(112) <-> (119)
+	* position into the image, which must be of type <code>SWT.BITMAP</code>.
+	* position into the image, which must be of type <code>SWT.BITMAP</code>.
+(113) <-> (120)
+	*
+	*
+(114) <-> (121)
+	* @param x the x coordinate in the receiver of the area to be copied
+	* @param x the x coordinate in the receiver of the area to be copied
+(115) <-> (122)
+	* @param y the y coordinate in the receiver of the area to be copied
+	* @param y the y coordinate in the receiver of the area to be copied
+(116) <-> (123)
+	*
+	*
+(117) <-> (124)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(118) <-> (125)
+	* <li>ERROR_NULL_ARGUMENT - if the image is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the image is null</li>
+(119) <-> (126)
+	* <li>ERROR_INVALID_ARGUMENT - if the image is not a bitmap or has been disposed</li>
+	* <li>ERROR_INVALID_ARGUMENT - if the image is not a bitmap or has been disposed</li>
+(120) <-> (127)
+	* </ul>
+	* </ul>
+(121) <-> (128)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(122) <-> (129)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(123) <-> (130)
+	* </ul>
+	* </ul>
+(124) <-> (131)
+	*/
+	*/
+(125) <-> (132)
+	public void copyArea(Image image, int x, int y) {
+	public void copyArea(Image image, int x, int y) {
+(126) <-> (133)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(127) <-> (134)
+	if (image == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (image == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(128) <-> (135)
+	if (image.type != SWT.BITMAP || image.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	if (image.type != SWT.BITMAP || image.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+(129) <-> (136)
+	/* AW
+	/* AW
+(130) <-> (137)
+	Rectangle rect = image.getBounds();
+	Rectangle rect = image.getBounds();
+(131) <-> (138)
+	int xDisplay = data.display;
+	int xDisplay = data.display;
+(132) <-> (139)
+	int xGC = OS.XCreateGC(xDisplay, image.pixmap, 0, null);
+	int xGC = OS.XCreateGC(xDisplay, image.pixmap, 0, null);
+(133) <-> (140)
+	if (xGC == 0) SWT.error(SWT.ERROR_NO_HANDLES);
+	if (xGC == 0) SWT.error(SWT.ERROR_NO_HANDLES);
+(134) <-> (141)
+	OS.XSetSubwindowMode (xDisplay, xGC, OS.IncludeInferiors);
+	OS.XSetSubwindowMode (xDisplay, xGC, OS.IncludeInferiors);
+(135) <-> (142)
+	OS.XCopyArea(xDisplay, data.drawable, image.pixmap, xGC, x, y, rect.width, rect.height, 0, 0);
+	OS.XCopyArea(xDisplay, data.drawable, image.pixmap, xGC, x, y, rect.width, rect.height, 0, 0);
+(136) <-> (143)
+	OS.XFreeGC(xDisplay, xGC);
+	OS.XFreeGC(xDisplay, xGC);
+(137) <-> (144)
+	*/
+	*/
+(138) <-> (145)
+	System.out.println("GC.copyArea(Image): nyi");
+	System.out.println("GC.copyArea(Image): nyi");
+(139) <-> (146)
+	}
+	}
+(140) <-> (147)
+	/**
+	/**
+(141) <-> (148)
+	* Disposes of the operating system resources associated with
+	* Disposes of the operating system resources associated with
+(142) <-> (149)
+	* the graphics context. Applications must dispose of all GCs
+	* the graphics context. Applications must dispose of all GCs
+(143) <-> (150)
+	* which they allocate.
+	* which they allocate.
+(144) <-> (151)
+	*/
+	*/
+(145) <-> (152)
+	public void dispose () {
+	public void dispose () {
+(146) <-> (153)
+	if (handle == 0) return;
+	if (handle == 0) return;
+(147) <-> (154)
+	if (data.device.isDisposed()) return;
+	if (data.device.isDisposed()) return;
+(149) <-> (156)
+	/* Free resources */
+	/* Free resources */
+(150) <-> (157)
+	int clipRgn = data.clipRgn;
+	int clipRgn = data.clipRgn;
+(151) <-> (158)
+	if (clipRgn != 0) OS.DisposeRgn(clipRgn);
+	if (clipRgn != 0) OS.DisposeRgn(clipRgn);
+(156) <-> (160)
+	Image image = data.image;
+	Image image = data.image;
+(157) <-> (161)
+	if (image != null) image.memGC = null;
+	if (image != null) image.memGC = null;
+(159) <-> (163)
+	/* Dispose the GC */
+	/* Dispose the GC */
+(160) <-> (164)
+	drawable.internal_dispose_GC(handle, data);
+	drawable.internal_dispose_GC(handle, data);
+(162) <-> (166)
+	data.clipRgn = 0;
+	data.clipRgn = 0;
+(164) <-> (167)
+	data.font = null;
+	data.font = null;
+(165) <-> (168)
+	drawable = null;
+	drawable = null;
+(166) <-> (169)
+	data.device = null;
+	data.device = null;
+(167) <-> (170)
+	data.image = null;
+	data.image = null;
+(168) <-> (171)
+	data = null;
+	data = null;
+(169) <-> (172)
+	handle = 0;
+	handle = 0;
+(170) <-> (173)
+	}
+	}
+(171) <-> (174)
+	/**
+	/**
+(172) <-> (175)
+	* Draws the outline of a circular or elliptical arc
+	* Draws the outline of a circular or elliptical arc
+(173) <-> (176)
+	* within the specified rectangular area.
+	* within the specified rectangular area.
+(174) <-> (177)
+	* <p>
+	* <p>
+(175) <-> (178)
+	* The resulting arc begins at <code>startAngle</code> and extends
+	* The resulting arc begins at <code>startAngle</code> and extends
+(176) <-> (179)
+	* for <code>arcAngle</code> degrees, using the current color.
+	* for <code>arcAngle</code> degrees, using the current color.
+(177) <-> (180)
+	* Angles are interpreted such that 0 degrees is at the 3 o'clock
+	* Angles are interpreted such that 0 degrees is at the 3 o'clock
+(178) <-> (181)
+	* position. A positive value indicates a counter-clockwise rotation
+	* position. A positive value indicates a counter-clockwise rotation
+(179) <-> (182)
+	* while a negative value indicates a clockwise rotation.
+	* while a negative value indicates a clockwise rotation.
+(180) <-> (183)
+	* </p><p>
+	* </p><p>
+(181) <-> (184)
+	* The center of the arc is the center of the rectangle whose origin
+	* The center of the arc is the center of the rectangle whose origin
+(182) <-> (185)
+	* is (<code>x</code>, <code>y</code>) and whose size is specified by the
+	* is (<code>x</code>, <code>y</code>) and whose size is specified by the
+(183) <-> (186)
+	* <code>width</code> and <code>height</code> arguments.
+	* <code>width</code> and <code>height</code> arguments.
+(184) <-> (187)
+	* </p><p>
+	* </p><p>
+(185) <-> (188)
+	* The resulting arc covers an area <code>width + 1</code> pixels wide
+	* The resulting arc covers an area <code>width + 1</code> pixels wide
+(186) <-> (189)
+	* by <code>height + 1</code> pixels tall.
+	* by <code>height + 1</code> pixels tall.
+(187) <-> (190)
+	* </p>
+	* </p>
+(188) <-> (191)
+	*
+	*
+(189) <-> (192)
+	* @param x the x coordinate of the upper-left corner of the arc to be drawn
+	* @param x the x coordinate of the upper-left corner of the arc to be drawn
+(190) <-> (193)
+	* @param y the y coordinate of the upper-left corner of the arc to be drawn
+	* @param y the y coordinate of the upper-left corner of the arc to be drawn
+(191) <-> (194)
+	* @param width the width of the arc to be drawn
+	* @param width the width of the arc to be drawn
+(192) <-> (195)
+	* @param height the height of the arc to be drawn
+	* @param height the height of the arc to be drawn
+(193) <-> (196)
+	* @param startAngle the beginning angle
+	* @param startAngle the beginning angle
+(194) <-> (197)
+	* @param arcAngle the angular extent of the arc, relative to the start angle
+	* @param arcAngle the angular extent of the arc, relative to the start angle
+(195) <-> (198)
+	*
+	*
+(196) <-> (199)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(197) <-> (200)
+	* <li>ERROR_INVALID_ARGUMENT - if any of the width, height or endAngle is zero.</li>
+	* <li>ERROR_INVALID_ARGUMENT - if any of the width, height or endAngle is zero.</li>
+(198) <-> (201)
+	* </ul>
+	* </ul>
+(199) <-> (202)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(200) <-> (203)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(201) <-> (204)
+	* </ul>
+	* </ul>
+(202) <-> (205)
+	*/
+	*/
+(203) <-> (206)
+	public void drawArc(int x, int y, int width, int height, int startAngle, int endAngle) {
+	public void drawArc(int x, int y, int width, int height, int startAngle, int endAngle) {
+(204) <-> (207)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(205) <-> (208)
+	if (width < 0) {
+	if (width < 0) {
+(206) <-> (209)
+	x = x + width;
+	x = x + width;
+(207) <-> (210)
+	width = -width;
+	width = -width;
+(208) <-> (211)
+	}
+	}
+(209) <-> (212)
+	if (height < 0) {
+	if (height < 0) {
+(210) <-> (213)
+	y = y + height;
+	y = y + height;
+(211) <-> (214)
+	height = -height;
+	height = -height;
+(212) <-> (215)
+	}
+	}
+(213) <-> (216)
+	if (width == 0 || height == 0 || endAngle == 0) {
+	if (width == 0 || height == 0 || endAngle == 0) {
+(214) <-> (217)
+	SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+(215) <-> (218)
+	}
+	}
+(216) <-> (219)
+	/* AW
+	/* AW
+(217) <-> (220)
+	OS.XDrawArc(data.display,data.drawable,handle,x,y,width,height,startAngle * 64 ,endAngle * 64);
+	OS.XDrawArc(data.display,data.drawable,handle,x,y,width,height,startAngle * 64 ,endAngle * 64);
+(218) <-> (221)
+	*/
+	*/
+(219) <-> (222)
+	System.out.println("GC.drawArc");
+	System.out.println("GC.drawArc");
+(220) <-> (223)
+	}
+	}
+(221) <-> (224)
+	/**
+	/**
+(222) <-> (225)
+	* Draws a rectangle, based on the specified arguments, which has
+	* Draws a rectangle, based on the specified arguments, which has
+(223) <-> (226)
+	* the appearance of the platform's <em>focus rectangle</em> if the
+	* the appearance of the platform's <em>focus rectangle</em> if the
+(224) <-> (227)
+	* platform supports such a notion, and otherwise draws a simple
+	* platform supports such a notion, and otherwise draws a simple
+(225) <-> (228)
+	* rectangle in the receiver's foreground color.
+	* rectangle in the receiver's foreground color.
+(226) <-> (229)
+	*
+	*
+(227) <-> (230)
+	* @param x the x coordinate of the rectangle
+	* @param x the x coordinate of the rectangle
+(228) <-> (231)
+	* @param y the y coordinate of the rectangle
+	* @param y the y coordinate of the rectangle
+(229) <-> (232)
+	* @param width the width of the rectangle
+	* @param width the width of the rectangle
+(230) <-> (233)
+	* @param height the height of the rectangle
+	* @param height the height of the rectangle
+(231) <-> (234)
+	*
+	*
+(232) <-> (235)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(233) <-> (236)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(234) <-> (237)
+	* </ul>
+	* </ul>
+(235) <-> (238)
+	*
+	*
+(236) <-> (239)
+	* @see #drawRectangle
+	* @see #drawRectangle
+(237) <-> (240)
+	*/
+	*/
+(238) <-> (241)
+	public void drawFocus (int x, int y, int width, int height) {
+	public void drawFocus (int x, int y, int width, int height) {
+(239) <-> (242)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(240) <-> (243)
+	/*
+	/*
+(241) <-> (244)
+	* When the drawable is not a widget, the highlight
+	* When the drawable is not a widget, the highlight
+(242) <-> (245)
+	* color is zero.
+	* color is zero.
+(243) <-> (246)
+	*/
+	*/
+(244) <-> (247)
+	/* AW
+	/* AW
+(245) <-> (248)
+	int highlightColor = 0;
+	int highlightColor = 0;
+(246) <-> (249)
+	int widget = OS.XtWindowToWidget (xDisplay, xDrawable);
+	int widget = OS.XtWindowToWidget (xDisplay, xDrawable);
+(247) <-> (250)
+	if (widget != 0) {
+	if (widget != 0) {
+(248) <-> (251)
+	int [] argList = {OS.XmNhighlightColor, 0};
+	int [] argList = {OS.XmNhighlightColor, 0};
+(249) <-> (252)
+	OS.XtGetValues (widget, argList, argList.length / 2);
+	OS.XtGetValues (widget, argList, argList.length / 2);
+(250) <-> (253)
+	highlightColor = argList [1];
+	highlightColor = argList [1];
+(251) <-> (254)
+	}
+	}
+(252) <-> (255)
+	*/
+	*/
+(254) <-> (257)
+	/* Draw the focus rectangle */
+	/* Draw the focus rectangle */
+(255) <-> (258)
+	if (width < 0) {
+	if (width < 0) {
+(256) <-> (259)
+	x = x + width;
+	x = x + width;
+(257) <-> (260)
+	width = -width;
+	width = -width;
+(258) <-> (261)
+	}
+	}
+(259) <-> (262)
+	if (height < 0) {
+	if (height < 0) {
+(260) <-> (263)
+	y = y + height;
+	y = y + height;
+(261) <-> (264)
+	height = -height;
+	height = -height;
+(262) <-> (265)
+	}
+	}
+(263) <-> (266)
+	/* AW
+	/* AW
+(264) <-> (267)
+	XGCValues values = new XGCValues ();
+	XGCValues values = new XGCValues ();
+(265) <-> (268)
+	OS.XGetGCValues (xDisplay, handle, OS.GCForeground, values);
+	OS.XGetGCValues (xDisplay, handle, OS.GCForeground, values);
+(266) <-> (269)
+	OS.XSetForeground (xDisplay, handle, highlightColor);
+	OS.XSetForeground (xDisplay, handle, highlightColor);
+(267) <-> (270)
+	OS.XDrawRectangle (xDisplay, xDrawable, handle, x, y, width - 1, height - 1);
+	OS.XDrawRectangle (xDisplay, xDrawable, handle, x, y, width - 1, height - 1);
+(268) <-> (271)
+	OS.XSetForeground (xDisplay, handle, values.foreground);
+	OS.XSetForeground (xDisplay, handle, values.foreground);
+(269) <-> (272)
+	*/
+	*/
+(270) <-> (273)
+	//System.out.println("GC.drawFocus");
+	//System.out.println("GC.drawFocus");
+(271) <-> (274)
+	}
+	}
+(272) <-> (275)
+	/**
+	/**
+(273) <-> (276)
+	* Draws the given image in the receiver at the specified
+	* Draws the given image in the receiver at the specified
+(274) <-> (277)
+	* coordinates.
+	* coordinates.
+(275) <-> (278)
+	*
+	*
+(276) <-> (279)
+	* @param image the image to draw
+	* @param image the image to draw
+(277) <-> (280)
+	* @param x the x coordinate of where to draw
+	* @param x the x coordinate of where to draw
+(278) <-> (281)
+	* @param y the y coordinate of where to draw
+	* @param y the y coordinate of where to draw
+(279) <-> (282)
+	*
+	*
+(280) <-> (283)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(281) <-> (284)
+	* <li>ERROR_NULL_ARGUMENT - if the image is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the image is null</li>
+(282) <-> (285)
+	* <li>ERROR_INVALID_ARGUMENT - if the image has been disposed</li>
+	* <li>ERROR_INVALID_ARGUMENT - if the image has been disposed</li>
+(283) <-> (286)
+	* <li>ERROR_INVALID_ARGUMENT - if the given coordinates are outside the bounds of the image</li>
+	* <li>ERROR_INVALID_ARGUMENT - if the given coordinates are outside the bounds of the image</li>
+(284) <-> (287)
+	* @exception SWTError <ul>
+	* @exception SWTError <ul>
+(285) <-> (288)
+	* <li>ERROR_NO_HANDLES - if no handles are available to perform the operation</li>
+	* <li>ERROR_NO_HANDLES - if no handles are available to perform the operation</li>
+(286) <-> (289)
+	* </ul>
+	* </ul>
+(287) <-> (290)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(288) <-> (291)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(289) <-> (292)
+	* </ul>
+	* </ul>
+(290) <-> (293)
+	*/
+	*/
+(291) <-> (294)
+	public void drawImage(Image image, int x, int y) {
+	public void drawImage(Image image, int x, int y) {
+(292) <-> (295)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(293) <-> (296)
+	if (image == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (image == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(294) <-> (297)
+	if (image.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	if (image.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+(295) <-> (298)
+	drawImage(image, 0, 0, -1, -1, x, y, -1, -1, true);
+	drawImage(image, 0, 0, -1, -1, x, y, -1, -1, true);
+(296) <-> (299)
+	}
+	}
+(297) <-> (300)
+	/**
+	/**
+(298) <-> (301)
+	* Copies a rectangular area from the source image into a (potentially
+	* Copies a rectangular area from the source image into a (potentially
+(299) <-> (302)
+	* different sized) rectangular area in the receiver. If the source
+	* different sized) rectangular area in the receiver. If the source
+(300) <-> (303)
+	* and destination areas are of differing sizes, then the source
+	* and destination areas are of differing sizes, then the source
+(301) <-> (304)
+	* area will be stretched or shrunk to fit the destination area
+	* area will be stretched or shrunk to fit the destination area
+(302) <-> (305)
+	* as it is copied. The copy fails if any part of the source rectangle
+	* as it is copied. The copy fails if any part of the source rectangle
+(303) <-> (306)
+	* lies outside the bounds of the source image, or if any of the width
+	* lies outside the bounds of the source image, or if any of the width
+(304) <-> (307)
+	* or height arguments are negative.
+	* or height arguments are negative.
+(305) <-> (308)
+	*
+	*
+(306) <-> (309)
+	* @param image the source image
+	* @param image the source image
+(307) <-> (310)
+	* @param srcX the x coordinate in the source image to copy from
+	* @param srcX the x coordinate in the source image to copy from
+(308) <-> (311)
+	* @param srcY the y coordinate in the source image to copy from
+	* @param srcY the y coordinate in the source image to copy from
+(309) <-> (312)
+	* @param srcWidth the width in pixels to copy from the source
+	* @param srcWidth the width in pixels to copy from the source
+(310) <-> (313)
+	* @param srcHeight the height in pixels to copy from the source
+	* @param srcHeight the height in pixels to copy from the source
+(311) <-> (314)
+	* @param destX the x coordinate in the destination to copy to
+	* @param destX the x coordinate in the destination to copy to
+(312) <-> (315)
+	* @param destY the y coordinate in the destination to copy to
+	* @param destY the y coordinate in the destination to copy to
+(313) <-> (316)
+	* @param destWidth the width in pixels of the destination rectangle
+	* @param destWidth the width in pixels of the destination rectangle
+(314) <-> (317)
+	* @param destHeight the height in pixels of the destination rectangle
+	* @param destHeight the height in pixels of the destination rectangle
+(315) <-> (318)
+	*
+	*
+(316) <-> (319)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(317) <-> (320)
+	* <li>ERROR_NULL_ARGUMENT - if the image is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the image is null</li>
+(318) <-> (321)
+	* <li>ERROR_INVALID_ARGUMENT - if the image has been disposed</li>
+	* <li>ERROR_INVALID_ARGUMENT - if the image has been disposed</li>
+(319) <-> (322)
+	* <li>ERROR_INVALID_ARGUMENT - if any of the width or height arguments are negative.
+	* <li>ERROR_INVALID_ARGUMENT - if any of the width or height arguments are negative.
+(320) <-> (323)
+	* <li>ERROR_INVALID_ARGUMENT - if the source rectangle is not contained within the bounds of the source image</li>
+	* <li>ERROR_INVALID_ARGUMENT - if the source rectangle is not contained within the bounds of the source image</li>
+(321) <-> (324)
+	* </ul>
+	* </ul>
+(322) <-> (325)
+	* @exception SWTError <ul>
+	* @exception SWTError <ul>
+(323) <-> (326)
+	* <li>ERROR_NO_HANDLES - if no handles are available to perform the operation</li>
+	* <li>ERROR_NO_HANDLES - if no handles are available to perform the operation</li>
+(324) <-> (327)
+	* </ul>
+	* </ul>
+(325) <-> (328)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(326) <-> (329)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(327) <-> (330)
+	* </ul>
+	* </ul>
+(328) <-> (331)
+	*/
+	*/
+(329) <-> (332)
+	public void drawImage(Image image, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight) {
+	public void drawImage(Image image, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight) {
+(330) <-> (333)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(331) <-> (334)
+	if (srcWidth == 0 || srcHeight == 0 || destWidth == 0 || destHeight == 0) return;
+	if (srcWidth == 0 || srcHeight == 0 || destWidth == 0 || destHeight == 0) return;
+(332) <-> (335)
+	if (srcX < 0 || srcY < 0 || srcWidth < 0 || srcHeight < 0 || destWidth < 0 || destHeight < 0) {
+	if (srcX < 0 || srcY < 0 || srcWidth < 0 || srcHeight < 0 || destWidth < 0 || destHeight < 0) {
+(333) <-> (336)
+	SWT.error (SWT.ERROR_INVALID_ARGUMENT);
+	SWT.error (SWT.ERROR_INVALID_ARGUMENT);
+(334) <-> (337)
+	}
+	}
+(335) <-> (338)
+	if (image == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (image == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(336) <-> (339)
+	if (image.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	if (image.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+(337) <-> (340)
+	drawImage(image, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, false);
+	drawImage(image, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, false);
+(338) <-> (341)
+	}
+	}
+(339) <-> (342)
+	void drawImage(Image srcImage, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
+	void drawImage(Image srcImage, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
+(340) <-> (343)
+	Rect bounds= new Rect();
+	MacRect bounds= new MacRect();
+(341) <-> (344)
+	OS.GetPixBounds(srcImage.pixmap, bounds);
+	OS.GetPixBounds(srcImage.pixmap, bounds.getData());
+(342) <-> (345)
+	int imgWidth = bounds.right - bounds.left;
+	int imgWidth = bounds.getWidth();
+(343) <-> (346)
+	int imgHeight = bounds.bottom - bounds.top;
+	int imgHeight = bounds.getHeight();
+(345) <-> (348)
+	if (simple) {
+	if (simple) {
+(346) <-> (349)
+	srcWidth = destWidth = imgWidth;
+	srcWidth = destWidth = imgWidth;
+(347) <-> (350)
+	srcHeight = destHeight = imgHeight;
+	srcHeight = destHeight = imgHeight;
+(348) <-> (351)
+	} else {
+	} else {
+(349) <-> (352)
+	if (srcX + srcWidth > imgWidth || srcY + srcHeight > imgHeight) {
+	if (srcX + srcWidth > imgWidth || srcY + srcHeight > imgHeight) {
+(350) <-> (353)
+	SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+(351) <-> (354)
+	}
+	}
+(352) <-> (355)
+	}
+	}
+(354) <-> (357)
+	if (srcImage.alpha == 0) // fully transparent
+	if (srcImage.alpha == 0) // fully transparent
+(355) <-> (358)
+	return;
+	return;
+(357) <-> (360)
+	if (srcImage.pixmap == 0)
+	if (srcImage.pixmap == 0)
+(358) <-> (361)
+	return;
+	return;
+(359) <-> (362)
+	int srcBits= OS.DerefHandle(srcImage.pixmap);
+	int srcBits= OS.DerefHandle(srcImage.pixmap);
+(360) <-> (363)
+	if (srcBits == 0)
+	if (srcBits == 0)
+(361) <-> (364)
+	return;
+	return;
+(362) <-> (365)
+	int destBits= OS.GetPortBitMapForCopyBits(handle);
+	int destBits= OS.GetPortBitMapForCopyBits(handle);
+(363) <-> (366)
+	if (destBits == 0)
+	if (destBits == 0)
+(364) <-> (367)
+	return;
+	return;
+(366) <-> (369)
+	try {
+	try {
+(367) <-> (370)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(385) <-> (376)
+	OS.RGBForeColor(color);
+	OS.RGBForeColor((short)0x0000, (short)0x0000, (short)0x0000);
+(387) <-> (378)
+	if (srcImage.alpha != -1 || srcImage.alphaData != null) {
+	if (srcImage.alpha != -1 || srcImage.alphaData != null) {
+(389) <-> (380)
+	if (srcImage.alpha == 255) { // fully opaque
+	if (srcImage.alpha == 255) { // fully opaque
+(390) <-> (381)
+	OS.CopyBits(srcBits, destBits, ib, rect, (short)0, 0);
+	OS.CopyBits(srcBits, destBits, ib.getData(), fRect.getData(), (short)0, 0);
+(391) <-> (382)
+	return;
+	return;
+(392) <-> (383)
+	}
+	}
+(394) <-> (385)
+	//OS.CopyDeepMask(srcBits, maskBits, destBits, ib.getData(), ib.getData(), fRect.getData(), (short)0, 0);
+	//OS.CopyDeepMask(srcBits, maskBits, destBits, ib.getData(), ib.getData(), fRect.getData(), (short)0, 0);
+(395) <-> (386)
+	System.out.println("GC.drawImage: alpha drawing not nyi");
+	System.out.println("GC.drawImage: alpha drawing not nyi");
+(397) <-> (388)
+	} else if (srcImage.transparentPixel != -1 || srcImage.mask != 0) {
+	} else if (srcImage.transparentPixel != -1 || srcImage.mask != 0) {
+(398) <-> (389)
+	/* Generate the mask if necessary. */
+	/* Generate the mask if necessary. */
+(399) <-> (390)
+	if (srcImage.transparentPixel != -1) srcImage.createMask();
+	if (srcImage.transparentPixel != -1) srcImage.createMask();
+(401) <-> (392)
+	int maskBits= srcImage.mask != 0 ? OS.DerefHandle(srcImage.mask) : 0;
+	int maskBits= srcImage.mask != 0 ? OS.DerefHandle(srcImage.mask) : 0;
+(402) <-> (393)
+	if (maskBits != 0) {
+	if (maskBits != 0) {
+(403) <-> (394)
+	int rc= OS.CopyMask(srcBits, maskBits, destBits, ib, ib, rect);
+	int rc= OS.CopyMask(srcBits, maskBits, destBits, ib.getData(), ib.getData(), fRect.getData());
+(404) <-> (395)
+	if (rc != OS.noErr)
+	if (rc != OS.kNoErr)
+(405) <-> (396)
+	System.out.println("GC.drawImage: error in CopyMask: " + rc);
+	System.out.println("GC.drawImage: error in CopyMask: " + rc);
+(406) <-> (397)
+	}
+	}
+(408) <-> (399)
+	/* Destroy the image mask if there is a GC created on the image */
+	/* Destroy the image mask if there is a GC created on the image */
+(409) <-> (400)
+	if (srcImage.transparentPixel != -1 && srcImage.memGC != null) srcImage.destroyMask();
+	if (srcImage.transparentPixel != -1 && srcImage.memGC != null) srcImage.destroyMask();
+(411) <-> (402)
+	} else {
+	} else {
+(412) <-> (403)
+	OS.CopyBits(srcBits, destBits, ib, rect, (short)0, 0);
+	OS.CopyBits(srcBits, destBits, ib.getData(), fRect.getData(), (short)0, 0);
+(413) <-> (404)
+	}
+	}
+(414) <-> (405)
+	}
+	}
+(415) <-> (406)
+	} finally {
+	} finally {
+(416) <-> (407)
+	unfocus(true);
+	unfocus(true);
+(417) <-> (408)
+	}
+	}
+(418) <-> (409)
+	}
+	}
+(419) <-> (410)
+	/**
+	/**
+(420) <-> (411)
+	* Draws a line, using the foreground color, between the points
+	* Draws a line, using the foreground color, between the points
+(421) <-> (412)
+	* (<code>x1</code>, <code>y1</code>) and (<code>x2</code>, <code>y2</code>).
+	* (<code>x1</code>, <code>y1</code>) and (<code>x2</code>, <code>y2</code>).
+(422) <-> (413)
+	*
+	*
+(423) <-> (414)
+	* @param x1 the first point's x coordinate
+	* @param x1 the first point's x coordinate
+(424) <-> (415)
+	* @param y1 the first point's y coordinate
+	* @param y1 the first point's y coordinate
+(425) <-> (416)
+	* @param x2 the second point's x coordinate
+	* @param x2 the second point's x coordinate
+(426) <-> (417)
+	* @param y2 the second point's y coordinate
+	* @param y2 the second point's y coordinate
+(427) <-> (418)
+	*
+	*
+(428) <-> (419)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(429) <-> (420)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(430) <-> (421)
+	* </ul>
+	* </ul>
+(431) <-> (422)
+	*/
+	*/
+(432) <-> (423)
+	public void drawLine (int x1, int y1, int x2, int y2) {
+	public void drawLine (int x1, int y1, int x2, int y2) {
+(433) <-> (424)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(434) <-> (425)
+	try {
+	try {
+(435) <-> (426)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(436) <-> (427)
+	MacUtil.RGBForeColor(data.foreground);
+	MacUtil.RGBForeColor(data.foreground);
+(437) <-> (677)
+	OS.PenSize((short) data.lineWidth, (short) data.lineWidth);
+	OS.PenSize((short) fLineWidth, (short) fLineWidth);
+(438) <-> (429)
+	OS.MoveTo((short)x1, (short)y1);
+	OS.MoveTo((short)x1, (short)y1);
+(439) <-> (430)
+	OS.LineTo((short)x2, (short)y2);
+	OS.LineTo((short)x2, (short)y2);
+(440) <-> (431)
+	}
+	}
+(441) <-> (432)
+	} finally {
+	} finally {
+(442) <-> (433)
+	unfocus(true);
+	unfocus(true);
+(443) <-> (434)
+	}
+	}
+(444) <-> (435)
+	}
+	}
+(445) <-> (436)
+	/**
+	/**
+(446) <-> (437)
+	* Draws the outline of an oval, using the foreground color,
+	* Draws the outline of an oval, using the foreground color,
+(447) <-> (438)
+	* within the specified rectangular area.
+	* within the specified rectangular area.
+(448) <-> (439)
+	* <p>
+	* <p>
+(449) <-> (440)
+	* The result is a circle or ellipse that fits within the
+	* The result is a circle or ellipse that fits within the
+(450) <-> (441)
+	* rectangle specified by the <code>x</code>, <code>y</code>,
+	* rectangle specified by the <code>x</code>, <code>y</code>,
+(451) <-> (442)
+	* <code>width</code>, and <code>height</code> arguments.
+	* <code>width</code>, and <code>height</code> arguments.
+(452) <-> (443)
+	* </p><p>
+	* </p><p>
+(453) <-> (444)
+	* The oval covers an area that is <code>width + 1</code>
+	* The oval covers an area that is <code>width + 1</code>
+(454) <-> (445)
+	* pixels wide and <code>height + 1</code> pixels tall.
+	* pixels wide and <code>height + 1</code> pixels tall.
+(455) <-> (446)
+	* </p>
+	* </p>
+(456) <-> (447)
+	*
+	*
+(457) <-> (448)
+	* @param x the x coordinate of the upper left corner of the oval to be drawn
+	* @param x the x coordinate of the upper left corner of the oval to be drawn
+(458) <-> (449)
+	* @param y the y coordinate of the upper left corner of the oval to be drawn
+	* @param y the y coordinate of the upper left corner of the oval to be drawn
+(459) <-> (450)
+	* @param width the width of the oval to be drawn
+	* @param width the width of the oval to be drawn
+(460) <-> (451)
+	* @param height the height of the oval to be drawn
+	* @param height the height of the oval to be drawn
+(461) <-> (452)
+	*
+	*
+(462) <-> (453)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(463) <-> (454)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(464) <-> (455)
+	* </ul>
+	* </ul>
+(465) <-> (456)
+	*/
+	*/
+(466) <-> (457)
+	public void drawOval(int x, int y, int width, int height) {
+	public void drawOval(int x, int y, int width, int height) {
+(467) <-> (458)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(468) <-> (459)
+	if (width < 0) {
+	if (width < 0) {
+(469) <-> (460)
+	x = x + width;
+	x = x + width;
+(470) <-> (461)
+	width = -width;
+	width = -width;
+(471) <-> (462)
+	}
+	}
+(472) <-> (463)
+	if (height < 0) {
+	if (height < 0) {
+(473) <-> (464)
+	y = y + height;
+	y = y + height;
+(474) <-> (465)
+	height = -height;
+	height = -height;
+(475) <-> (466)
+	}
+	}
+(476) <-> (467)
+	try {
+	try {
+(477) <-> (468)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(478) <-> (469)
+	MacUtil.RGBForeColor(data.foreground);
+	MacUtil.RGBForeColor(data.foreground);
+(479) <-> (428)
+	OS.PenSize((short) data.lineWidth, (short) data.lineWidth);
+	OS.PenSize((short) fLineWidth, (short) fLineWidth);
+(480) <-> (678)
+	Rect rect= new Rect();
+	fRect.set(x, y, width+1, height+1);
+(483) <-> (472)
+	OS.FrameOval(rect);
+	OS.FrameOval(fRect.getData());
+(484) <-> (473)
+	}
+	}
+(485) <-> (474)
+	} finally {
+	} finally {
+(486) <-> (475)
+	unfocus(true);
+	unfocus(true);
+(487) <-> (476)
+	}
+	}
+(488) <-> (477)
+	}
+	}
+(489) <-> (478)
+	/**
+	/**
+(490) <-> (479)
+	* Draws the closed polygon which is defined by the specified array
+	* Draws the closed polygon which is defined by the specified array
+(491) <-> (480)
+	* of integer coordinates, using the receiver's foreground color. The array
+	* of integer coordinates, using the receiver's foreground color. The array
+(492) <-> (481)
+	* contains alternating x and y values which are considered to represent
+	* contains alternating x and y values which are considered to represent
+(493) <-> (482)
+	* points which are the vertices of the polygon. Lines are drawn between
+	* points which are the vertices of the polygon. Lines are drawn between
+(494) <-> (483)
+	* each consecutive pair, and between the first pair and last pair in the
+	* each consecutive pair, and between the first pair and last pair in the
+(495) <-> (484)
+	* array.
+	* array.
+(496) <-> (485)
+	*
+	*
+(497) <-> (486)
+	* @param pointArray an array of alternating x and y values which are the vertices of the polygon
+	* @param pointArray an array of alternating x and y values which are the vertices of the polygon
+(498) <-> (487)
+	*
+	*
+(499) <-> (488)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(500) <-> (489)
+	* <li>ERROR_NULL_ARGUMENT if pointArray is null</li>
+	* <li>ERROR_NULL_ARGUMENT if pointArray is null</li>
+(501) <-> (490)
+	* </ul>
+	* </ul>
+(502) <-> (491)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(503) <-> (492)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(504) <-> (493)
+	* </ul>
+	* </ul>
+(505) <-> (494)
+	*/
+	*/
+(506) <-> (495)
+	public void drawPolygon(int[] pointArray) {
+	public void drawPolygon(int[] pointArray) {
+(507) <-> (496)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(508) <-> (497)
+	if (pointArray == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (pointArray == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(510) <-> (499)
+	// Motif does not have a native drawPolygon() call. Instead we ensure
+	// Motif does not have a native drawPolygon() call. Instead we ensure
+(511) <-> (500)
+	// that the first and last points are the same and call drawPolyline().
+	// that the first and last points are the same and call drawPolyline().
+(513) <-> (502)
+	int length = pointArray.length;
+	int length = pointArray.length;
+(515) <-> (504)
+	// Need at least 3 points to define the polygon. If 2 or fewer points
+	// Need at least 3 points to define the polygon. If 2 or fewer points
+(516) <-> (505)
+	// passed in, it is either a line or point so just call drawPolyline().
+	// passed in, it is either a line or point so just call drawPolyline().
+(517) <-> (506)
+	// Check what happens when XOR is implemented. We may not be able to
+	// Check what happens when XOR is implemented. We may not be able to
+(518) <-> (507)
+	// do this optimization.
+	// do this optimization.
+(520) <-> (509)
+	if (length < 4) {
+	if (length < 4) {
+(521) <-> (510)
+	drawPolyline(pointArray);
+	drawPolyline(pointArray);
+(522) <-> (511)
+	return;
+	return;
+(523) <-> (512)
+	}
+	}
+(525) <-> (514)
+	// If first and last points are the same, the polygon is already closed.
+	// If first and last points are the same, the polygon is already closed.
+(526) <-> (515)
+	// Just call drawPolyline().
+	// Just call drawPolyline().
+(527) <-> (516)
+	//
+	//
+(528) <-> (517)
+	// Check what happens when XOR is implemented. We may not be able to
+	// Check what happens when XOR is implemented. We may not be able to
+(529) <-> (518)
+	// do this optimization.
+	// do this optimization.
+(531) <-> (520)
+	if (pointArray[0] == pointArray[length - 2] && (pointArray[1] == pointArray[length - 1])) {
+	if (pointArray[0] == pointArray[length - 2] && (pointArray[1] == pointArray[length - 1])) {
+(532) <-> (521)
+	drawPolyline(pointArray);
+	drawPolyline(pointArray);
+(533) <-> (522)
+	return;
+	return;
+(534) <-> (523)
+	}
+	}
+(536) <-> (525)
+	// Grow the list of points by one element and make sure the first and last
+	// Grow the list of points by one element and make sure the first and last
+(537) <-> (526)
+	// points are the same. This will close the polygon and we can use the
+	// points are the same. This will close the polygon and we can use the
+(538) <-> (527)
+	// drawPolyline() call.
+	// drawPolyline() call.
+(540) <-> (529)
+	int newPoints[] = new int[length + 2];
+	int newPoints[] = new int[length + 2];
+(541) <-> (530)
+	for (int i = 0; i < length ; i++)
+	for (int i = 0; i < length ; i++)
+(542) <-> (531)
+	newPoints[i] = pointArray[i];
+	newPoints[i] = pointArray[i];
+(543) <-> (532)
+	newPoints[length] = pointArray[0];
+	newPoints[length] = pointArray[0];
+(544) <-> (533)
+	newPoints[length + 1] = pointArray[1];
+	newPoints[length + 1] = pointArray[1];
+(546) <-> (535)
+	drawPolyline(newPoints);
+	drawPolyline(newPoints);
+(547) <-> (536)
+	}
+	}
+(548) <-> (537)
+	/**
+	/**
+(549) <-> (538)
+	* Draws the polyline which is defined by the specified array
+	* Draws the polyline which is defined by the specified array
+(550) <-> (539)
+	* of integer coordinates, using the receiver's foreground color. The array
+	* of integer coordinates, using the receiver's foreground color. The array
+(551) <-> (540)
+	* contains alternating x and y values which are considered to represent
+	* contains alternating x and y values which are considered to represent
+(552) <-> (541)
+	* points which are the corners of the polyline. Lines are drawn between
+	* points which are the corners of the polyline. Lines are drawn between
+(553) <-> (542)
+	* each consecutive pair, but not between the first pair and last pair in
+	* each consecutive pair, but not between the first pair and last pair in
+(554) <-> (543)
+	* the array.
+	* the array.
+(555) <-> (544)
+	*
+	*
+(556) <-> (545)
+	* @param pointArray an array of alternating x and y values which are the corners of the polyline
+	* @param pointArray an array of alternating x and y values which are the corners of the polyline
+(557) <-> (546)
+	*
+	*
+(558) <-> (547)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(559) <-> (548)
+	* <li>ERROR_NULL_ARGUMENT - if the point array is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the point array is null</li>
+(560) <-> (549)
+	* </ul>
+	* </ul>
+(561) <-> (550)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(562) <-> (551)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(563) <-> (552)
+	* </ul>
+	* </ul>
+(564) <-> (553)
+	*/
+	*/
+(565) <-> (554)
+	public void drawPolyline(int[] pointArray) {
+	public void drawPolyline(int[] pointArray) {
+(566) <-> (555)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(567) <-> (556)
+	if (pointArray == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (pointArray == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(568) <-> (557)
+	/* AW
+	/* AW
+(569) <-> (558)
+	short[] xPoints = new short[pointArray.length];
+	short[] xPoints = new short[pointArray.length];
+(570) <-> (559)
+	for (int i = 0; i<pointArray.length;i++) {
+	for (int i = 0; i<pointArray.length;i++) {
+(571) <-> (560)
+	xPoints[i] = (short) pointArray[i];
+	xPoints[i] = (short) pointArray[i];
+(572) <-> (561)
+	}
+	}
+(573) <-> (562)
+	OS.XDrawLines(data.display,data.drawable,handle,xPoints,xPoints.length / 2, OS.CoordModeOrigin);
+	OS.XDrawLines(data.display,data.drawable,handle,xPoints,xPoints.length / 2, OS.CoordModeOrigin);
+(574) <-> (563)
+	*/
+	*/
+(576) <-> (565)
+	if (pointArray.length < 4)
+	if (pointArray.length < 4)
+(577) <-> (566)
+	return;
+	return;
+(579) <-> (568)
+	int poly= 0;
+	int poly= 0;
+(580) <-> (569)
+	try {
+	try {
+(581) <-> (570)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(582) <-> (572)
+	poly= OS.OpenPoly();
+	poly= OS.OpenPoly();
+(583) <-> (573)
+	OS.MoveTo((short)pointArray[0], (short)pointArray[1]);
+	OS.MoveTo((short)pointArray[0], (short)pointArray[1]);
+(584) <-> (574)
+	for (int i= 2; i < pointArray.length; i+= 2)
+	for (int i= 2; i < pointArray.length; i+= 2)
+(585) <-> (575)
+	OS.LineTo((short)pointArray[i], (short)pointArray[i+1]);
+	OS.LineTo((short)pointArray[i], (short)pointArray[i+1]);
+(586) <-> (576)
+	OS.ClosePoly();
+	OS.ClosePoly();
+(588) <-> (578)
+	MacUtil.RGBForeColor(data.foreground);
+	MacUtil.RGBForeColor(data.foreground);
+(589) <-> (579)
+	OS.PenSize((short) data.lineWidth, (short) data.lineWidth);
+	OS.PenSize((short) fLineWidth, (short) fLineWidth);
+(590) <-> (580)
+	OS.FramePoly(poly);
+	OS.FramePoly(poly);
+(591) <-> (581)
+	}
+	}
+(592) <-> (582)
+	} finally {
+	} finally {
+(593) <-> (583)
+	unfocus(true);
+	unfocus(true);
+(594) <-> (584)
+	}
+	}
+(596) <-> (586)
+	if (poly != 0)
+	if (poly != 0)
+(597) <-> (587)
+	OS.KillPoly(poly);
+	OS.KillPoly(poly);
+(598) <-> (588)
+	}
+	}
+(599) <-> (589)
+	/**
+	/**
+(600) <-> (590)
+	* Draws the outline of the rectangle specified by the arguments,
+	* Draws the outline of the rectangle specified by the arguments,
+(601) <-> (591)
+	* using the receiver's foreground color. The left and right edges
+	* using the receiver's foreground color. The left and right edges
+(602) <-> (592)
+	* of the rectangle are at <code>x</code> and <code>x + width</code>.
+	* of the rectangle are at <code>x</code> and <code>x + width</code>.
+(603) <-> (593)
+	* The top and bottom edges are at <code>y</code> and <code>y + height</code>.
+	* The top and bottom edges are at <code>y</code> and <code>y + height</code>.
+(604) <-> (594)
+	*
+	*
+(605) <-> (595)
+	* @param x the x coordinate of the rectangle to be drawn
+	* @param x the x coordinate of the rectangle to be drawn
+(606) <-> (596)
+	* @param y the y coordinate of the rectangle to be drawn
+	* @param y the y coordinate of the rectangle to be drawn
+(607) <-> (597)
+	* @param width the width of the rectangle to be drawn
+	* @param width the width of the rectangle to be drawn
+(608) <-> (598)
+	* @param height the height of the rectangle to be drawn
+	* @param height the height of the rectangle to be drawn
+(609) <-> (599)
+	*
+	*
+(610) <-> (600)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(611) <-> (601)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(612) <-> (602)
+	* </ul>
+	* </ul>
+(613) <-> (603)
+	*/
+	*/
+(614) <-> (604)
+	public void drawRectangle (int x, int y, int width, int height) {
+	public void drawRectangle (int x, int y, int width, int height) {
+(615) <-> (605)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(616) <-> (606)
+	if (width < 0) {
+	if (width < 0) {
+(617) <-> (607)
+	x = x + width;
+	x = x + width;
+(618) <-> (608)
+	width = -width;
+	width = -width;
+(619) <-> (609)
+	}
+	}
+(620) <-> (610)
+	if (height < 0) {
+	if (height < 0) {
+(621) <-> (611)
+	y = y + height;
+	y = y + height;
+(622) <-> (612)
+	height = -height;
+	height = -height;
+(623) <-> (613)
+	}
+	}
+(624) <-> (614)
+	try {
+	try {
+(625) <-> (615)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(626) <-> (616)
+	MacUtil.RGBForeColor(data.foreground);
+	MacUtil.RGBForeColor(data.foreground);
+(627) <-> (470)
+	OS.PenSize((short) data.lineWidth, (short) data.lineWidth);
+	OS.PenSize((short) fLineWidth, (short) fLineWidth);
+(628) <-> (618)
+	Rect rect= new Rect();
+	fRect.set(x, y, width+1, height+1);
+(631) <-> (619)
+	OS.FrameRect(rect);
+	OS.FrameRect(fRect.getData());
+(632) <-> (620)
+	}
+	}
+(633) <-> (621)
+	} finally {
+	} finally {
+(634) <-> (622)
+	unfocus(true);
+	unfocus(true);
+(635) <-> (623)
+	}
+	}
+(636) <-> (624)
+	}
+	}
+(637) <-> (625)
+	/**
+	/**
+(638) <-> (626)
+	* Draws the outline of the specified rectangle, using the receiver's
+	* Draws the outline of the specified rectangle, using the receiver's
+(639) <-> (627)
+	* foreground color. The left and right edges of the rectangle are at
+	* foreground color. The left and right edges of the rectangle are at
+(640) <-> (628)
+	* <code>rect.x</code> and <code>rect.x + rect.width</code>. The top
+	* <code>rect.x</code> and <code>rect.x + rect.width</code>. The top
+(641) <-> (629)
+	* and bottom edges are at <code>rect.y</code> and
+	* and bottom edges are at <code>rect.y</code> and
+(642) <-> (630)
+	* <code>rect.y + rect.height</code>.
+	* <code>rect.y + rect.height</code>.
+(643) <-> (631)
+	*
+	*
+(644) <-> (632)
+	* @param rect the rectangle to draw
+	* @param rect the rectangle to draw
+(645) <-> (633)
+	*
+	*
+(646) <-> (634)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(647) <-> (635)
+	* <li>ERROR_NULL_ARGUMENT - if the rectangle is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the rectangle is null</li>
+(648) <-> (636)
+	* </ul>
+	* </ul>
+(649) <-> (637)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(650) <-> (638)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(651) <-> (639)
+	* </ul>
+	* </ul>
+(652) <-> (640)
+	*/
+	*/
+(653) <-> (641)
+	public void drawRectangle (Rectangle rect) {
+	public void drawRectangle (Rectangle rect) {
+(654) <-> (642)
+	if (rect == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (rect == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(655) <-> (643)
+	drawRectangle (rect.x, rect.y, rect.width, rect.height);
+	drawRectangle (rect.x, rect.y, rect.width, rect.height);
+(656) <-> (644)
+	}
+	}
+(657) <-> (645)
+	/**
+	/**
+(658) <-> (646)
+	* Draws the outline of the round-cornered rectangle specified by
+	* Draws the outline of the round-cornered rectangle specified by
+(659) <-> (647)
+	* the arguments, using the receiver's foreground color. The left and
+	* the arguments, using the receiver's foreground color. The left and
+(660) <-> (648)
+	* right edges of the rectangle are at <code>x</code> and <code>x + width</code>.
+	* right edges of the rectangle are at <code>x</code> and <code>x + width</code>.
+(661) <-> (649)
+	* The top and bottom edges are at <code>y</code> and <code>y + height</code>.
+	* The top and bottom edges are at <code>y</code> and <code>y + height</code>.
+(662) <-> (650)
+	* The <em>roundness</em> of the corners is specified by the
+	* The <em>roundness</em> of the corners is specified by the
+(663) <-> (651)
+	* <code>arcWidth</code> and <code>arcHeight</code> arguments.
+	* <code>arcWidth</code> and <code>arcHeight</code> arguments.
+(664) <-> (652)
+	*
+	*
+(665) <-> (653)
+	* @param x the x coordinate of the rectangle to be drawn
+	* @param x the x coordinate of the rectangle to be drawn
+(666) <-> (654)
+	* @param y the y coordinate of the rectangle to be drawn
+	* @param y the y coordinate of the rectangle to be drawn
+(667) <-> (655)
+	* @param width the width of the rectangle to be drawn
+	* @param width the width of the rectangle to be drawn
+(668) <-> (656)
+	* @param height the height of the rectangle to be drawn
+	* @param height the height of the rectangle to be drawn
+(669) <-> (657)
+	* @param arcWidth the horizontal diameter of the arc at the four corners
+	* @param arcWidth the horizontal diameter of the arc at the four corners
+(670) <-> (658)
+	* @param arcHeight the vertical diameter of the arc at the four corners
+	* @param arcHeight the vertical diameter of the arc at the four corners
+(671) <-> (659)
+	*
+	*
+(672) <-> (660)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(673) <-> (661)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(674) <-> (662)
+	* </ul>
+	* </ul>
+(675) <-> (663)
+	*/
+	*/
+(676) <-> (664)
+	public void drawRoundRectangle (int x, int y, int width, int height, int arcWidth, int arcHeight) {
+	public void drawRoundRectangle (int x, int y, int width, int height, int arcWidth, int arcHeight) {
+(677) <-> (665)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(678) <-> (666)
+	if (width < 0) {
+	if (width < 0) {
+(679) <-> (667)
+	x = x + width;
+	x = x + width;
+(680) <-> (668)
+	width = -width;
+	width = -width;
+(681) <-> (669)
+	}
+	}
+(682) <-> (670)
+	if (height < 0) {
+	if (height < 0) {
+(683) <-> (671)
+	y = y + height;
+	y = y + height;
+(684) <-> (672)
+	height = -height;
+	height = -height;
+(685) <-> (673)
+	}
+	}
+(686) <-> (674)
+	try {
+	try {
+(687) <-> (675)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(688) <-> (676)
+	MacUtil.RGBForeColor(data.foreground);
+	MacUtil.RGBForeColor(data.foreground);
+(689) <-> (617)
+	OS.PenSize((short) data.lineWidth, (short) data.lineWidth);
+	OS.PenSize((short) fLineWidth, (short) fLineWidth);
+(690) <-> (38)
+	Rect rect= new Rect();
+	private MacRect fRect= new MacRect();
+(693) <-> (679)
+	OS.FrameRoundRect(rect, (short)arcWidth, (short)arcHeight);
+	OS.FrameRoundRect(fRect.getData(), (short)arcWidth, (short)arcHeight);
+(694) <-> (680)
+	}
+	}
+(695) <-> (681)
+	} finally {
+	} finally {
+(696) <-> (682)
+	unfocus(true);
+	unfocus(true);
+(697) <-> (683)
+	}
+	}
+(698) <-> (684)
+	}
+	}
+(699) <-> (685)
+	/**
+	/**
+(700) <-> (686)
+	* Draws the given string, using the receiver's current font and
+	* Draws the given string, using the receiver's current font and
+(701) <-> (687)
+	* foreground color. No tab expansion or carriage return processing
+	* foreground color. No tab expansion or carriage return processing
+(702) <-> (688)
+	* will be performed. The background of the rectangular area where
+	* will be performed. The background of the rectangular area where
+(703) <-> (689)
+	* the string is being drawn will be filled with the receiver's
+	* the string is being drawn will be filled with the receiver's
+(704) <-> (690)
+	* background color.
+	* background color.
+(705) <-> (691)
+	*
+	*
+(706) <-> (692)
+	* @param string the string to be drawn
+	* @param string the string to be drawn
+(707) <-> (693)
+	* @param x the x coordinate of the top left corner of the rectangular area where the string is to be drawn
+	* @param x the x coordinate of the top left corner of the rectangular area where the string is to be drawn
+(708) <-> (694)
+	* @param y the y coordinate of the top left corner of the rectangular area where the string is to be drawn
+	* @param y the y coordinate of the top left corner of the rectangular area where the string is to be drawn
+(709) <-> (695)
+	*
+	*
+(710) <-> (696)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(711) <-> (697)
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+(712) <-> (698)
+	* </ul>
+	* </ul>
+(713) <-> (699)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(714) <-> (700)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(715) <-> (701)
+	* </ul>
+	* </ul>
+(716) <-> (702)
+	*/
+	*/
+(717) <-> (703)
+	public void drawString (String string, int x, int y) {
+	public void drawString (String string, int x, int y) {
+(718) <-> (704)
+	drawString(string, x, y, false);
+	drawString(string, x, y, false);
+(719) <-> (705)
+	}
+	}
+(720) <-> (706)
+	/**
+	/**
+(721) <-> (707)
+	* Draws the given string, using the receiver's current font and
+	* Draws the given string, using the receiver's current font and
+(722) <-> (708)
+	* foreground color. No tab expansion or carriage return processing
+	* foreground color. No tab expansion or carriage return processing
+(723) <-> (709)
+	* will be performed. If <code>isTransparent</code> is <code>true</code>,
+	* will be performed. If <code>isTransparent</code> is <code>true</code>,
+(724) <-> (710)
+	* then the background of the rectangular area where the string is being
+	* then the background of the rectangular area where the string is being
+(725) <-> (711)
+	* drawn will not be modified, otherwise it will be filled with the
+	* drawn will not be modified, otherwise it will be filled with the
+(726) <-> (712)
+	* receiver's background color.
+	* receiver's background color.
+(727) <-> (713)
+	*
+	*
+(728) <-> (714)
+	* @param string the string to be drawn
+	* @param string the string to be drawn
+(729) <-> (715)
+	* @param x the x coordinate of the top left corner of the rectangular area where the string is to be drawn
+	* @param x the x coordinate of the top left corner of the rectangular area where the string is to be drawn
+(730) <-> (716)
+	* @param y the y coordinate of the top left corner of the rectangular area where the string is to be drawn
+	* @param y the y coordinate of the top left corner of the rectangular area where the string is to be drawn
+(731) <-> (717)
+	* @param isTransparent if <code>true</code> the background will be transparent, otherwise it will be opaque
+	* @param isTransparent if <code>true</code> the background will be transparent, otherwise it will be opaque
+(732) <-> (718)
+	*
+	*
+(733) <-> (719)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(734) <-> (720)
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+(735) <-> (721)
+	* </ul>
+	* </ul>
+(736) <-> (722)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(737) <-> (723)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(738) <-> (724)
+	* </ul>
+	* </ul>
+(739) <-> (725)
+	*/
+	*/
+(740) <-> (726)
+	public void drawString (String string, int x, int y, boolean isTransparent) {
+	public void drawString (String string, int x, int y, boolean isTransparent) {
+(741) <-> (727)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(742) <-> (728)
+	if (string == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (string == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(743) <-> (729)
+	/* AW
+	/* AW
+(744) <-> (730)
+	byte [] buffer = Converter.wcsToMbcs (getCodePage (), string, true);
+	byte [] buffer = Converter.wcsToMbcs (getCodePage (), string, true);
+(745) <-> (731)
+	int xmString = OS.XmStringCreate (buffer, OS.XmFONTLIST_DEFAULT_TAG);
+	int xmString = OS.XmStringCreate (buffer, OS.XmFONTLIST_DEFAULT_TAG);
+(746) <-> (732)
+	if (isTransparent) {
+	if (isTransparent) {
+(747) <-> (733)
+	OS.XmStringDraw (data.display, data.drawable, data.fontList, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null);
+	OS.XmStringDraw (data.display, data.drawable, data.fontList, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null);
+(748) <-> (734)
+	} else {
+	} else {
+(749) <-> (735)
+	OS.XmStringDrawImage (data.display, data.drawable, data.fontList, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null);
+	OS.XmStringDrawImage (data.display, data.drawable, data.fontList, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null);
+(750) <-> (736)
+	}
+	}
+(751) <-> (737)
+	// OS.XmStringDrawUnderline (display, drawable, fontList, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null, 0);
+	// OS.XmStringDrawUnderline (display, drawable, fontList, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null, 0);
+(752) <-> (738)
+	OS.XmStringFree (xmString);
+	OS.XmStringFree (xmString);
+(753) <-> (739)
+	*/
+	*/
+(754) <-> (740)
+	try {
+	try {
+(755) <-> (741)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(756) <-> (742)
+	carbon_installFont();
+	installFont();
+(757) <-> (743)
+	MacUtil.RGBForeColor(data.foreground);
+	MacUtil.RGBForeColor(data.foreground);
+(758) <-> (744)
+	if (isTransparent) {
+	if (isTransparent) {
+(759) <-> (745)
+	OS.TextMode((short)OS.srcOr);
+	OS.TextMode(OS.srcOr);
+(760) <-> (746)
+	} else {
+	} else {
+(761) <-> (747)
+	if ((data.background & 0xff000000) == 0) {
+	if ((data.background & 0xff000000) == 0) {
+(762) <-> (748)
+	MacUtil.RGBBackColor(data.background);
+	MacUtil.RGBBackColor(data.background);
+(763) <-> (749)
+	OS.TextMode((short)OS.srcCopy);
+	OS.TextMode(OS.srcCopy);
+(764) <-> (750)
+	} else {
+	} else {
+(765) <-> (751)
+	//System.out.println("GC.drawString: " + Integer.toHexString(data.background));
+	//System.out.println("GC.drawString: " + Integer.toHexString(data.background));
+(766) <-> (752)
+	OS.TextMode((short)OS.srcOr);
+	OS.TextMode(OS.srcOr);
+(767) <-> (753)
+	}
+	}
+(768) <-> (754)
+	}
+	}
+(769) <-> (755)
+	short[] fontInfo= new short[4];
+	short[] fontInfo= new short[4];
+(770) <-> (756)
+	OS.GetFontInfo(fontInfo); // FontInfo
+	OS.GetFontInfo(fontInfo); // FontInfo
+(771) <-> (757)
+	OS.MoveTo((short)x, (short)(y+fontInfo[0]));
+	OS.MoveTo((short)x, (short)(y+fontInfo[0]));
+(773) <-> (758)
+	OS.DrawText(buffer, (short)0, (short)buffer.length);
+	OS.DrawText(string, data.font.fID, data.font.fSize, data.font.fFace);
+(774) <-> (759)
+	}
+	}
+(775) <-> (760)
+	} finally {
+	} finally {
+(776) <-> (761)
+	unfocus(true);
+	unfocus(true);
+(777) <-> (762)
+	}
+	}
+(778) <-> (763)
+	}
+	}
+(779) <-> (764)
+	/**
+	/**
+(780) <-> (765)
+	* Draws the given string, using the receiver's current font and
+	* Draws the given string, using the receiver's current font and
+(781) <-> (766)
+	* foreground color. Tab expansion and carriage return processing
+	* foreground color. Tab expansion and carriage return processing
+(782) <-> (767)
+	* are performed. The background of the rectangular area where
+	* are performed. The background of the rectangular area where
+(783) <-> (768)
+	* the text is being drawn will be filled with the receiver's
+	* the text is being drawn will be filled with the receiver's
+(784) <-> (769)
+	* background color.
+	* background color.
+(785) <-> (770)
+	*
+	*
+(786) <-> (771)
+	* @param string the string to be drawn
+	* @param string the string to be drawn
+(787) <-> (772)
+	* @param x the x coordinate of the top left corner of the rectangular area where the text is to be drawn
+	* @param x the x coordinate of the top left corner of the rectangular area where the text is to be drawn
+(788) <-> (773)
+	* @param y the y coordinate of the top left corner of the rectangular area where the text is to be drawn
+	* @param y the y coordinate of the top left corner of the rectangular area where the text is to be drawn
+(789) <-> (774)
+	*
+	*
+(790) <-> (775)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(791) <-> (776)
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+(792) <-> (777)
+	* </ul>
+	* </ul>
+(793) <-> (778)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(794) <-> (779)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(795) <-> (780)
+	* </ul>
+	* </ul>
+(796) <-> (781)
+	*/
+	*/
+(797) <-> (782)
+	public void drawText (String string, int x, int y) {
+	public void drawText (String string, int x, int y) {
+(798) <-> (783)
+	drawText(string, x, y, SWT.DRAW_DELIMITER | SWT.DRAW_TAB);
+	drawText(string, x, y, SWT.DRAW_DELIMITER | SWT.DRAW_TAB);
+(799) <-> (784)
+	}
+	}
+(800) <-> (785)
+	/**
+	/**
+(801) <-> (786)
+	* Draws the given string, using the receiver's current font and
+	* Draws the given string, using the receiver's current font and
+(802) <-> (787)
+	* foreground color. Tab expansion and carriage return processing
+	* foreground color. Tab expansion and carriage return processing
+(803) <-> (788)
+	* are performed. If <code>isTransparent</code> is <code>true</code>,
+	* are performed. If <code>isTransparent</code> is <code>true</code>,
+(804) <-> (789)
+	* then the background of the rectangular area where the text is being
+	* then the background of the rectangular area where the text is being
+(805) <-> (790)
+	* drawn will not be modified, otherwise it will be filled with the
+	* drawn will not be modified, otherwise it will be filled with the
+(806) <-> (791)
+	* receiver's background color.
+	* receiver's background color.
+(807) <-> (792)
+	*
+	*
+(808) <-> (793)
+	* @param string the string to be drawn
+	* @param string the string to be drawn
+(809) <-> (794)
+	* @param x the x coordinate of the top left corner of the rectangular area where the text is to be drawn
+	* @param x the x coordinate of the top left corner of the rectangular area where the text is to be drawn
+(810) <-> (795)
+	* @param y the y coordinate of the top left corner of the rectangular area where the text is to be drawn
+	* @param y the y coordinate of the top left corner of the rectangular area where the text is to be drawn
+(811) <-> (796)
+	* @param isTransparent if <code>true</code> the background will be transparent, otherwise it will be opaque
+	* @param isTransparent if <code>true</code> the background will be transparent, otherwise it will be opaque
+(812) <-> (797)
+	*
+	*
+(813) <-> (798)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(814) <-> (799)
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+(815) <-> (800)
+	* </ul>
+	* </ul>
+(816) <-> (801)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(817) <-> (802)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(818) <-> (803)
+	* </ul>
+	* </ul>
+(819) <-> (804)
+	*/
+	*/
+(820) <-> (805)
+	public void drawText (String string, int x, int y, boolean isTransparent) {
+	public void drawText (String string, int x, int y, boolean isTransparent) {
+(821) <-> (806)
+	int flags = SWT.DRAW_DELIMITER | SWT.DRAW_TAB;
+	int flags = SWT.DRAW_DELIMITER | SWT.DRAW_TAB;
+(822) <-> (807)
+	if (isTransparent) flags |= SWT.DRAW_TRANSPARENT;
+	if (isTransparent) flags |= SWT.DRAW_TRANSPARENT;
+(823) <-> (808)
+	drawText(string, x, y, flags);
+	drawText(string, x, y, flags);
+(824) <-> (809)
+	}
+	}
+(825) <-> (810)
+	/**
+	/**
+(826) <-> (811)
+	* Draws the given string, using the receiver's current font and
+	* Draws the given string, using the receiver's current font and
+(827) <-> (812)
+	* foreground color. Tab expansion, line delimiter and mnemonic
+	* foreground color. Tab expansion, line delimiter and mnemonic
+(828) <-> (813)
+	* processing are performed according to the specified flags. If
+	* processing are performed according to the specified flags. If
+(829) <-> (814)
+	* <code>flags</code> includes <code>DRAW_TRANSPARENT</code>,
+	* <code>flags</code> includes <code>DRAW_TRANSPARENT</code>,
+(830) <-> (815)
+	* then the background of the rectangular area where the text is being
+	* then the background of the rectangular area where the text is being
+(831) <-> (816)
+	* drawn will not be modified, otherwise it will be filled with the
+	* drawn will not be modified, otherwise it will be filled with the
+(832) <-> (817)
+	* receiver's background color.
+	* receiver's background color.
+(833) <-> (818)
+	* <p>
+	* <p>
+(834) <-> (819)
+	* The parameter <code>flags</code> may be a combination of:
+	* The parameter <code>flags</code> may be a combination of:
+(835) <-> (820)
+	* <dl>
+	* <dl>
+(836) <-> (821)
+	* <dt><b>DRAW_DELIMITER</b></dt>
+	* <dt><b>DRAW_DELIMITER</b></dt>
+(837) <-> (822)
+	* <dd>draw multiple lines</dd>
+	* <dd>draw multiple lines</dd>
+(838) <-> (823)
+	* <dt><b>DRAW_TAB</b></dt>
+	* <dt><b>DRAW_TAB</b></dt>
+(839) <-> (824)
+	* <dd>expand tabs</dd>
+	* <dd>expand tabs</dd>
+(840) <-> (825)
+	* <dt><b>DRAW_MNEMONIC</b></dt>
+	* <dt><b>DRAW_MNEMONIC</b></dt>
+(841) <-> (826)
+	* <dd>underline the mnemonic character</dd>
+	* <dd>underline the mnemonic character</dd>
+(842) <-> (827)
+	* <dt><b>DRAW_TRANSPARENT</b></dt>
+	* <dt><b>DRAW_TRANSPARENT</b></dt>
+(843) <-> (828)
+	* <dd>transparent background</dd>
+	* <dd>transparent background</dd>
+(844) <-> (829)
+	* </dl>
+	* </dl>
+(845) <-> (830)
+	* </p>
+	* </p>
+(846) <-> (831)
+	*
+	*
+(847) <-> (832)
+	* @param string the string to be drawn
+	* @param string the string to be drawn
+(848) <-> (833)
+	* @param x the x coordinate of the top left corner of the rectangular area where the text is to be drawn
+	* @param x the x coordinate of the top left corner of the rectangular area where the text is to be drawn
+(849) <-> (834)
+	* @param y the y coordinate of the top left corner of the rectangular area where the text is to be drawn
+	* @param y the y coordinate of the top left corner of the rectangular area where the text is to be drawn
+(850) <-> (835)
+	* @param flags the flags specifing how to process the text
+	* @param flags the flags specifing how to process the text
+(851) <-> (836)
+	*
+	*
+(852) <-> (837)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(853) <-> (838)
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+(854) <-> (839)
+	* </ul>
+	* </ul>
+(855) <-> (840)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(856) <-> (841)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(857) <-> (842)
+	* </ul>
+	* </ul>
+(858) <-> (843)
+	*/
+	*/
+(859) <-> (844)
+	public void drawText (String string, int x, int y, int flags) {
+	public void drawText (String string, int x, int y, int flags) {
+(860) <-> (845)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(861) <-> (846)
+	if (string == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (string == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(863) <-> (848)
+	/* AW
+	/* AW
+(864) <-> (849)
+	if (data.renderTable == 0) createRenderTable();
+	if (data.renderTable == 0) createRenderTable();
+(865) <-> (850)
+	int renderTable = data.renderTable;
+	int renderTable = data.renderTable;
+(867) <-> (852)
+	char mnemonic=0;
+	char mnemonic=0;
+(868) <-> (853)
+	int tableLength = 0;
+	int tableLength = 0;
+(869) <-> (854)
+	Device device = data.device;
+	Device device = data.device;
+(870) <-> (855)
+	int[] parseTable = new int[2];
+	int[] parseTable = new int[2];
+(871) <-> (856)
+	char[] text = new char[string.length()];
+	char[] text = new char[string.length()];
+(872) <-> (857)
+	string.getChars(0, text.length, text, 0);
+	string.getChars(0, text.length, text, 0);
+(873) <-> (858)
+	if ((flags & SWT.DRAW_DELIMITER) != 0) parseTable[tableLength++] = device.crMapping;
+	if ((flags & SWT.DRAW_DELIMITER) != 0) parseTable[tableLength++] = device.crMapping;
+(874) <-> (859)
+	if ((flags & SWT.DRAW_TAB) != 0) parseTable[tableLength++] = device.tabMapping;
+	if ((flags & SWT.DRAW_TAB) != 0) parseTable[tableLength++] = device.tabMapping;
+(875) <-> (860)
+	if ((flags & SWT.DRAW_MNEMONIC) != 0) mnemonic = stripMnemonic(text);
+	if ((flags & SWT.DRAW_MNEMONIC) != 0) mnemonic = stripMnemonic(text);
+(877) <-> (862)
+	String codePage = getCodePage();
+	String codePage = getCodePage();
+(878) <-> (863)
+	byte[] buffer = Converter.wcsToMbcs(codePage, text, true);
+	byte[] buffer = Converter.wcsToMbcs(codePage, text, true);
+(879) <-> (864)
+	int xmString = OS.XmStringParseText(buffer, 0, OS.XmFONTLIST_DEFAULT_TAG, OS.XmCHARSET_TEXT, parseTable, tableLength, 0);
+	int xmString = OS.XmStringParseText(buffer, 0, OS.XmFONTLIST_DEFAULT_TAG, OS.XmCHARSET_TEXT, parseTable, tableLength, 0);
+(880) <-> (865)
+	if (mnemonic != 0) {
+	if (mnemonic != 0) {
+(881) <-> (866)
+	byte [] buffer1 = Converter.wcsToMbcs(codePage, new char[]{mnemonic}, true);
+	byte [] buffer1 = Converter.wcsToMbcs(codePage, new char[]{mnemonic}, true);
+(882) <-> (867)
+	int xmStringUnderline = OS.XmStringCreate (buffer1, OS.XmFONTLIST_DEFAULT_TAG);
+	int xmStringUnderline = OS.XmStringCreate (buffer1, OS.XmFONTLIST_DEFAULT_TAG);
+(883) <-> (868)
+	OS.XmStringDrawUnderline(data.display, data.drawable, renderTable, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null, xmStringUnderline);
+	OS.XmStringDrawUnderline(data.display, data.drawable, renderTable, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null, xmStringUnderline);
+(884) <-> (869)
+	OS.XmStringFree(xmStringUnderline);
+	OS.XmStringFree(xmStringUnderline);
+(885) <-> (870)
+	} else {
+	} else {
+(886) <-> (871)
+	if ((flags & SWT.DRAW_TRANSPARENT) != 0) {
+	if ((flags & SWT.DRAW_TRANSPARENT) != 0) {
+(887) <-> (872)
+	OS.XmStringDraw(data.display, data.drawable, renderTable, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null);
+	OS.XmStringDraw(data.display, data.drawable, renderTable, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null);
+(888) <-> (873)
+	} else {
+	} else {
+(889) <-> (874)
+	OS.XmStringDrawImage(data.display, data.drawable, renderTable, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null);
+	OS.XmStringDrawImage(data.display, data.drawable, renderTable, xmString, handle, x, y, 0x7FFFFFFF, OS.XmALIGNMENT_BEGINNING, 0, null);
+(890) <-> (875)
+	}
+	}
+(891) <-> (876)
+	}
+	}
+(892) <-> (877)
+	OS.XmStringFree(xmString);
+	OS.XmStringFree(xmString);
+(893) <-> (878)
+	*/
+	*/
+(894) <-> (879)
+	try {
+	try {
+(895) <-> (880)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(896) <-> (881)
+	carbon_installFont();
+	installFont();
+(897) <-> (882)
+	MacUtil.RGBForeColor(data.foreground);
+	MacUtil.RGBForeColor(data.foreground);
+(898) <-> (883)
+	if ((flags & SWT.DRAW_TRANSPARENT) != 0) {
+	if ((flags & SWT.DRAW_TRANSPARENT) != 0) {
+(899) <-> (884)
+	OS.TextMode((short)OS.srcOr);
+	OS.TextMode(OS.srcOr);
+(900) <-> (885)
+	} else {
+	} else {
+(901) <-> (886)
+	if ((data.background & 0xff000000) == 0) {
+	if ((data.background & 0xff000000) == 0) {
+(902) <-> (887)
+	MacUtil.RGBBackColor(data.background);
+	MacUtil.RGBBackColor(data.background);
+(903) <-> (888)
+	OS.TextMode((short)OS.srcCopy);
+	OS.TextMode(OS.srcCopy);
+(904) <-> (889)
+	} else {
+	} else {
+(905) <-> (890)
+	//System.out.println("GC.drawText: " + Integer.toHexString(data.background));
+	//System.out.println("GC.drawText: " + Integer.toHexString(data.background));
+(906) <-> (891)
+	OS.TextMode((short)OS.srcOr);
+	OS.TextMode(OS.srcOr);
+(907) <-> (892)
+	}
+	}
+(908) <-> (893)
+	}
+	}
+(909) <-> (894)
+	short[] fontInfo= new short[4];
+	short[] fontInfo= new short[4];
+(910) <-> (895)
+	OS.GetFontInfo(fontInfo); // FontInfo
+	OS.GetFontInfo(fontInfo); // FontInfo
+(911) <-> (896)
+	OS.MoveTo((short)x, (short)(y+fontInfo[0]));
+	OS.MoveTo((short)x, (short)(y+fontInfo[0]));
+(913) <-> (897)
+	OS.DrawText(buffer, (short)0, (short)buffer.length);
+	OS.DrawText(string, data.font.fID, data.font.fSize, data.font.fFace);
+(914) <-> (898)
+	}
+	}
+(915) <-> (899)
+	} finally {
+	} finally {
+(916) <-> (900)
+	unfocus(true);
+	unfocus(true);
+(917) <-> (901)
+	}
+	}
+(918) <-> (902)
+	}
+	}
+(920) <-> (904)
+	/**
+	/**
+(921) <-> (905)
+	* Compares the argument to the receiver, and returns true
+	* Compares the argument to the receiver, and returns true
+(922) <-> (906)
+	* if they represent the <em>same</em> object using a class
+	* if they represent the <em>same</em> object using a class
+(923) <-> (907)
+	* specific comparison.
+	* specific comparison.
+(924) <-> (908)
+	*
+	*
+(925) <-> (909)
+	* @param object the object to compare with this object
+	* @param object the object to compare with this object
+(926) <-> (910)
+	* @return <code>true</code> if the object is the same as this object and <code>false</code> otherwise
+	* @return <code>true</code> if the object is the same as this object and <code>false</code> otherwise
+(927) <-> (911)
+	*
+	*
+(928) <-> (912)
+	* @see #hashCode
+	* @see #hashCode
+(929) <-> (913)
+	*/
+	*/
+(930) <-> (914)
+	public boolean equals (Object object) {
+	public boolean equals (Object object) {
+(931) <-> (915)
+	if (object == this) return true;
+	if (object == this) return true;
+(932) <-> (916)
+	if (!(object instanceof GC)) return false;
+	if (!(object instanceof GC)) return false;
+(933) <-> (917)
+	return handle == ((GC)object).handle;
+	return handle == ((GC)object).handle;
+(934) <-> (918)
+	}
+	}
+(935) <-> (919)
+	/**
+	/**
+(936) <-> (920)
+	* Fills the interior of a circular or elliptical arc within
+	* Fills the interior of a circular or elliptical arc within
+(937) <-> (921)
+	* the specified rectangular area, with the receiver's background
+	* the specified rectangular area, with the receiver's background
+(938) <-> (922)
+	* color.
+	* color.
+(939) <-> (923)
+	* <p>
+	* <p>
+(940) <-> (924)
+	* The resulting arc begins at <code>startAngle</code> and extends
+	* The resulting arc begins at <code>startAngle</code> and extends
+(941) <-> (925)
+	* for <code>arcAngle</code> degrees, using the current color.
+	* for <code>arcAngle</code> degrees, using the current color.
+(942) <-> (926)
+	* Angles are interpreted such that 0 degrees is at the 3 o'clock
+	* Angles are interpreted such that 0 degrees is at the 3 o'clock
+(943) <-> (927)
+	* position. A positive value indicates a counter-clockwise rotation
+	* position. A positive value indicates a counter-clockwise rotation
+(944) <-> (928)
+	* while a negative value indicates a clockwise rotation.
+	* while a negative value indicates a clockwise rotation.
+(945) <-> (929)
+	* </p><p>
+	* </p><p>
+(946) <-> (930)
+	* The center of the arc is the center of the rectangle whose origin
+	* The center of the arc is the center of the rectangle whose origin
+(947) <-> (931)
+	* is (<code>x</code>, <code>y</code>) and whose size is specified by the
+	* is (<code>x</code>, <code>y</code>) and whose size is specified by the
+(948) <-> (932)
+	* <code>width</code> and <code>height</code> arguments.
+	* <code>width</code> and <code>height</code> arguments.
+(949) <-> (933)
+	* </p><p>
+	* </p><p>
+(950) <-> (934)
+	* The resulting arc covers an area <code>width + 1</code> pixels wide
+	* The resulting arc covers an area <code>width + 1</code> pixels wide
+(951) <-> (935)
+	* by <code>height + 1</code> pixels tall.
+	* by <code>height + 1</code> pixels tall.
+(952) <-> (936)
+	* </p>
+	* </p>
+(953) <-> (937)
+	*
+	*
+(954) <-> (938)
+	* @param x the x coordinate of the upper-left corner of the arc to be filled
+	* @param x the x coordinate of the upper-left corner of the arc to be filled
+(955) <-> (939)
+	* @param y the y coordinate of the upper-left corner of the arc to be filled
+	* @param y the y coordinate of the upper-left corner of the arc to be filled
+(956) <-> (940)
+	* @param width the width of the arc to be filled
+	* @param width the width of the arc to be filled
+(957) <-> (941)
+	* @param height the height of the arc to be filled
+	* @param height the height of the arc to be filled
+(958) <-> (942)
+	* @param startAngle the beginning angle
+	* @param startAngle the beginning angle
+(959) <-> (943)
+	* @param arcAngle the angular extent of the arc, relative to the start angle
+	* @param arcAngle the angular extent of the arc, relative to the start angle
+(960) <-> (944)
+	*
+	*
+(961) <-> (945)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(962) <-> (946)
+	* <li>ERROR_INVALID_ARGUMENT - if any of the width, height or endAngle is zero.</li>
+	* <li>ERROR_INVALID_ARGUMENT - if any of the width, height or endAngle is zero.</li>
+(963) <-> (947)
+	* </ul>
+	* </ul>
+(964) <-> (948)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(965) <-> (949)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(966) <-> (950)
+	* </ul>
+	* </ul>
+(967) <-> (951)
+	*
+	*
+(968) <-> (952)
+	* @see #drawArc
+	* @see #drawArc
+(969) <-> (953)
+	*/
+	*/
+(970) <-> (954)
+	public void fillArc(int x, int y, int width, int height, int startAngle, int endAngle) {
+	public void fillArc(int x, int y, int width, int height, int startAngle, int endAngle) {
+(971) <-> (955)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(972) <-> (956)
+	if (width < 0) {
+	if (width < 0) {
+(973) <-> (957)
+	x = x + width;
+	x = x + width;
+(974) <-> (958)
+	width = -width;
+	width = -width;
+(975) <-> (959)
+	}
+	}
+(976) <-> (960)
+	if (height < 0) {
+	if (height < 0) {
+(977) <-> (961)
+	y = y + height;
+	y = y + height;
+(978) <-> (962)
+	height = -height;
+	height = -height;
+(979) <-> (963)
+	}
+	}
+(980) <-> (964)
+	if (width == 0 || height == 0 || endAngle == 0) {
+	if (width == 0 || height == 0 || endAngle == 0) {
+(981) <-> (965)
+	SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+(982) <-> (966)
+	}
+	}
+(983) <-> (967)
+	/* AW
+	/* AW
+(984) <-> (968)
+	XGCValues values = new XGCValues ();
+	XGCValues values = new XGCValues ();
+(985) <-> (969)
+	OS.XGetGCValues (xDisplay, handle, OS.GCForeground | OS.GCBackground, values);
+	OS.XGetGCValues (xDisplay, handle, OS.GCForeground | OS.GCBackground, values);
+(986) <-> (970)
+	OS.XSetForeground (xDisplay, handle, values.background);
+	OS.XSetForeground (xDisplay, handle, values.background);
+(987) <-> (971)
+	OS.XFillArc(xDisplay,data.drawable,handle,x,y,width,height,startAngle * 64 ,endAngle * 64);
+	OS.XFillArc(xDisplay,data.drawable,handle,x,y,width,height,startAngle * 64 ,endAngle * 64);
+(988) <-> (972)
+	OS.XSetForeground (xDisplay, handle, values.foreground);
+	OS.XSetForeground (xDisplay, handle, values.foreground);
+(989) <-> (973)
+	*/
+	*/
+(990) <-> (974)
+	System.out.println("GC.fillArc");
+	System.out.println("GC.fillArc");
+(991) <-> (975)
+	}
+	}
+(993) <-> (977)
+	/**
+	/**
+(994) <-> (978)
+	* Fills the interior of the specified rectangle with a gradient
+	* Fills the interior of the specified rectangle with a gradient
+(995) <-> (979)
+	* sweeping from left to right or top to bottom progressing
+	* sweeping from left to right or top to bottom progressing
+(996) <-> (980)
+	* from the receiver's foreground color to its background color.
+	* from the receiver's foreground color to its background color.
+(997) <-> (981)
+	*
+	*
+(998) <-> (982)
+	* @param x the x coordinate of the rectangle to be filled
+	* @param x the x coordinate of the rectangle to be filled
+(999) <-> (983)
+	* @param y the y coordinate of the rectangle to be filled
+	* @param y the y coordinate of the rectangle to be filled
+(1000) <-> (984)
+	* @param width the width of the rectangle to be filled, may be negative
+	* @param width the width of the rectangle to be filled, may be negative
+(1001) <-> (985)
+	* (inverts direction of gradient if horizontal)
+	* (inverts direction of gradient if horizontal)
+(1002) <-> (986)
+	* @param height the height of the rectangle to be filled, may be negative
+	* @param height the height of the rectangle to be filled, may be negative
+(1003) <-> (987)
+	* (inverts direction of gradient if vertical)
+	* (inverts direction of gradient if vertical)
+(1004) <-> (988)
+	* @param vertical if true sweeps from top to bottom, else
+	* @param vertical if true sweeps from top to bottom, else
+(1005) <-> (989)
+	* sweeps from left to right
+	* sweeps from left to right
+(1006) <-> (990)
+	*
+	*
+(1007) <-> (991)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1008) <-> (992)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1009) <-> (993)
+	* </ul>
+	* </ul>
+(1010) <-> (994)
+	*
+	*
+(1011) <-> (995)
+	* @see #drawRectangle
+	* @see #drawRectangle
+(1012) <-> (996)
+	*/
+	*/
+(1013) <-> (997)
+	public void fillGradientRectangle(int x, int y, int width, int height, boolean vertical) {
+	public void fillGradientRectangle(int x, int y, int width, int height, boolean vertical) {
+(1014) <-> (998)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1015) <-> (999)
+	if ((width == 0) || (height == 0)) return;
+	if ((width == 0) || (height == 0)) return;
+(1017) <-> (1001)
+	try {
+	try {
+(1018) <-> (1002)
+	if (! focus(true, null))
+	if (! focus(true, null))
+(1019) <-> (1003)
+	return;
+	return;
+(1021) <-> (1005)
+	/* AW
+	/* AW
+(1022) <-> (1006)
+	int xDisplay = data.display;
+	int xDisplay = data.display;
+(1023) <-> (1007)
+	int xScreenNum = OS.XDefaultScreen(xDisplay);
+	int xScreenNum = OS.XDefaultScreen(xDisplay);
+(1024) <-> (1008)
+	XGCValues values = new XGCValues();
+	XGCValues values = new XGCValues();
+(1025) <-> (1009)
+	*/
+	*/
+(1026) <-> (1010)
+	int fromColor, toColor;
+	int fromColor, toColor;
+(1027) <-> (1011)
+	/* AW
+	/* AW
+(1028) <-> (1012)
+	OS.XGetGCValues(xDisplay, handle, OS.GCForeground | OS.GCBackground, values);
+	OS.XGetGCValues(xDisplay, handle, OS.GCForeground | OS.GCBackground, values);
+(1029) <-> (1013)
+	fromColor = values.foreground;
+	fromColor = values.foreground;
+(1030) <-> (1014)
+	toColor = values.background;
+	toColor = values.background;
+(1031) <-> (1015)
+	*/
+	*/
+(1032) <-> (1016)
+	fromColor = data.foreground;
+	fromColor = data.foreground;
+(1033) <-> (1017)
+	toColor = data.background;
+	toColor = data.background;
+(1035) <-> (1019)
+	boolean swapColors = false;
+	boolean swapColors = false;
+(1036) <-> (1020)
+	if (width < 0) {
+	if (width < 0) {
+(1037) <-> (1021)
+	x += width; width = -width;
+	x += width; width = -width;
+(1038) <-> (1022)
+	if (! vertical) swapColors = true;
+	if (! vertical) swapColors = true;
+(1039) <-> (1023)
+	}
+	}
+(1040) <-> (1024)
+	if (height < 0) {
+	if (height < 0) {
+(1041) <-> (1025)
+	y += height; height = -height;
+	y += height; height = -height;
+(1042) <-> (1026)
+	if (vertical) swapColors = true;
+	if (vertical) swapColors = true;
+(1043) <-> (1027)
+	}
+	}
+(1044) <-> (1028)
+	if (swapColors) {
+	if (swapColors) {
+(1045) <-> (1029)
+	final int t = fromColor;
+	final int t = fromColor;
+(1046) <-> (1030)
+	fromColor = toColor;
+	fromColor = toColor;
+(1047) <-> (1031)
+	toColor = t;
+	toColor = t;
+(1048) <-> (1032)
+	}
+	}
+(1050) <-> (1034)
+	if (fromColor == toColor) {
+	if (fromColor == toColor) {
+(1051) <-> (1035)
+	/* AW
+	/* AW
+(1052) <-> (1036)
+	OS.XFillRectangle(xDisplay, data.drawable, handle, x, y, width, height);
+	OS.XFillRectangle(xDisplay, data.drawable, handle, x, y, width, height);
+(1053) <-> (1037)
+	*/
+	*/
+(1054) <-> (1038)
+	MacUtil.RGBForeColor(data.foreground);
+	MacUtil.RGBForeColor(data.foreground);
+(1055) <-> (1039)
+	Rect rect= new Rect();
+	fRect.set(x, y, width, height);
+(1058) <-> (1040)
+	OS.PaintRect(rect);
+	OS.PaintRect(fRect.getData());
+(1059) <-> (1041)
+	return;
+	return;
+(1060) <-> (1042)
+	}
+	}
+(1061) <-> (1043)
+	/* X Window deals with a virtually limitless array of color formats
+	/* X Window deals with a virtually limitless array of color formats
+(1062) <-> (1044)
+	* but we only distinguish between paletted and direct modes
+	* but we only distinguish between paletted and direct modes
+(1063) <-> (1045)
+	*/
+	*/
+(1064) <-> (1046)
+	/* AW
+	/* AW
+(1065) <-> (1047)
+	final int xScreen = OS.XDefaultScreenOfDisplay(xDisplay);
+	final int xScreen = OS.XDefaultScreenOfDisplay(xDisplay);
+(1066) <-> (1048)
+	final int xVisual = OS.XDefaultVisual(xDisplay, xScreenNum);
+	final int xVisual = OS.XDefaultVisual(xDisplay, xScreenNum);
+(1067) <-> (1049)
+	Visual visual = new Visual();
+	Visual visual = new Visual();
+(1068) <-> (1050)
+	OS.memmove(visual, xVisual, visual.sizeof);
+	OS.memmove(visual, xVisual, visual.sizeof);
+(1069) <-> (1051)
+	final int depth = OS.XDefaultDepthOfScreen(xScreen);
+	final int depth = OS.XDefaultDepthOfScreen(xScreen);
+(1070) <-> (1052)
+	*/
+	*/
+(1072) <-> (1054)
+	int depth= getCurrentScreenDepth();
+	int depth= getCurrentScreenDepth();
+(1073) <-> (1055)
+	final boolean directColor = (depth > 8);
+	final boolean directColor = (depth > 8);
+(1075) <-> (1057)
+	// This code is intentionally commented since elsewhere in SWT we
+	// This code is intentionally commented since elsewhere in SWT we
+(1076) <-> (1058)
+	// assume that depth <= 8 means we are in a paletted mode though
+	// assume that depth <= 8 means we are in a paletted mode though
+(1077) <-> (1059)
+	// this is not always the case.
+	// this is not always the case.
+(1078) <-> (1060)
+	//final boolean directColor = (visual.c_class == OS.TrueColor) || (visual.c_class == OS.DirectColor);
+	//final boolean directColor = (visual.c_class == OS.TrueColor) || (visual.c_class == OS.DirectColor);
+(1080) <-> (1062)
+	/* AW
+	/* AW
+(1081) <-> (1063)
+	XColor xColor = new XColor();
+	XColor xColor = new XColor();
+(1082) <-> (1064)
+	xColor.pixel = fromColor;
+	xColor.pixel = fromColor;
+(1083) <-> (1065)
+	OS.XQueryColor(xDisplay, data.colormap, xColor);
+	OS.XQueryColor(xDisplay, data.colormap, xColor);
+(1084) <-> (1066)
+	final RGB fromRGB = new RGB((xColor.red & 0xffff) >>> 8, (xColor.green & 0xffff) >>> 8, (xColor.blue & 0xffff) >>> 8);
+	final RGB fromRGB = new RGB((xColor.red & 0xffff) >>> 8, (xColor.green & 0xffff) >>> 8, (xColor.blue & 0xffff) >>> 8);
+(1085) <-> (1067)
+	xColor.pixel = toColor;
+	xColor.pixel = toColor;
+(1086) <-> (1068)
+	OS.XQueryColor(xDisplay, data.colormap, xColor);
+	OS.XQueryColor(xDisplay, data.colormap, xColor);
+(1087) <-> (1069)
+	final RGB toRGB = new RGB((xColor.red & 0xffff) >>> 8, (xColor.green & 0xffff) >>> 8, (xColor.blue & 0xffff) >>> 8);
+	final RGB toRGB = new RGB((xColor.red & 0xffff) >>> 8, (xColor.green & 0xffff) >>> 8, (xColor.blue & 0xffff) >>> 8);
+(1088) <-> (1070)
+	*/
+	*/
+(1090) <-> (1072)
+	RGB fromRGB = Color.carbon_new(data.device, fromColor, false).getRGB();
+	RGB fromRGB = Color.carbon_new(data.device, fromColor, false).getRGB();
+(1091) <-> (1073)
+	RGB toRGB = Color.carbon_new(data.device, toColor, false).getRGB();
+	RGB toRGB = Color.carbon_new(data.device, toColor, false).getRGB();
+(1093) <-> (1075)
+	final int redBits, greenBits, blueBits;
+	final int redBits, greenBits, blueBits;
+(1094) <-> (1076)
+	if (directColor) {
+	if (directColor) {
+(1095) <-> (1077)
+	// RGB mapped display
+	// RGB mapped display
+(1096) <-> (1078)
+	redBits = getChannelWidth(0x00ff0000 /* AW visual.red_mask */);
+	redBits = getChannelWidth(0x00ff0000 /* AW visual.red_mask */);
+(1097) <-> (1079)
+	greenBits = getChannelWidth(0x0000ff00 /* AW visual.green_mask */);
+	greenBits = getChannelWidth(0x0000ff00 /* AW visual.green_mask */);
+(1098) <-> (1080)
+	blueBits = getChannelWidth(0x000000ff /* AW visual.blue_mask */);
+	blueBits = getChannelWidth(0x000000ff /* AW visual.blue_mask */);
+(1099) <-> (1081)
+	} else {
+	} else {
+(1100) <-> (1082)
+	// Index display
+	// Index display
+(1101) <-> (1083)
+	redBits = greenBits = blueBits = 0;
+	redBits = greenBits = blueBits = 0;
+(1102) <-> (1084)
+	}
+	}
+(1104) <-> (1086)
+	ImageData.fillGradientRectangle(this, data.device,
+	ImageData.fillGradientRectangle(this, data.device,
+(1105) <-> (1087)
+	x, y, width, height, vertical, fromRGB, toRGB,
+	x, y, width, height, vertical, fromRGB, toRGB,
+(1106) <-> (1088)
+	redBits, greenBits, blueBits);
+	redBits, greenBits, blueBits);
+(1108) <-> (1090)
+	} finally {
+	} finally {
+(1109) <-> (1091)
+	unfocus(true);
+	unfocus(true);
+(1110) <-> (1092)
+	}
+	}
+(1111) <-> (1093)
+	}
+	}
+(1113) <-> (1095)
+	/**
+	/**
+(1114) <-> (1096)
+	* Computes the required channel width (depth) from a mask.
+	* Computes the required channel width (depth) from a mask.
+(1115) <-> (1097)
+	*/
+	*/
+(1116) <-> (1098)
+	static int getChannelWidth(int mask) {
+	static int getChannelWidth(int mask) {
+(1117) <-> (1099)
+	int width = 0;
+	int width = 0;
+(1118) <-> (1100)
+	while (mask != 0) {
+	while (mask != 0) {
+(1119) <-> (1101)
+	width += (mask & 1);
+	width += (mask & 1);
+(1120) <-> (1102)
+	mask >>>= 1;
+	mask >>>= 1;
+(1121) <-> (1103)
+	}
+	}
+(1122) <-> (1104)
+	return width;
+	return width;
+(1123) <-> (1105)
+	}
+	}
+(1125) <-> (1107)
+	/**
+	/**
+(1126) <-> (1108)
+	* Fills the interior of an oval, within the specified
+	* Fills the interior of an oval, within the specified
+(1127) <-> (1109)
+	* rectangular area, with the receiver's background
+	* rectangular area, with the receiver's background
+(1128) <-> (1110)
+	* color.
+	* color.
+(1129) <-> (1111)
+	*
+	*
+(1130) <-> (1112)
+	* @param x the x coordinate of the upper left corner of the oval to be filled
+	* @param x the x coordinate of the upper left corner of the oval to be filled
+(1131) <-> (1113)
+	* @param y the y coordinate of the upper left corner of the oval to be filled
+	* @param y the y coordinate of the upper left corner of the oval to be filled
+(1132) <-> (1114)
+	* @param width the width of the oval to be filled
+	* @param width the width of the oval to be filled
+(1133) <-> (1115)
+	* @param height the height of the oval to be filled
+	* @param height the height of the oval to be filled
+(1134) <-> (1116)
+	*
+	*
+(1135) <-> (1117)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1136) <-> (1118)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1137) <-> (1119)
+	* </ul>
+	* </ul>
+(1138) <-> (1120)
+	*
+	*
+(1139) <-> (1121)
+	* @see #drawOval
+	* @see #drawOval
+(1140) <-> (1122)
+	*/
+	*/
+(1141) <-> (1123)
+	public void fillOval (int x, int y, int width, int height) {
+	public void fillOval (int x, int y, int width, int height) {
+(1142) <-> (1124)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1143) <-> (1125)
+	if (width < 0) {
+	if (width < 0) {
+(1144) <-> (1126)
+	x = x + width;
+	x = x + width;
+(1145) <-> (1127)
+	width = -width;
+	width = -width;
+(1146) <-> (1128)
+	}
+	}
+(1147) <-> (1129)
+	if (height < 0) {
+	if (height < 0) {
+(1148) <-> (1130)
+	y = y + height;
+	y = y + height;
+(1149) <-> (1131)
+	height = -height;
+	height = -height;
+(1150) <-> (1132)
+	}
+	}
+(1151) <-> (1133)
+	try {
+	try {
+(1152) <-> (1134)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(1153) <-> (1135)
+	if ((data.background & 0xff000000) == 0) {
+	if ((data.background & 0xff000000) == 0) {
+(1154) <-> (1136)
+	MacUtil.RGBForeColor(data.background);
+	MacUtil.RGBForeColor(data.background);
+(1155) <-> (1227)
+	Rect rect= new Rect();
+	fRect.set(x, y, width, height);
+(1157) <-> (1137)
+	rect.right= (short)(x + width); rect.bottom= (short)(y + height);
+	fRect.set(x, y, width, height);
+(1158) <-> (1138)
+	OS.PaintOval(rect);
+	OS.PaintOval(fRect.getData());
+(1159) <-> (1139)
+	} else {
+	} else {
+(1160) <-> (1140)
+	// System.out.println("GC.fillOval: " + Integer.toHexString(data.background));
+	// System.out.println("GC.fillOval: " + Integer.toHexString(data.background));
+(1161) <-> (1141)
+	}
+	}
+(1162) <-> (1142)
+	}
+	}
+(1163) <-> (1143)
+	} finally {
+	} finally {
+(1164) <-> (1144)
+	unfocus(true);
+	unfocus(true);
+(1165) <-> (1145)
+	}
+	}
+(1166) <-> (1146)
+	}
+	}
+(1167) <-> (1147)
+	/**
+	/**
+(1168) <-> (1148)
+	* Fills the interior of the closed polygon which is defined by the
+	* Fills the interior of the closed polygon which is defined by the
+(1169) <-> (1149)
+	* specified array of integer coordinates, using the receiver's
+	* specified array of integer coordinates, using the receiver's
+(1170) <-> (1150)
+	* background color. The array contains alternating x and y values
+	* background color. The array contains alternating x and y values
+(1171) <-> (1151)
+	* which are considered to represent points which are the vertices of
+	* which are considered to represent points which are the vertices of
+(1172) <-> (1152)
+	* the polygon. Lines are drawn between each consecutive pair, and
+	* the polygon. Lines are drawn between each consecutive pair, and
+(1173) <-> (1153)
+	* between the first pair and last pair in the array.
+	* between the first pair and last pair in the array.
+(1174) <-> (1154)
+	*
+	*
+(1175) <-> (1155)
+	* @param pointArray an array of alternating x and y values which are the vertices of the polygon
+	* @param pointArray an array of alternating x and y values which are the vertices of the polygon
+(1176) <-> (1156)
+	*
+	*
+(1177) <-> (1157)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(1178) <-> (1158)
+	* <li>ERROR_NULL_ARGUMENT if pointArray is null</li>
+	* <li>ERROR_NULL_ARGUMENT if pointArray is null</li>
+(1179) <-> (1159)
+	* </ul>
+	* </ul>
+(1180) <-> (1160)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1181) <-> (1161)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1182) <-> (1162)
+	* </ul>
+	* </ul>
+(1183) <-> (1163)
+	*
+	*
+(1184) <-> (1164)
+	* @see #drawPolygon
+	* @see #drawPolygon
+(1185) <-> (1165)
+	*/
+	*/
+(1186) <-> (1166)
+	public void fillPolygon(int[] pointArray) {
+	public void fillPolygon(int[] pointArray) {
+(1187) <-> (1167)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1188) <-> (1168)
+	if (pointArray == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (pointArray == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(1190) <-> (1170)
+	/* AW
+	/* AW
+(1191) <-> (1171)
+	short[] xPoints = new short[pointArray.length];
+	short[] xPoints = new short[pointArray.length];
+(1192) <-> (1172)
+	for (int i = 0; i<pointArray.length;i++) {
+	for (int i = 0; i<pointArray.length;i++) {
+(1193) <-> (1173)
+	xPoints[i] = (short) pointArray[i];
+	xPoints[i] = (short) pointArray[i];
+(1194) <-> (1174)
+	}
+	}
+(1195) <-> (1175)
+	int xDisplay = data.display;
+	int xDisplay = data.display;
+(1196) <-> (1176)
+	XGCValues values = new XGCValues ();
+	XGCValues values = new XGCValues ();
+(1197) <-> (1177)
+	OS.XGetGCValues (xDisplay, handle, OS.GCForeground | OS.GCBackground, values);
+	OS.XGetGCValues (xDisplay, handle, OS.GCForeground | OS.GCBackground, values);
+(1198) <-> (1178)
+	OS.XSetForeground (xDisplay, handle, values.background);
+	OS.XSetForeground (xDisplay, handle, values.background);
+(1199) <-> (1179)
+	OS.XFillPolygon(xDisplay, data.drawable, handle,xPoints, xPoints.length / 2, OS.Complex, OS.CoordModeOrigin);
+	OS.XFillPolygon(xDisplay, data.drawable, handle,xPoints, xPoints.length / 2, OS.Complex, OS.CoordModeOrigin);
+(1200) <-> (1180)
+	OS.XSetForeground (xDisplay, handle, values.foreground);
+	OS.XSetForeground (xDisplay, handle, values.foreground);
+(1201) <-> (1181)
+	*/
+	*/
+(1202) <-> (1182)
+	int poly= 0;
+	int poly= 0;
+(1203) <-> (1183)
+	try {
+	try {
+(1204) <-> (1184)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(1205) <-> (1185)
+	poly= OS.OpenPoly();
+	poly= OS.OpenPoly();
+(1206) <-> (1186)
+	OS.MoveTo((short)pointArray[0], (short)pointArray[1]);
+	OS.MoveTo((short)pointArray[0], (short)pointArray[1]);
+(1207) <-> (1187)
+	for (int i= 2; i < pointArray.length; i+= 2)
+	for (int i= 2; i < pointArray.length; i+= 2)
+(1208) <-> (1188)
+	OS.LineTo((short)pointArray[i], (short)pointArray[i+1]);
+	OS.LineTo((short)pointArray[i], (short)pointArray[i+1]);
+(1209) <-> (1189)
+	OS.ClosePoly();
+	OS.ClosePoly();
+(1211) <-> (1191)
+	MacUtil.RGBForeColor(data.background);
+	MacUtil.RGBForeColor(data.background);
+(1212) <-> (1192)
+	OS.PaintPoly(poly);
+	OS.PaintPoly(poly);
+(1213) <-> (1193)
+	}
+	}
+(1214) <-> (1194)
+	} finally {
+	} finally {
+(1215) <-> (1195)
+	unfocus(true);
+	unfocus(true);
+(1216) <-> (1196)
+	}
+	}
+(1217) <-> (1197)
+	if (poly != 0)
+	if (poly != 0)
+(1218) <-> (1198)
+	OS.KillPoly(poly);
+	OS.KillPoly(poly);
+(1219) <-> (1199)
+	}
+	}
+(1220) <-> (1200)
+	/**
+	/**
+(1221) <-> (1201)
+	* Fills the interior of the rectangle specified by the arguments,
+	* Fills the interior of the rectangle specified by the arguments,
+(1222) <-> (1202)
+	* using the receiver's background color.
+	* using the receiver's background color.
+(1223) <-> (1203)
+	*
+	*
+(1224) <-> (1204)
+	* @param x the x coordinate of the rectangle to be filled
+	* @param x the x coordinate of the rectangle to be filled
+(1225) <-> (1205)
+	* @param y the y coordinate of the rectangle to be filled
+	* @param y the y coordinate of the rectangle to be filled
+(1226) <-> (1206)
+	* @param width the width of the rectangle to be filled
+	* @param width the width of the rectangle to be filled
+(1227) <-> (1207)
+	* @param height the height of the rectangle to be filled
+	* @param height the height of the rectangle to be filled
+(1228) <-> (1208)
+	*
+	*
+(1229) <-> (1209)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1230) <-> (1210)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1231) <-> (1211)
+	* </ul>
+	* </ul>
+(1232) <-> (1212)
+	*
+	*
+(1233) <-> (1213)
+	* @see #drawRectangle
+	* @see #drawRectangle
+(1234) <-> (1214)
+	*/
+	*/
+(1235) <-> (1215)
+	public void fillRectangle (int x, int y, int width, int height) {
+	public void fillRectangle (int x, int y, int width, int height) {
+(1236) <-> (1216)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1237) <-> (1217)
+	if (width < 0) {
+	if (width < 0) {
+(1238) <-> (1218)
+	x = x + width;
+	x = x + width;
+(1239) <-> (1219)
+	width = -width;
+	width = -width;
+(1240) <-> (1220)
+	}
+	}
+(1241) <-> (1221)
+	if (height < 0) {
+	if (height < 0) {
+(1242) <-> (1222)
+	y = y + height;
+	y = y + height;
+(1243) <-> (1223)
+	height = -height;
+	height = -height;
+(1244) <-> (1224)
+	}
+	}
+(1245) <-> (1225)
+	try {
+	try {
+(1246) <-> (1226)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(1252) <-> (1228)
+	} else if ((data.background & 0xFF000000) == 0) {
+	if ((data.background & 0xFF000000) == 0) {
+(1253) <-> (1229)
+	MacUtil.RGBForeColor(data.background);
+	MacUtil.RGBForeColor(data.background);
+(1254) <-> (1230)
+	OS.PaintRect(rect);
+	OS.PaintRect(fRect.getData());
+(1255) <-> (1231)
+	} else {
+	} else {
+(1256) <-> (1232)
+	short depth= getCurrentScreenDepth();
+	short depth= getCurrentScreenDepth();
+(1257) <-> (1233)
+	int[] state= new int[1];
+	int[] state= new int[1];
+(1258) <-> (1234)
+	OS.GetThemeDrawingState(state);
+	OS.GetThemeDrawingState(state);
+(1259) <-> (1235)
+	//OS.SetThemeBackground(OS.kThemeBrushDialogBackgroundActive, depth, true);
+	//OS.SetThemeBackground(OS.kThemeBrushDialogBackgroundActive, depth, true);
+(1260) <-> (1236)
+	if (data.controlHandle != 0)
+	if (data.controlHandle != 0)
+(1261) <-> (1237)
+	OS.SetUpControlBackground(data.controlHandle, depth, true);
+	OS.SetUpControlBackground(data.controlHandle, depth, true);
+(1262) <-> (1238)
+	OS.EraseRect(rect);
+	OS.EraseRect(fRect.getData());
+(1263) <-> (1239)
+	OS.SetThemeDrawingState(state[0], true);
+	OS.SetThemeDrawingState(state[0], true);
+(1264) <-> (1240)
+	}
+	}
+(1265) <-> (1241)
+	}
+	}
+(1266) <-> (1242)
+	} finally {
+	} finally {
+(1267) <-> (1243)
+	unfocus(true);
+	unfocus(true);
+(1268) <-> (1244)
+	}
+	}
+(1269) <-> (1245)
+	}
+	}
+(1270) <-> (1246)
+	/**
+	/**
+(1271) <-> (1247)
+	* Fills the interior of the specified rectangle, using the receiver's
+	* Fills the interior of the specified rectangle, using the receiver's
+(1272) <-> (1248)
+	* background color.
+	* background color.
+(1273) <-> (1249)
+	*
+	*
+(1274) <-> (1250)
+	* @param rectangle the rectangle to be filled
+	* @param rectangle the rectangle to be filled
+(1275) <-> (1251)
+	*
+	*
+(1276) <-> (1252)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(1277) <-> (1253)
+	* <li>ERROR_NULL_ARGUMENT - if the rectangle is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the rectangle is null</li>
+(1278) <-> (1254)
+	* </ul>
+	* </ul>
+(1279) <-> (1255)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1280) <-> (1256)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1281) <-> (1257)
+	* </ul>
+	* </ul>
+(1282) <-> (1258)
+	*
+	*
+(1283) <-> (1259)
+	* @see #drawRectangle
+	* @see #drawRectangle
+(1284) <-> (1260)
+	*/
+	*/
+(1285) <-> (1261)
+	public void fillRectangle (Rectangle rect) {
+	public void fillRectangle (Rectangle rect) {
+(1286) <-> (1262)
+	if (rect == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (rect == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(1287) <-> (1263)
+	fillRectangle(rect.x, rect.y, rect.width, rect.height);
+	fillRectangle(rect.x, rect.y, rect.width, rect.height);
+(1288) <-> (1264)
+	}
+	}
+(1289) <-> (1265)
+	/**
+	/**
+(1290) <-> (1266)
+	* Fills the interior of the round-cornered rectangle specified by
+	* Fills the interior of the round-cornered rectangle specified by
+(1291) <-> (1267)
+	* the arguments, using the receiver's background color.
+	* the arguments, using the receiver's background color.
+(1292) <-> (1268)
+	*
+	*
+(1293) <-> (1269)
+	* @param x the x coordinate of the rectangle to be filled
+	* @param x the x coordinate of the rectangle to be filled
+(1294) <-> (1270)
+	* @param y the y coordinate of the rectangle to be filled
+	* @param y the y coordinate of the rectangle to be filled
+(1295) <-> (1271)
+	* @param width the width of the rectangle to be filled
+	* @param width the width of the rectangle to be filled
+(1296) <-> (1272)
+	* @param height the height of the rectangle to be filled
+	* @param height the height of the rectangle to be filled
+(1297) <-> (1273)
+	* @param arcWidth the horizontal diameter of the arc at the four corners
+	* @param arcWidth the horizontal diameter of the arc at the four corners
+(1298) <-> (1274)
+	* @param arcHeight the vertical diameter of the arc at the four corners
+	* @param arcHeight the vertical diameter of the arc at the four corners
+(1299) <-> (1275)
+	*
+	*
+(1300) <-> (1276)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1301) <-> (1277)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1302) <-> (1278)
+	* </ul>
+	* </ul>
+(1303) <-> (1279)
+	*
+	*
+(1304) <-> (1280)
+	* @see #drawRoundRectangle
+	* @see #drawRoundRectangle
+(1305) <-> (1281)
+	*/
+	*/
+(1306) <-> (1282)
+	public void fillRoundRectangle (int x, int y, int width, int height, int arcWidth, int arcHeight) {
+	public void fillRoundRectangle (int x, int y, int width, int height, int arcWidth, int arcHeight) {
+(1307) <-> (1283)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1308) <-> (1284)
+	try {
+	try {
+(1309) <-> (1285)
+	if (focus(true, null)) {
+	if (focus(true, null)) {
+(1310) <-> (1286)
+	if ((data.background & 0xff000000) == 0) {
+	if ((data.background & 0xff000000) == 0) {
+(1311) <-> (1287)
+	MacUtil.RGBForeColor(data.background);
+	MacUtil.RGBForeColor(data.background);
+(1314) <-> (1288)
+	rect.right= (short)(x + width); rect.bottom= (short)(y + height);
+	fRect.set(x, y, width, height);
+(1315) <-> (1289)
+	OS.PaintRoundRect(rect, (short)arcWidth, (short)arcHeight);
+	OS.PaintRoundRect(fRect.getData(), (short)arcWidth, (short)arcHeight);
+(1316) <-> (1290)
+	} else {
+	} else {
+(1317) <-> (1291)
+	// System.out.println("GC.fillRoundRectangle: " + Integer.toHexString(data.background));
+	// System.out.println("GC.fillRoundRectangle: " + Integer.toHexString(data.background));
+(1318) <-> (1292)
+	}
+	}
+(1319) <-> (1293)
+	}
+	}
+(1320) <-> (1294)
+	} finally {
+	} finally {
+(1321) <-> (1295)
+	unfocus(true);
+	unfocus(true);
+(1322) <-> (1296)
+	}
+	}
+(1323) <-> (1297)
+	}
+	}
+(1324) <-> (1298)
+	/**
+	/**
+(1325) <-> (1299)
+	* Returns the <em>advance width</em> of the specified character in
+	* Returns the <em>advance width</em> of the specified character in
+(1326) <-> (1300)
+	* the font which is currently selected into the receiver.
+	* the font which is currently selected into the receiver.
+(1327) <-> (1301)
+	* <p>
+	* <p>
+(1328) <-> (1302)
+	* The advance width is defined as the horizontal distance the cursor
+	* The advance width is defined as the horizontal distance the cursor
+(1329) <-> (1303)
+	* should move after printing the character in the selected font.
+	* should move after printing the character in the selected font.
+(1330) <-> (1304)
+	* </p>
+	* </p>
+(1331) <-> (1305)
+	*
+	*
+(1332) <-> (1306)
+	* @param ch the character to measure
+	* @param ch the character to measure
+(1333) <-> (1307)
+	* @return the distance in the x direction to move past the character before painting the next
+	* @return the distance in the x direction to move past the character before painting the next
+(1334) <-> (1308)
+	*
+	*
+(1335) <-> (1309)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1336) <-> (1310)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1337) <-> (1311)
+	* </ul>
+	* </ul>
+(1338) <-> (1312)
+	*/
+	*/
+(1339) <-> (1313)
+	public int getAdvanceWidth(char ch) {
+	public int getAdvanceWidth(char ch) {
+(1340) <-> (1314)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1341) <-> (1315)
+	try {
+	try {
+(1342) <-> (1316)
+	focus(false, null);
+	focus(false, null);
+(1343) <-> (1317)
+	carbon_installFont();
+	installFont();
+(1344) <-> (1318)
+	return OS.CharWidth((byte) ch);
+	return OS.CharWidth((byte) ch);
+(1345) <-> (1319)
+	} finally {
+	} finally {
+(1346) <-> (1320)
+	unfocus(false);
+	unfocus(false);
+(1347) <-> (1321)
+	}
+	}
+(1348) <-> (1322)
+	}
+	}
+(1349) <-> (1323)
+	/**
+	/**
+(1350) <-> (1324)
+	* Returns the background color.
+	* Returns the background color.
+(1351) <-> (1325)
+	*
+	*
+(1352) <-> (1326)
+	* @return the receiver's background color
+	* @return the receiver's background color
+(1353) <-> (1327)
+	*
+	*
+(1354) <-> (1328)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1355) <-> (1329)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1356) <-> (1330)
+	* </ul>
+	* </ul>
+(1357) <-> (1331)
+	*/
+	*/
+(1358) <-> (1332)
+	public Color getBackground() {
+	public Color getBackground() {
+(1359) <-> (1333)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1360) <-> (1334)
+	/* AW
+	/* AW
+(1361) <-> (1335)
+	int xDisplay = data.display;
+	int xDisplay = data.display;
+(1362) <-> (1336)
+	XGCValues values = new XGCValues();
+	XGCValues values = new XGCValues();
+(1363) <-> (1337)
+	OS.XGetGCValues(xDisplay, handle, OS.GCBackground, values);
+	OS.XGetGCValues(xDisplay, handle, OS.GCBackground, values);
+(1364) <-> (1338)
+	XColor xColor = new XColor();
+	XColor xColor = new XColor();
+(1365) <-> (1339)
+	xColor.pixel = values.background;
+	xColor.pixel = values.background;
+(1366) <-> (1340)
+	OS.XQueryColor(xDisplay,data.colormap,xColor);
+	OS.XQueryColor(xDisplay,data.colormap,xColor);
+(1367) <-> (1341)
+	*/
+	*/
+(1368) <-> (1342)
+	return Color.carbon_new(data.device, data.background, false);
+	return Color.carbon_new(data.device, data.background, false);
+(1369) <-> (1343)
+	}
+	}
+(1370) <-> (1344)
+	/**
+	/**
+(1371) <-> (1345)
+	* Returns the width of the specified character in the font
+	* Returns the width of the specified character in the font
+(1372) <-> (1346)
+	* selected into the receiver.
+	* selected into the receiver.
+(1373) <-> (1347)
+	* <p>
+	* <p>
+(1374) <-> (1348)
+	* The width is defined as the space taken up by the actual
+	* The width is defined as the space taken up by the actual
+(1375) <-> (1349)
+	* character, not including the leading and tailing whitespace
+	* character, not including the leading and tailing whitespace
+(1376) <-> (1350)
+	* or overhang.
+	* or overhang.
+(1377) <-> (1351)
+	* </p>
+	* </p>
+(1378) <-> (1352)
+	*
+	*
+(1379) <-> (1353)
+	* @param ch the character to measure
+	* @param ch the character to measure
+(1380) <-> (1354)
+	* @return the width of the character
+	* @return the width of the character
+(1381) <-> (1355)
+	*
+	*
+(1382) <-> (1356)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1383) <-> (1357)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1384) <-> (1358)
+	* </ul>
+	* </ul>
+(1385) <-> (1359)
+	*/
+	*/
+(1386) <-> (1360)
+	public int getCharWidth(char ch) {
+	public int getCharWidth(char ch) {
+(1387) <-> (1361)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1388) <-> (1362)
+	System.out.println("GC.getCharWidth");
+	System.out.println("GC.getCharWidth");
+(1389) <-> (1363)
+	return 0;
+	return 0;
+(1390) <-> (1364)
+	}
+	}
+(1391) <-> (1365)
+	/**
+	/**
+(1392) <-> (1366)
+	* Returns the bounding rectangle of the receiver's clipping
+	* Returns the bounding rectangle of the receiver's clipping
+(1393) <-> (1367)
+	* region. If no clipping region is set, the return value
+	* region. If no clipping region is set, the return value
+(1394) <-> (1368)
+	* will be a rectangle which covers the entire bounds of the
+	* will be a rectangle which covers the entire bounds of the
+(1395) <-> (1369)
+	* object the receiver is drawing on.
+	* object the receiver is drawing on.
+(1396) <-> (1370)
+	*
+	*
+(1397) <-> (1371)
+	* @return the bounding rectangle of the clipping region
+	* @return the bounding rectangle of the clipping region
+(1398) <-> (1372)
+	*
+	*
+(1399) <-> (1373)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1400) <-> (1374)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1401) <-> (1375)
+	* </ul>
+	* </ul>
+(1402) <-> (1376)
+	*/
+	*/
+(1403) <-> (1377)
+	public Rectangle getClipping() {
+	public Rectangle getClipping() {
+(1404) <-> (1378)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1405) <-> (1379)
+	/* AW
+	/* AW
+(1406) <-> (1380)
+	int clipRgn = data.clipRgn;
+	int clipRgn = data.clipRgn;
+(1407) <-> (1381)
+	if (clipRgn == 0) {
+	if (clipRgn == 0) {
+(1408) <-> (1382)
+	int[] width = new int[1]; int[] height = new int[1];
+	int[] width = new int[1]; int[] height = new int[1];
+(1409) <-> (1383)
+	int[] unused = new int[1];
+	int[] unused = new int[1];
+(1410) <-> (1384)
+	OS.XGetGeometry(data.display, data.drawable, unused, unused, unused, width, height, unused, unused);
+	OS.XGetGeometry(data.display, data.drawable, unused, unused, unused, width, height, unused, unused);
+(1411) <-> (1385)
+	return new Rectangle(0, 0, width[0], height[0]);
+	return new Rectangle(0, 0, width[0], height[0]);
+(1412) <-> (1386)
+	}
+	}
+(1413) <-> (1387)
+	XRectangle rect = new XRectangle();
+	XRectangle rect = new XRectangle();
+(1414) <-> (1388)
+	OS.XClipBox(clipRgn, rect);
+	OS.XClipBox(clipRgn, rect);
+(1415) <-> (1389)
+	return new Rectangle(rect.x, rect.y, rect.width, rect.height);
+	return new Rectangle(rect.x, rect.y, rect.width, rect.height);
+(1416) <-> (1390)
+	*/
+	*/
+(1417) <-> (1391)
+	Rect bounds= new Rect();
+	MacRect bounds= new MacRect();
+(1418) <-> (1392)
+	if (data.clipRgn == 0) {
+	if (data.clipRgn == 0) {
+(1419) <-> (1393)
+	if (data.controlHandle != 0) {
+	if (data.controlHandle != 0) {
+(1420) <-> (1394)
+	OS.GetControlBounds(data.controlHandle, bounds);
+	OS.GetControlBounds(data.controlHandle, bounds.getData());
+(1421) <-> (1395)
+	return new Rectangle(0, 0, bounds.right - bounds.left, bounds.bottom - bounds.top);
+	return new Rectangle(0, 0, bounds.getWidth(), bounds.getHeight());
+(1422) <-> (1396)
+	}
+	}
+(1423) <-> (1397)
+	if (data.image != null) {
+	if (data.image != null) {
+(1424) <-> (1398)
+	return data.image.getBounds();
+	return data.image.getBounds();
+(1425) <-> (1399)
+	}
+	}
+(1426) <-> (1400)
+	System.out.println("GC.getClipping(): should not happen");
+	System.out.println("GC.getClipping(): should not happen");
+(1427) <-> (1401)
+	return new Rectangle(0, 0, 100, 100);
+	return new Rectangle(0, 0, 100, 100);
+(1428) <-> (1402)
+	}
+	}
+(1429) <-> (1403)
+	OS.GetRegionBounds(data.clipRgn, bounds);
+	OS.GetRegionBounds(data.clipRgn, bounds.getData());
+(1430) <-> (1404)
+	int width = bounds.right - bounds.left;
+	return bounds.toRectangle();
+(1433) <-> (1405)
+	}
+	}
+(1434) <-> (1406)
+	/**
+	/**
+(1435) <-> (1407)
+	* Sets the region managed by the argument to the current
+	* Sets the region managed by the argument to the current
+(1436) <-> (1408)
+	* clipping region of the receiver.
+	* clipping region of the receiver.
+(1437) <-> (1409)
+	*
+	*
+(1438) <-> (1410)
+	* @param region the region to fill with the clipping region
+	* @param region the region to fill with the clipping region
+(1439) <-> (1411)
+	*
+	*
+(1440) <-> (1412)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(1441) <-> (1413)
+	* <li>ERROR_NULL_ARGUMENT - if the region is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the region is null</li>
+(1442) <-> (1414)
+	* </ul>
+	* </ul>
+(1443) <-> (1415)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1444) <-> (1416)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1445) <-> (1417)
+	* </ul>
+	* </ul>
+(1446) <-> (1418)
+	*/
+	*/
+(1447) <-> (1419)
+	public void getClipping(Region region) {
+	public void getClipping(Region region) {
+(1448) <-> (1420)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1449) <-> (1421)
+	if (region == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (region == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(1451) <-> (1423)
+	if (region.handle == 0)
+	if (region.handle == 0)
+(1452) <-> (1424)
+	region.handle= OS.NewRgn();
+	region.handle= OS.NewRgn();
+(1454) <-> (1426)
+	if (data.clipRgn == 0) {
+	if (data.clipRgn == 0) {
+(1455) <-> (1427)
+	if (data.controlHandle != 0) {
+	if (data.controlHandle != 0) {
+(1456) <-> (1428)
+	OS.GetControlRegion(data.controlHandle, (short)OS.kWindowContentRgn, region.handle);
+	OS.GetControlRegion(data.controlHandle, OS.kWindowContentRgn, region.handle);
+(1457) <-> (1429)
+	} else
+	} else
+(1458) <-> (1430)
+	System.out.println("GC.getClipping(Region): nyi");
+	System.out.println("GC.getClipping(Region): nyi");
+(1459) <-> (1431)
+	} else {
+	} else {
+(1460) <-> (1432)
+	OS.CopyRgn(data.clipRgn, region.handle);
+	OS.CopyRgn(data.clipRgn, region.handle);
+(1461) <-> (1433)
+	}
+	}
+(1463) <-> (1435)
+	/* AW
+	/* AW
+(1464) <-> (1436)
+	if (clipRgn == 0) {
+	if (clipRgn == 0) {
+(1465) <-> (1437)
+	int[] width = new int[1]; int[] height = new int[1];
+	int[] width = new int[1]; int[] height = new int[1];
+(1466) <-> (1438)
+	int[] unused = new int[1];
+	int[] unused = new int[1];
+(1467) <-> (1439)
+	OS.XGetGeometry(data.display, data.drawable, unused, unused, unused, width, height, unused, unused);
+	OS.XGetGeometry(data.display, data.drawable, unused, unused, unused, width, height, unused, unused);
+(1468) <-> (1440)
+	OS.XSubtractRegion (hRegion, hRegion, hRegion);
+	OS.XSubtractRegion (hRegion, hRegion, hRegion);
+(1469) <-> (1441)
+	XRectangle rect = new XRectangle();
+	XRectangle rect = new XRectangle();
+(1470) <-> (1442)
+	rect.x = 0; rect.y = 0;
+	rect.x = 0; rect.y = 0;
+(1471) <-> (1443)
+	rect.width = (short)width[0]; rect.height = (short)height[0];
+	rect.width = (short)width[0]; rect.height = (short)height[0];
+(1472) <-> (1444)
+	OS.XUnionRectWithRegion(rect, hRegion, hRegion);
+	OS.XUnionRectWithRegion(rect, hRegion, hRegion);
+(1473) <-> (1445)
+	return;
+	return;
+(1474) <-> (1446)
+	}
+	}
+(1475) <-> (1447)
+	OS.XSubtractRegion (hRegion, hRegion, hRegion);
+	OS.XSubtractRegion (hRegion, hRegion, hRegion);
+(1476) <-> (1448)
+	OS.XUnionRegion (clipRgn, hRegion, hRegion);
+	OS.XUnionRegion (clipRgn, hRegion, hRegion);
+(1477) <-> (1449)
+	*/
+	*/
+(1478) <-> (1450)
+	}
+	}
+(1479) <-> (1451)
+	/**
+	/**
+(1480) <-> (1452)
+	* Returns the font currently being used by the receiver
+	* Returns the font currently being used by the receiver
+(1481) <-> (1453)
+	* to draw and measure text.
+	* to draw and measure text.
+(1482) <-> (1454)
+	*
+	*
+(1483) <-> (1455)
+	* @return the receiver's font
+	* @return the receiver's font
+(1484) <-> (1456)
+	*
+	*
+(1485) <-> (1457)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1486) <-> (1458)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1487) <-> (1459)
+	* </ul>
+	* </ul>
+(1488) <-> (1460)
+	*/
+	*/
+(1489) <-> (1461)
+	public Font getFont () {
+	public Font getFont () {
+(1490) <-> (1462)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1491) <-> (1463)
+	return Font.carbon_new(data.device, data.font);
+	return Font.carbon_new(data.device, data.font);
+(1492) <-> (1464)
+	}
+	}
+(1493) <-> (1465)
+	int getFontHeight () {
+	int getFontHeight () {
+(1494) <-> (1466)
+	try {
+	try {
+(1495) <-> (1467)
+	focus(false, null);
+	focus(false, null);
+(1496) <-> (1468)
+	carbon_installFont();
+	installFont();
+(1497) <-> (1469)
+	short[] fontInfo= new short[4];
+	short[] fontInfo= new short[4];
+(1498) <-> (1470)
+	OS.GetFontInfo(fontInfo); // FontInfo
+	OS.GetFontInfo(fontInfo); // FontInfo
+(1499) <-> (1471)
+	return fontInfo[0] + fontInfo[1];
+	return fontInfo[0] + fontInfo[1];
+(1500) <-> (1472)
+	} finally {
+	} finally {
+(1501) <-> (1473)
+	unfocus(false);
+	unfocus(false);
+(1502) <-> (1474)
+	}
+	}
+(1503) <-> (1475)
+	}
+	}
+(1504) <-> (1476)
+	/**
+	/**
+(1505) <-> (1477)
+	* Returns a FontMetrics which contains information
+	* Returns a FontMetrics which contains information
+(1506) <-> (1478)
+	* about the font currently being used by the receiver
+	* about the font currently being used by the receiver
+(1507) <-> (1479)
+	* to draw and measure text.
+	* to draw and measure text.
+(1508) <-> (1480)
+	*
+	*
+(1509) <-> (1481)
+	* @return font metrics for the receiver's font
+	* @return font metrics for the receiver's font
+(1510) <-> (1482)
+	*
+	*
+(1511) <-> (1483)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1512) <-> (1484)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1513) <-> (1485)
+	* </ul>
+	* </ul>
+(1514) <-> (1486)
+	*/
+	*/
+(1515) <-> (1487)
+	public FontMetrics getFontMetrics() {
+	public FontMetrics getFontMetrics() {
+(1516) <-> (1488)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1518) <-> (1490)
+	try {
+	try {
+(1519) <-> (1491)
+	focus(false, null);
+	focus(false, null);
+(1520) <-> (1492)
+	carbon_installFont();
+	installFont();
+(1521) <-> (1493)
+	short[] fontInfo= new short[4];
+	short[] fontInfo= new short[4];
+(1522) <-> (1494)
+	OS.GetFontInfo(fontInfo); // FontInfo
+	OS.GetFontInfo(fontInfo); // FontInfo
+(1523) <-> (1495)
+	byte[] s= "abcdefghijklmnopqrstuvwxyz".getBytes();
+	String s= "abcdefghijklmnopqrstuvwxyz";
+(1524) <-> (1496)
+	int width= OS.TextWidth(s, (short)0, (short)s.length) / 26;
+	int width= OS.TextWidth(s, data.font.fID, data.font.fSize, data.font.fFace) / 26;
+(1525) <-> (1497)
+	return FontMetrics.carbon_new(fontInfo[0], fontInfo[1], width, fontInfo[3], fontInfo[0]+fontInfo[1]);
+	return FontMetrics.carbon_new(fontInfo[0], fontInfo[1], width, fontInfo[3], fontInfo[0]+fontInfo[1]);
+(1526) <-> (1498)
+	} finally {
+	} finally {
+(1527) <-> (1499)
+	unfocus(false);
+	unfocus(false);
+(1528) <-> (1500)
+	}
+	}
+(1529) <-> (1501)
+	}
+	}
+(1530) <-> (1502)
+	/**
+	/**
+(1531) <-> (1503)
+	* Returns the receiver's foreground color.
+	* Returns the receiver's foreground color.
+(1532) <-> (1504)
+	*
+	*
+(1533) <-> (1505)
+	* @return the color used for drawing foreground things
+	* @return the color used for drawing foreground things
+(1534) <-> (1506)
+	*
+	*
+(1535) <-> (1507)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1536) <-> (1508)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1537) <-> (1509)
+	* </ul>
+	* </ul>
+(1538) <-> (1510)
+	*/
+	*/
+(1539) <-> (1511)
+	public Color getForeground() {
+	public Color getForeground() {
+(1540) <-> (1512)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1541) <-> (1513)
+	/* AW
+	/* AW
+(1542) <-> (1514)
+	int xDisplay = data.display;
+	int xDisplay = data.display;
+(1543) <-> (1515)
+	XGCValues values = new XGCValues();
+	XGCValues values = new XGCValues();
+(1544) <-> (1516)
+	OS.XGetGCValues(xDisplay, handle, OS.GCForeground, values);
+	OS.XGetGCValues(xDisplay, handle, OS.GCForeground, values);
+(1545) <-> (1517)
+	XColor xColor = new XColor();
+	XColor xColor = new XColor();
+(1546) <-> (1518)
+	xColor.pixel = values.foreground;
+	xColor.pixel = values.foreground;
+(1547) <-> (1519)
+	OS.XQueryColor(xDisplay,data.colormap,xColor);
+	OS.XQueryColor(xDisplay,data.colormap,xColor);
+(1548) <-> (1520)
+	return Color.motif_new(data.device, xColor);
+	return Color.motif_new(data.device, xColor);
+(1549) <-> (1521)
+	*/
+	*/
+(1550) <-> (1522)
+	return Color.carbon_new(data.device, data.foreground, false);
+	return Color.carbon_new(data.device, data.foreground, false);
+(1551) <-> (1523)
+	}
+	}
+(1552) <-> (1524)
+	/**
+	/**
+(1553) <-> (1525)
+	* Returns the receiver's line style, which will be one
+	* Returns the receiver's line style, which will be one
+(1554) <-> (1526)
+	* of the constants <code>SWT.LINE_SOLID</code>, <code>SWT.LINE_DASH</code>,
+	* of the constants <code>SWT.LINE_SOLID</code>, <code>SWT.LINE_DASH</code>,
+(1555) <-> (1527)
+	* <code>SWT.LINE_DOT</code>, <code>SWT.LINE_DASHDOT</code> or
+	* <code>SWT.LINE_DOT</code>, <code>SWT.LINE_DASHDOT</code> or
+(1556) <-> (1528)
+	* <code>SWT.LINE_DASHDOTDOT</code>.
+	* <code>SWT.LINE_DASHDOTDOT</code>.
+(1557) <-> (1529)
+	*
+	*
+(1558) <-> (1530)
+	* @return the style used for drawing lines
+	* @return the style used for drawing lines
+(1559) <-> (1531)
+	*
+	*
+(1560) <-> (1532)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1561) <-> (1533)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1562) <-> (1534)
+	* </ul>
+	* </ul>
+(1563) <-> (1535)
+	*/
+	*/
+(1564) <-> (1536)
+	public int getLineStyle() {
+	public int getLineStyle() {
+(1565) <-> (1537)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1566) <-> (1538)
+	return data.lineStyle;
+	return data.lineStyle;
+(1567) <-> (1539)
+	}
+	}
+(1568) <-> (1540)
+	/**
+	/**
+(1569) <-> (1541)
+	* Returns the width that will be used when drawing lines
+	* Returns the width that will be used when drawing lines
+(1570) <-> (1542)
+	* for all of the figure drawing operations (that is,
+	* for all of the figure drawing operations (that is,
+(1571) <-> (1543)
+	* <code>drawLine</code>, <code>drawRectangle</code>,
+	* <code>drawLine</code>, <code>drawRectangle</code>,
+(1572) <-> (1544)
+	* <code>drawPolyline</code>, and so forth.
+	* <code>drawPolyline</code>, and so forth.
+(1573) <-> (1545)
+	*
+	*
+(1574) <-> (1546)
+	* @return the receiver's line width
+	* @return the receiver's line width
+(1575) <-> (1547)
+	*
+	*
+(1576) <-> (1548)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1577) <-> (1549)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1578) <-> (1550)
+	* </ul>
+	* </ul>
+(1579) <-> (1551)
+	*/
+	*/
+(1580) <-> (1552)
+	public int getLineWidth() {
+	public int getLineWidth() {
+(1581) <-> (1553)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1582) <-> (1559)
+	return data.lineWidth;
+	return fLineWidth;
+(1583) <-> (1560)
+	}
+	}
+(1584) <-> (1561)
+	/**
+	/**
+(1585) <-> (1562)
+	* Returns <code>true</code> if this GC is drawing in the mode
+	* Returns <code>true</code> if this GC is drawing in the mode
+(1586) <-> (1563)
+	* where the resulting color in the destination is the
+	* where the resulting color in the destination is the
+(1587) <-> (1564)
+	* <em>exclusive or</em> of the color values in the source
+	* <em>exclusive or</em> of the color values in the source
+(1588) <-> (1565)
+	* and the destination, and <code>false</code> if it is
+	* and the destination, and <code>false</code> if it is
+(1589) <-> (1566)
+	* drawing in the mode where the destination color is being
+	* drawing in the mode where the destination color is being
+(1590) <-> (1567)
+	* replaced with the source color value.
+	* replaced with the source color value.
+(1591) <-> (1568)
+	*
+	*
+(1592) <-> (1569)
+	* @return <code>true</code> true if the receiver is in XOR mode, and false otherwise
+	* @return <code>true</code> true if the receiver is in XOR mode, and false otherwise
+(1593) <-> (1570)
+	*
+	*
+(1594) <-> (1571)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1595) <-> (1572)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1596) <-> (1573)
+	* </ul>
+	* </ul>
+(1597) <-> (1574)
+	*/
+	*/
+(1598) <-> (1575)
+	public boolean getXORMode() {
+	public boolean getXORMode() {
+(1599) <-> (1576)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1600) <-> (1582)
+	return data.xorMode;
+	return fXorMode;
+(1601) <-> (1583)
+	}
+	}
+(1602) <-> (1584)
+	/**
+	/**
+(1603) <-> (1585)
+	* Returns an integer hash code for the receiver. Any two
+	* Returns an integer hash code for the receiver. Any two
+(1604) <-> (1586)
+	* objects which return <code>true</code> when passed to
+	* objects which return <code>true</code> when passed to
+(1605) <-> (1587)
+	* <code>equals</code> must return the same value for this
+	* <code>equals</code> must return the same value for this
+(1606) <-> (1588)
+	* method.
+	* method.
+(1607) <-> (1589)
+	*
+	*
+(1608) <-> (1590)
+	* @return the receiver's hash
+	* @return the receiver's hash
+(1609) <-> (1591)
+	*
+	*
+(1610) <-> (1592)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1611) <-> (1593)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1612) <-> (1594)
+	* </ul>
+	* </ul>
+(1613) <-> (1595)
+	*
+	*
+(1614) <-> (1596)
+	* @see #equals
+	* @see #equals
+(1615) <-> (1597)
+	*/
+	*/
+(1616) <-> (1598)
+	public int hashCode () {
+	public int hashCode () {
+(1617) <-> (1599)
+	return handle;
+	return handle;
+(1618) <-> (1600)
+	}
+	}
+(1619) <-> (1601)
+	void init(Drawable drawable, GCData data, int xGC) {
+	void init(Drawable drawable, GCData data, int xGC) {
+(1620) <-> (1602)
+	/* AW
+	/* AW
+(1621) <-> (1603)
+	int xDisplay = data.display;
+	int xDisplay = data.display;
+(1622) <-> (1604)
+	int foreground = data.foreground;
+	int foreground = data.foreground;
+(1623) <-> (1605)
+	if (foreground != -1) OS.XSetForeground (xDisplay, xGC, foreground);
+	if (foreground != -1) OS.XSetForeground (xDisplay, xGC, foreground);
+(1624) <-> (1606)
+	int background = data.background;
+	int background = data.background;
+(1625) <-> (1607)
+	if (background != -1) OS.XSetBackground (xDisplay, xGC, background);
+	if (background != -1) OS.XSetBackground (xDisplay, xGC, background);
+(1626) <-> (1608)
+	*/
+	*/
+(1627) <-> (1609)
+	Image image = data.image;
+	Image image = data.image;
+(1628) <-> (1610)
+	if (image != null) {
+	if (image != null) {
+(1629) <-> (1611)
+	image.memGC = this;
+	image.memGC = this;
+(1630) <-> (1612)
+	/*
+	/*
+(1631) <-> (1613)
+	* The transparent pixel mask might change when drawing on
+	* The transparent pixel mask might change when drawing on
+(1632) <-> (1614)
+	* the image. Destroy it so that it is regenerated when
+	* the image. Destroy it so that it is regenerated when
+(1633) <-> (1615)
+	* necessary.
+	* necessary.
+(1634) <-> (1616)
+	*/
+	*/
+(1635) <-> (1617)
+	if (image.transparentPixel != -1) image.destroyMask();
+	if (image.transparentPixel != -1) image.destroyMask();
+(1636) <-> (1618)
+	}
+	}
+(1637) <-> (1619)
+	this.drawable = drawable;
+	this.drawable = drawable;
+(1638) <-> (1620)
+	this.data = data;
+	this.data = data;
+(1639) <-> (1621)
+	if (xGC == 0)
+	if (xGC == 0)
+(1640) <-> (1622)
+	SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1641) <-> (1623)
+	handle = xGC;
+	handle = xGC;
+(1642) <-> (1624)
+	}
+	}
+(1643) <-> (1625)
+	/**
+	/**
+(1644) <-> (1626)
+	* Returns <code>true</code> if the receiver has a clipping
+	* Returns <code>true</code> if the receiver has a clipping
+(1645) <-> (1627)
+	* region set into it, and <code>false</code> otherwise.
+	* region set into it, and <code>false</code> otherwise.
+(1646) <-> (1628)
+	* If this method returns false, the receiver will draw on all
+	* If this method returns false, the receiver will draw on all
+(1647) <-> (1629)
+	* available space in the destination. If it returns true,
+	* available space in the destination. If it returns true,
+(1648) <-> (1630)
+	* it will draw only in the area that is covered by the region
+	* it will draw only in the area that is covered by the region
+(1649) <-> (1631)
+	* that can be accessed with <code>getClipping(region)</code>.
+	* that can be accessed with <code>getClipping(region)</code>.
+(1650) <-> (1632)
+	*
+	*
+(1651) <-> (1633)
+	* @return <code>true</code> if the GC has a clipping region, and <code>false</code> otherwise
+	* @return <code>true</code> if the GC has a clipping region, and <code>false</code> otherwise
+(1652) <-> (1634)
+	*
+	*
+(1653) <-> (1635)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1654) <-> (1636)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1655) <-> (1637)
+	* </ul>
+	* </ul>
+(1656) <-> (1638)
+	*/
+	*/
+(1657) <-> (1639)
+	public boolean isClipped() {
+	public boolean isClipped() {
+(1658) <-> (1640)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1659) <-> (1641)
+	System.out.println("GC.isClipped: nyi");
+	System.out.println("GC.isClipped: nyi");
+(1660) <-> (1642)
+	return data.clipRgn != 0;
+	return data.clipRgn != 0;
+(1661) <-> (1643)
+	}
+	}
+(1662) <-> (1644)
+	/**
+	/**
+(1663) <-> (1645)
+	* Returns <code>true</code> if the GC has been disposed,
+	* Returns <code>true</code> if the GC has been disposed,
+(1664) <-> (1646)
+	* and <code>false</code> otherwise.
+	* and <code>false</code> otherwise.
+(1665) <-> (1647)
+	* <p>
+	* <p>
+(1666) <-> (1648)
+	* This method gets the dispose state for the GC.
+	* This method gets the dispose state for the GC.
+(1667) <-> (1649)
+	* When a GC has been disposed, it is an error to
+	* When a GC has been disposed, it is an error to
+(1668) <-> (1650)
+	* invoke any other method using the GC.
+	* invoke any other method using the GC.
+(1669) <-> (1651)
+	*
+	*
+(1670) <-> (1652)
+	* @return <code>true</code> when the GC is disposed and <code>false</code> otherwise
+	* @return <code>true</code> when the GC is disposed and <code>false</code> otherwise
+(1671) <-> (1653)
+	*/
+	*/
+(1672) <-> (1654)
+	public boolean isDisposed() {
+	public boolean isDisposed() {
+(1673) <-> (1655)
+	return handle == 0;
+	return handle == 0;
+(1674) <-> (1656)
+	}
+	}
+(1676) <-> (1657)
+	public static GC carbon_new(Drawable drawable, GCData data) {
+	public static GC macosx_new(Drawable drawable, GCData data) {
+(1677) <-> (1658)
+	GC gc = new GC();
+	GC gc = new GC();
+(1678) <-> (1659)
+	int port = drawable.internal_new_GC(data);
+	int xGC = drawable.internal_new_GC(data);
+(1679) <-> (1660)
+	gc.init(drawable, data, port);
+	gc.init(drawable, data, xGC);
+(1680) <-> (1661)
+	return gc;
+	return gc;
+(1681) <-> (1662)
+	}
+	}
+(1682) <-> (1883)
+	*/
+	*/
+(1683) <-> (1663)
+	/**
+	/**
+(1684) <-> (1664)
+	* Sets the background color. The background color is used
+	* Sets the background color. The background color is used
+(1685) <-> (1665)
+	* for fill operations and as the background color when text
+	* for fill operations and as the background color when text
+(1686) <-> (1666)
+	* is drawn.
+	* is drawn.
+(1687) <-> (1667)
+	*
+	*
+(1688) <-> (1668)
+	* @param color the new background color for the receiver
+	* @param color the new background color for the receiver
+(1689) <-> (1669)
+	*
+	*
+(1690) <-> (1670)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(1691) <-> (1671)
+	* <li>ERROR_NULL_ARGUMENT - if the color is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the color is null</li>
+(1692) <-> (1672)
+	* <li>ERROR_INVALID_ARGUMENT - if the color has been disposed</li>
+	* <li>ERROR_INVALID_ARGUMENT - if the color has been disposed</li>
+(1693) <-> (1673)
+	* </ul>
+	* </ul>
+(1694) <-> (1674)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1695) <-> (1675)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1696) <-> (1676)
+	* </ul>
+	* </ul>
+(1697) <-> (1677)
+	*/
+	*/
+(1698) <-> (1678)
+	public void setBackground (Color color) {
+	public void setBackground (Color color) {
+(1699) <-> (1679)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1700) <-> (1680)
+	if (color == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (color == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(1701) <-> (1681)
+	if (color.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	if (color.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+(1702) <-> (1682)
+	data.background= color.handle;
+	data.background= color.handle;
+(1703) <-> (1683)
+	}
+	}
+(1704) <-> (1684)
+	/**
+	/**
+(1705) <-> (1685)
+	* Sets the area of the receiver which can be changed
+	* Sets the area of the receiver which can be changed
+(1706) <-> (1686)
+	* by drawing operations to the rectangular area specified
+	* by drawing operations to the rectangular area specified
+(1707) <-> (1687)
+	* by the arguments.
+	* by the arguments.
+(1708) <-> (1688)
+	*
+	*
+(1709) <-> (1689)
+	* @param x the x coordinate of the clipping rectangle
+	* @param x the x coordinate of the clipping rectangle
+(1710) <-> (1690)
+	* @param y the y coordinate of the clipping rectangle
+	* @param y the y coordinate of the clipping rectangle
+(1711) <-> (1691)
+	* @param width the width of the clipping rectangle
+	* @param width the width of the clipping rectangle
+(1712) <-> (1692)
+	* @param height the height of the clipping rectangle
+	* @param height the height of the clipping rectangle
+(1713) <-> (1693)
+	*
+	*
+(1714) <-> (1694)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1715) <-> (1695)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1716) <-> (1696)
+	* </ul>
+	* </ul>
+(1717) <-> (1697)
+	*/
+	*/
+(1718) <-> (1698)
+	public void setClipping (int x, int y, int width, int height) {
+	public void setClipping (int x, int y, int width, int height) {
+(1719) <-> (1699)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1720) <-> (1700)
+	if (data.clipRgn == 0)
+	if (data.clipRgn == 0)
+(1721) <-> (1701)
+	data.clipRgn = OS.NewRgn ();
+	data.clipRgn = OS.NewRgn ();
+(1722) <-> (1702)
+	OS.SetRectRgn(data.clipRgn, (short) x, (short) y, (short) (x+width), (short) (y+height));
+	OS.SetRectRgn(data.clipRgn, (short) x, (short) y, (short) (x+width), (short) (y+height));
+(1723) <-> (1703)
+	data.pendingClip= true;
+	fPendingClip= true;
+(1724) <-> (1704)
+	}
+	}
+(1725) <-> (1705)
+	/**
+	/**
+(1726) <-> (1706)
+	* Sets the area of the receiver which can be changed
+	* Sets the area of the receiver which can be changed
+(1727) <-> (1707)
+	* by drawing operations to the rectangular area specified
+	* by drawing operations to the rectangular area specified
+(1728) <-> (1708)
+	* by the argument.
+	* by the argument.
+(1729) <-> (1709)
+	*
+	*
+(1730) <-> (1710)
+	* @param rect the clipping rectangle
+	* @param rect the clipping rectangle
+(1731) <-> (1711)
+	*
+	*
+(1732) <-> (1712)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1733) <-> (1713)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1734) <-> (1714)
+	* </ul>
+	* </ul>
+(1735) <-> (1715)
+	*/
+	*/
+(1736) <-> (1716)
+	public void setClipping (Rectangle rect) {
+	public void setClipping (Rectangle rect) {
+(1737) <-> (1717)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1738) <-> (1718)
+	if (rect == null) {
+	if (rect == null) {
+(1739) <-> (1719)
+	if (data.clipRgn != 0) {
+	if (data.clipRgn != 0) {
+(1740) <-> (1720)
+	OS.DisposeRgn(data.clipRgn);
+	OS.DisposeRgn(data.clipRgn);
+(1741) <-> (1721)
+	data.clipRgn= 0;
+	data.clipRgn= 0;
+(1742) <-> (1722)
+	}
+	}
+(1743) <-> (1723)
+	data.pendingClip= true;
+	fPendingClip= true;
+(1744) <-> (1724)
+	return;
+	return;
+(1745) <-> (1725)
+	}
+	}
+(1746) <-> (1726)
+	setClipping (rect.x, rect.y, rect.width, rect.height);
+	setClipping (rect.x, rect.y, rect.width, rect.height);
+(1747) <-> (1727)
+	}
+	}
+(1748) <-> (1728)
+	/**
+	/**
+(1749) <-> (1729)
+	* Sets the area of the receiver which can be changed
+	* Sets the area of the receiver which can be changed
+(1750) <-> (1730)
+	* by drawing operations to the region specified
+	* by drawing operations to the region specified
+(1751) <-> (1731)
+	* by the argument.
+	* by the argument.
+(1752) <-> (1732)
+	*
+	*
+(1753) <-> (1733)
+	* @param rect the clipping region.
+	* @param rect the clipping region.
+(1754) <-> (1734)
+	*
+	*
+(1755) <-> (1735)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1756) <-> (1736)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1757) <-> (1737)
+	* </ul>
+	* </ul>
+(1758) <-> (1738)
+	*/
+	*/
+(1759) <-> (1739)
+	public void setClipping (Region region) {
+	public void setClipping (Region region) {
+(1760) <-> (1740)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1761) <-> (1741)
+	if (region == null) {
+	if (region == null) {
+(1762) <-> (1742)
+	if (data.clipRgn != 0) {
+	if (data.clipRgn != 0) {
+(1763) <-> (1743)
+	OS.DisposeRgn (data.clipRgn);
+	OS.DisposeRgn (data.clipRgn);
+(1764) <-> (1744)
+	data.clipRgn = 0;
+	data.clipRgn = 0;
+(1765) <-> (1745)
+	}
+	}
+(1766) <-> (1746)
+	} else {
+	} else {
+(1767) <-> (1747)
+	if (data.clipRgn == 0)
+	if (data.clipRgn == 0)
+(1768) <-> (1748)
+	data.clipRgn = OS.NewRgn();
+	data.clipRgn = OS.NewRgn();
+(1769) <-> (1749)
+	OS.CopyRgn(region.handle, data.clipRgn);
+	OS.CopyRgn(region.handle, data.clipRgn);
+(1770) <-> (1750)
+	}
+	}
+(1771) <-> (1751)
+	data.pendingClip= true;
+	fPendingClip= true;
+(1772) <-> (1752)
+	}
+	}
+(1773) <-> (1753)
+	/**
+	/**
+(1774) <-> (1754)
+	* Sets the font which will be used by the receiver
+	* Sets the font which will be used by the receiver
+(1775) <-> (1755)
+	* to draw and measure text to the argument. If the
+	* to draw and measure text to the argument. If the
+(1776) <-> (1756)
+	* argument is null, then a default font appropriate
+	* argument is null, then a default font appropriate
+(1777) <-> (1757)
+	* for the platform will be used instead.
+	* for the platform will be used instead.
+(1778) <-> (1758)
+	*
+	*
+(1779) <-> (1759)
+	* @param font the new font for the receiver, or null to indicate a default font
+	* @param font the new font for the receiver, or null to indicate a default font
+(1780) <-> (1760)
+	*
+	*
+(1781) <-> (1761)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(1782) <-> (1762)
+	* <li>ERROR_INVALID_ARGUMENT - if the font has been disposed</li>
+	* <li>ERROR_INVALID_ARGUMENT - if the font has been disposed</li>
+(1783) <-> (1763)
+	* </ul>
+	* </ul>
+(1784) <-> (1764)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1785) <-> (1765)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1786) <-> (1766)
+	* </ul>
+	* </ul>
+(1787) <-> (1767)
+	*/
+	*/
+(1788) <-> (1768)
+	public void setFont (Font font) {
+	public void setFont (Font font) {
+(1789) <-> (1769)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1790) <-> (1770)
+	if (font == null) {
+	if (font == null) {
+(1791) <-> (1771)
+	data.font = data.device.systemFont;
+	data.font = data.device.systemFont;
+(1792) <-> (1772)
+	} else {
+	} else {
+(1793) <-> (1773)
+	if (font.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	if (font.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+(1794) <-> (1774)
+	data.font = font.handle;
+	data.font = font.handle;
+(1795) <-> (1775)
+	}
+	}
+(1796) <-> (1776)
+	}
+	}
+(1797) <-> (1777)
+	/**
+	/**
+(1798) <-> (1778)
+	* Sets the foreground color. The foreground color is used
+	* Sets the foreground color. The foreground color is used
+(1799) <-> (1779)
+	* for drawing operations including when text is drawn.
+	* for drawing operations including when text is drawn.
+(1800) <-> (1780)
+	*
+	*
+(1801) <-> (1781)
+	* @param color the new foreground color for the receiver
+	* @param color the new foreground color for the receiver
+(1802) <-> (1782)
+	*
+	*
+(1803) <-> (1783)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(1804) <-> (1784)
+	* <li>ERROR_NULL_ARGUMENT - if the color is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the color is null</li>
+(1805) <-> (1785)
+	* <li>ERROR_INVALID_ARGUMENT - if the color has been disposed</li>
+	* <li>ERROR_INVALID_ARGUMENT - if the color has been disposed</li>
+(1806) <-> (1786)
+	* </ul>
+	* </ul>
+(1807) <-> (1787)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1808) <-> (1788)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1809) <-> (1789)
+	* </ul>
+	* </ul>
+(1810) <-> (1790)
+	*/
+	*/
+(1811) <-> (1791)
+	public void setForeground (Color color) {
+	public void setForeground (Color color) {
+(1812) <-> (1792)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1813) <-> (1793)
+	if (color == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (color == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(1814) <-> (1794)
+	if (color.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	if (color.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+(1815) <-> (1795)
+	data.foreground= color.handle;
+	data.foreground= color.handle;
+(1816) <-> (1796)
+	}
+	}
+(1817) <-> (1797)
+	/**
+	/**
+(1818) <-> (1798)
+	* Sets the receiver's line style to the argument, which must be one
+	* Sets the receiver's line style to the argument, which must be one
+(1819) <-> (1799)
+	* of the constants <code>SWT.LINE_SOLID</code>, <code>SWT.LINE_DASH</code>,
+	* of the constants <code>SWT.LINE_SOLID</code>, <code>SWT.LINE_DASH</code>,
+(1820) <-> (1800)
+	* <code>SWT.LINE_DOT</code>, <code>SWT.LINE_DASHDOT</code> or
+	* <code>SWT.LINE_DOT</code>, <code>SWT.LINE_DASHDOT</code> or
+(1821) <-> (1801)
+	* <code>SWT.LINE_DASHDOTDOT</code>.
+	* <code>SWT.LINE_DASHDOTDOT</code>.
+(1822) <-> (1802)
+	*
+	*
+(1823) <-> (1803)
+	* @param lineStyle the style to be used for drawing lines
+	* @param lineStyle the style to be used for drawing lines
+(1824) <-> (1804)
+	*
+	*
+(1825) <-> (1805)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1826) <-> (1806)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1827) <-> (1807)
+	* </ul>
+	* </ul>
+(1828) <-> (1808)
+	*/
+	*/
+(1829) <-> (1809)
+	public void setLineStyle(int lineStyle) {
+	public void setLineStyle(int lineStyle) {
+(1830) <-> (1810)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1831) <-> (1811)
+	/* AW
+	/* AW
+(1832) <-> (1812)
+	int xDisplay = data.display;
+	int xDisplay = data.display;
+(1833) <-> (1813)
+	switch (lineStyle) {
+	switch (lineStyle) {
+(1834) <-> (1814)
+	case SWT.LINE_SOLID:
+	case SWT.LINE_SOLID:
+(1835) <-> (1815)
+	data.lineStyle = lineStyle;
+	data.lineStyle = lineStyle;
+(1836) <-> (1816)
+	OS.XSetLineAttributes(xDisplay, handle, 0, OS.LineSolid, OS.CapButt, OS.JoinMiter);
+	OS.XSetLineAttributes(xDisplay, handle, 0, OS.LineSolid, OS.CapButt, OS.JoinMiter);
+(1837) <-> (1817)
+	return;
+	return;
+(1838) <-> (1818)
+	case SWT.LINE_DASH:
+	case SWT.LINE_DASH:
+(1839) <-> (1819)
+	OS.XSetDashes(xDisplay,handle,0, new byte[] {6, 2},2);
+	OS.XSetDashes(xDisplay,handle,0, new byte[] {6, 2},2);
+(1840) <-> (1820)
+	break;
+	break;
+(1841) <-> (1821)
+	case SWT.LINE_DOT:
+	case SWT.LINE_DOT:
+(1842) <-> (1822)
+	OS.XSetDashes(xDisplay,handle,0, new byte[] {3, 1},2);
+	OS.XSetDashes(xDisplay,handle,0, new byte[] {3, 1},2);
+(1843) <-> (1823)
+	break;
+	break;
+(1844) <-> (1824)
+	case SWT.LINE_DASHDOT:
+	case SWT.LINE_DASHDOT:
+(1845) <-> (1825)
+	OS.XSetDashes(xDisplay,handle,0, new byte[] {6, 2, 3, 1},4);
+	OS.XSetDashes(xDisplay,handle,0, new byte[] {6, 2, 3, 1},4);
+(1846) <-> (1826)
+	break;
+	break;
+(1847) <-> (1827)
+	case SWT.LINE_DASHDOTDOT:
+	case SWT.LINE_DASHDOTDOT:
+(1848) <-> (1828)
+	OS.XSetDashes(xDisplay,handle,0, new byte[] {6, 2, 3, 1, 3, 1},6);
+	OS.XSetDashes(xDisplay,handle,0, new byte[] {6, 2, 3, 1, 3, 1},6);
+(1849) <-> (1829)
+	break;
+	break;
+(1850) <-> (1830)
+	default:
+	default:
+(1851) <-> (1831)
+	SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+(1852) <-> (1832)
+	}
+	}
+(1853) <-> (1833)
+	data.lineStyle = lineStyle;
+	data.lineStyle = lineStyle;
+(1854) <-> (1834)
+	OS.XSetLineAttributes(xDisplay, handle, 0, OS.LineDoubleDash, OS.CapButt, OS.JoinMiter);
+	OS.XSetLineAttributes(xDisplay, handle, 0, OS.LineDoubleDash, OS.CapButt, OS.JoinMiter);
+(1855) <-> (1835)
+	*/
+	*/
+(1856) <-> (1836)
+	}
+	}
+(1857) <-> (1837)
+	/**
+	/**
+(1858) <-> (1838)
+	* Sets the width that will be used when drawing lines
+	* Sets the width that will be used when drawing lines
+(1859) <-> (1839)
+	* for all of the figure drawing operations (that is,
+	* for all of the figure drawing operations (that is,
+(1860) <-> (1840)
+	* <code>drawLine</code>, <code>drawRectangle</code>,
+	* <code>drawLine</code>, <code>drawRectangle</code>,
+(1861) <-> (1841)
+	* <code>drawPolyline</code>, and so forth.
+	* <code>drawPolyline</code>, and so forth.
+(1862) <-> (1842)
+	*
+	*
+(1863) <-> (1843)
+	* @param lineWidth the width of a line
+	* @param lineWidth the width of a line
+(1864) <-> (1844)
+	*
+	*
+(1865) <-> (1845)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1866) <-> (1846)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1867) <-> (1847)
+	* </ul>
+	* </ul>
+(1868) <-> (1848)
+	*/
+	*/
+(1869) <-> (1849)
+	public void setLineWidth(int width) {
+	public void setLineWidth(int width) {
+(1870) <-> (1850)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1871) <-> (1851)
+	if (data.lineStyle == SWT.LINE_SOLID) {
+	if (data.lineStyle == SWT.LINE_SOLID) {
+(1872) <-> (1852)
+	/* AW
+	/* AW
+(1873) <-> (1853)
+	OS.XSetLineAttributes(data.display, handle, width, OS.LineSolid, OS.CapButt, OS.JoinMiter);
+	OS.XSetLineAttributes(data.display, handle, width, OS.LineSolid, OS.CapButt, OS.JoinMiter);
+(1874) <-> (1854)
+	*/
+	*/
+(1875) <-> (1855)
+	} else {
+	} else {
+(1876) <-> (1856)
+	/* AW
+	/* AW
+(1877) <-> (1857)
+	OS.XSetLineAttributes(data.display, handle, width, OS.LineDoubleDash, OS.CapButt, OS.JoinMiter);
+	OS.XSetLineAttributes(data.display, handle, width, OS.LineDoubleDash, OS.CapButt, OS.JoinMiter);
+(1878) <-> (1858)
+	*/
+	*/
+(1879) <-> (1859)
+	}
+	}
+(1880) <-> (1860)
+	data.lineWidth= width;
+	fLineWidth= width;
+(1881) <-> (1861)
+	}
+	}
+(1882) <-> (1862)
+	/**
+	/**
+(1883) <-> (1863)
+	* If the argument is <code>true</code>, puts the receiver
+	* If the argument is <code>true</code>, puts the receiver
+(1884) <-> (1864)
+	* in a drawing mode where the resulting color in the destination
+	* in a drawing mode where the resulting color in the destination
+(1885) <-> (1865)
+	* is the <em>exclusive or</em> of the color values in the source
+	* is the <em>exclusive or</em> of the color values in the source
+(1886) <-> (1866)
+	* and the destination, and if the argument is <code>false</code>,
+	* and the destination, and if the argument is <code>false</code>,
+(1887) <-> (1867)
+	* puts the receiver in a drawing mode where the destination color
+	* puts the receiver in a drawing mode where the destination color
+(1888) <-> (1868)
+	* is replaced with the source color value.
+	* is replaced with the source color value.
+(1889) <-> (1869)
+	*
+	*
+(1890) <-> (1870)
+	* @param xor if <code>true</code>, then <em>xor</em> mode is used, otherwise <em>source copy</em> mode is used
+	* @param xor if <code>true</code>, then <em>xor</em> mode is used, otherwise <em>source copy</em> mode is used
+(1891) <-> (1871)
+	*
+	*
+(1892) <-> (1872)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1893) <-> (1873)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1894) <-> (1874)
+	* </ul>
+	* </ul>
+(1895) <-> (1875)
+	*/
+	*/
+(1896) <-> (1876)
+	public void setXORMode(boolean xor) {
+	public void setXORMode(boolean xor) {
+(1897) <-> (1877)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1898) <-> (1884)
+	data.xorMode= xor;
+	fXorMode= xor;
+(1899) <-> (1885)
+	}
+	}
+(1900) <-> (1886)
+	/**
+	/**
+(1901) <-> (1887)
+	* Returns the extent of the given string. No tab
+	* Returns the extent of the given string. No tab
+(1902) <-> (1888)
+	* expansion or carriage return processing will be performed.
+	* expansion or carriage return processing will be performed.
+(1903) <-> (1889)
+	* <p>
+	* <p>
+(1904) <-> (1890)
+	* The <em>extent</em> of a string is the width and height of
+	* The <em>extent</em> of a string is the width and height of
+(1905) <-> (1891)
+	* the rectangular area it would cover if drawn in a particular
+	* the rectangular area it would cover if drawn in a particular
+(1906) <-> (1892)
+	* font (in this case, the current font in the receiver).
+	* font (in this case, the current font in the receiver).
+(1907) <-> (1893)
+	* </p>
+	* </p>
+(1908) <-> (1894)
+	*
+	*
+(1909) <-> (1895)
+	* @param string the string to measure
+	* @param string the string to measure
+(1910) <-> (1896)
+	* @return a point containing the extent of the string
+	* @return a point containing the extent of the string
+(1911) <-> (1897)
+	*
+	*
+(1912) <-> (1898)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(1913) <-> (1899)
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+(1914) <-> (1900)
+	* </ul>
+	* </ul>
+(1915) <-> (1901)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1916) <-> (1902)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1917) <-> (1903)
+	* </ul>
+	* </ul>
+(1918) <-> (1904)
+	*/
+	*/
+(1919) <-> (1905)
+	public Point stringExtent(String string) {
+	public Point stringExtent(String string) {
+(1920) <-> (1906)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1921) <-> (1907)
+	if (string == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (string == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(1922) <-> (1908)
+	if (string.length () == 0) return new Point(0, getFontHeight());
+	if (string.length () == 0) return new Point(0, getFontHeight());
+(1923) <-> (1909)
+	/* AW
+	/* AW
+(1924) <-> (1910)
+	byte[] buffer = Converter.wcsToMbcs(getCodePage (), string, true);
+	byte[] buffer = Converter.wcsToMbcs(getCodePage (), string, true);
+(1925) <-> (1911)
+	int xmString = OS.XmStringCreate(buffer, OS.XmFONTLIST_DEFAULT_TAG);
+	int xmString = OS.XmStringCreate(buffer, OS.XmFONTLIST_DEFAULT_TAG);
+(1926) <-> (1912)
+	int fontList = data.fontList;
+	int fontList = data.fontList;
+(1927) <-> (1913)
+	int width = OS.XmStringWidth(fontList, xmString);
+	int width = OS.XmStringWidth(fontList, xmString);
+(1928) <-> (1914)
+	int height = OS.XmStringHeight(fontList, xmString);
+	int height = OS.XmStringHeight(fontList, xmString);
+(1929) <-> (1915)
+	OS.XmStringFree(xmString);
+	OS.XmStringFree(xmString);
+(1930) <-> (1916)
+	*/
+	*/
+(1931) <-> (1917)
+	try {
+	try {
+(1932) <-> (1918)
+	focus(false, null);
+	focus(false, null);
+(1933) <-> (1919)
+	carbon_installFont();
+	installFont();
+(1935) <-> (1920)
+	int width= OS.TextWidth(s, (short)0, (short)s.length);
+	int width= OS.TextWidth(string, data.font.fID, data.font.fSize, data.font.fFace);
+(1936) <-> (1921)
+	short[] fontInfo= new short[4];
+	short[] fontInfo= new short[4];
+(1937) <-> (1922)
+	OS.GetFontInfo(fontInfo); // FontInfo
+	OS.GetFontInfo(fontInfo); // FontInfo
+(1938) <-> (1923)
+	return new Point(width, fontInfo[0] + fontInfo[1]);
+	return new Point(width, fontInfo[0] + fontInfo[1]);
+(1939) <-> (1924)
+	} finally {
+	} finally {
+(1940) <-> (1925)
+	unfocus(false);
+	unfocus(false);
+(1941) <-> (1926)
+	}
+	}
+(1942) <-> (1927)
+	}
+	}
+(1943) <-> (1928)
+	/**
+	/**
+(1944) <-> (1929)
+	* Returns the extent of the given string. Tab expansion and
+	* Returns the extent of the given string. Tab expansion and
+(1945) <-> (1930)
+	* carriage return processing are performed.
+	* carriage return processing are performed.
+(1946) <-> (1931)
+	* <p>
+	* <p>
+(1947) <-> (1932)
+	* The <em>extent</em> of a string is the width and height of
+	* The <em>extent</em> of a string is the width and height of
+(1948) <-> (1933)
+	* the rectangular area it would cover if drawn in a particular
+	* the rectangular area it would cover if drawn in a particular
+(1949) <-> (1934)
+	* font (in this case, the current font in the receiver).
+	* font (in this case, the current font in the receiver).
+(1950) <-> (1935)
+	* </p>
+	* </p>
+(1951) <-> (1936)
+	*
+	*
+(1952) <-> (1937)
+	* @param string the string to measure
+	* @param string the string to measure
+(1953) <-> (1938)
+	* @return a point containing the extent of the string
+	* @return a point containing the extent of the string
+(1954) <-> (1939)
+	*
+	*
+(1955) <-> (1940)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(1956) <-> (1941)
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+(1957) <-> (1942)
+	* </ul>
+	* </ul>
+(1958) <-> (1943)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1959) <-> (1944)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1960) <-> (1945)
+	* </ul>
+	* </ul>
+(1961) <-> (1946)
+	*/
+	*/
+(1962) <-> (1947)
+	public Point textExtent(String string) {
+	public Point textExtent(String string) {
+(1963) <-> (1948)
+	return textExtent(string, SWT.DRAW_DELIMITER | SWT.DRAW_TAB);
+	return textExtent(string, SWT.DRAW_DELIMITER | SWT.DRAW_TAB);
+(1964) <-> (1949)
+	}
+	}
+(1965) <-> (1950)
+	/**
+	/**
+(1966) <-> (1951)
+	* Returns the extent of the given string. Tab expansion, line
+	* Returns the extent of the given string. Tab expansion, line
+(1967) <-> (1952)
+	* delimiter and mnemonic processing are performed according to
+	* delimiter and mnemonic processing are performed according to
+(1968) <-> (1953)
+	* the specified flags, which can be a combination of:
+	* the specified flags, which can be a combination of:
+(1969) <-> (1954)
+	* <dl>
+	* <dl>
+(1970) <-> (1955)
+	* <dt><b>DRAW_DELIMITER</b></dt>
+	* <dt><b>DRAW_DELIMITER</b></dt>
+(1971) <-> (1956)
+	* <dd>draw multiple lines</dd>
+	* <dd>draw multiple lines</dd>
+(1972) <-> (1957)
+	* <dt><b>DRAW_TAB</b></dt>
+	* <dt><b>DRAW_TAB</b></dt>
+(1973) <-> (1958)
+	* <dd>expand tabs</dd>
+	* <dd>expand tabs</dd>
+(1974) <-> (1959)
+	* <dt><b>DRAW_MNEMONIC</b></dt>
+	* <dt><b>DRAW_MNEMONIC</b></dt>
+(1975) <-> (1960)
+	* <dd>underline the mnemonic character</dd>
+	* <dd>underline the mnemonic character</dd>
+(1976) <-> (1961)
+	* <dt><b>DRAW_TRANSPARENT</b></dt>
+	* <dt><b>DRAW_TRANSPARENT</b></dt>
+(1977) <-> (1962)
+	* <dd>transparent background</dd>
+	* <dd>transparent background</dd>
+(1978) <-> (1963)
+	* </dl>
+	* </dl>
+(1979) <-> (1964)
+	* <p>
+	* <p>
+(1980) <-> (1965)
+	* The <em>extent</em> of a string is the width and height of
+	* The <em>extent</em> of a string is the width and height of
+(1981) <-> (1966)
+	* the rectangular area it would cover if drawn in a particular
+	* the rectangular area it would cover if drawn in a particular
+(1982) <-> (1967)
+	* font (in this case, the current font in the receiver).
+	* font (in this case, the current font in the receiver).
+(1983) <-> (1968)
+	* </p>
+	* </p>
+(1984) <-> (1969)
+	*
+	*
+(1985) <-> (1970)
+	* @param string the string to measure
+	* @param string the string to measure
+(1986) <-> (1971)
+	* @param flags the flags specifing how to process the text
+	* @param flags the flags specifing how to process the text
+(1987) <-> (1972)
+	* @return a point containing the extent of the string
+	* @return a point containing the extent of the string
+(1988) <-> (1973)
+	*
+	*
+(1989) <-> (1974)
+	* @exception IllegalArgumentException <ul>
+	* @exception IllegalArgumentException <ul>
+(1990) <-> (1975)
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+	* <li>ERROR_NULL_ARGUMENT - if the string is null</li>
+(1991) <-> (1976)
+	* </ul>
+	* </ul>
+(1992) <-> (1977)
+	* @exception SWTException <ul>
+	* @exception SWTException <ul>
+(1993) <-> (1978)
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+	* <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
+(1994) <-> (1979)
+	* </ul>
+	* </ul>
+(1995) <-> (1980)
+	*/
+	*/
+(1996) <-> (1981)
+	public Point textExtent(String string, int flags) {
+	public Point textExtent(String string, int flags) {
+(1997) <-> (1982)
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
+(1998) <-> (1983)
+	if (string == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (string == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+(1999) <-> (1984)
+	if (string.length () == 0) return new Point(0, getFontHeight());
+	if (string.length () == 0) return new Point(0, getFontHeight());
+(2001) <-> (1986)
+	/* AW
+	/* AW
+(2002) <-> (1987)
+	if (data.renderTable == 0) createRenderTable();
+	if (data.renderTable == 0) createRenderTable();
+(2003) <-> (1988)
+	int renderTable = data.renderTable;
+	int renderTable = data.renderTable;
+(2005) <-> (1990)
+	int tableLength = 0;
+	int tableLength = 0;
+(2006) <-> (1991)
+	Device device = data.device;
+	Device device = data.device;
+(2007) <-> (1992)
+	int[] parseTable = new int[2];
+	int[] parseTable = new int[2];
+(2008) <-> (1993)
+	char[] text = new char[string.length()];
+	char[] text = new char[string.length()];
+(2009) <-> (1994)
+	string.getChars(0, text.length, text, 0);
+	string.getChars(0, text.length, text, 0);
+(2010) <-> (1995)
+	if ((flags & SWT.DRAW_DELIMITER) != 0) parseTable[tableLength++] = device.crMapping;
+	if ((flags & SWT.DRAW_DELIMITER) != 0) parseTable[tableLength++] = device.crMapping;
+(2011) <-> (1996)
+	if ((flags & SWT.DRAW_TAB) != 0) parseTable[tableLength++] = device.tabMapping;
+	if ((flags & SWT.DRAW_TAB) != 0) parseTable[tableLength++] = device.tabMapping;
+(2012) <-> (1997)
+	if ((flags & SWT.DRAW_MNEMONIC) != 0) stripMnemonic(text);
+	if ((flags & SWT.DRAW_MNEMONIC) != 0) stripMnemonic(text);
+(2014) <-> (1999)
+	byte[] buffer = Converter.wcsToMbcs(getCodePage(), text, true);
+	byte[] buffer = Converter.wcsToMbcs(getCodePage(), text, true);
+(2015) <-> (2000)
+	int xmString = OS.XmStringParseText(buffer, 0, OS.XmFONTLIST_DEFAULT_TAG, OS.XmCHARSET_TEXT, parseTable, tableLength, 0);
+	int xmString = OS.XmStringParseText(buffer, 0, OS.XmFONTLIST_DEFAULT_TAG, OS.XmCHARSET_TEXT, parseTable, tableLength, 0);
+(2016) <-> (2001)
+	int width = OS.XmStringWidth(renderTable, xmString);
+	int width = OS.XmStringWidth(renderTable, xmString);
+(2017) <-> (2002)
+	int height = OS.XmStringHeight(renderTable, xmString);
+	int height = OS.XmStringHeight(renderTable, xmString);
+(2018) <-> (2003)
+	OS.XmStringFree(xmString);
+	OS.XmStringFree(xmString);
+(2019) <-> (2004)
+	return new Point(width, height);
+	return new Point(width, height);
+(2020) <-> (2005)
+	*/
+	*/
+(2021) <-> (2006)
+	try {
+	try {
+(2022) <-> (2007)
+	focus(false, null);
+	focus(false, null);
+(2023) <-> (2008)
+	carbon_installFont();
+	installFont();
+(2025) <-> (2009)
+	int width= OS.TextWidth(s, (short)0, (short)s.length);
+	int width= OS.TextWidth(string, data.font.fID, data.font.fSize, data.font.fFace);
+(2026) <-> (2010)
+	short[] fontInfo= new short[4];
+	short[] fontInfo= new short[4];
+(2027) <-> (2011)
+	OS.GetFontInfo(fontInfo); // FontInfo
+	OS.GetFontInfo(fontInfo); // FontInfo
+(2028) <-> (2012)
+	return new Point(width, fontInfo[0] + fontInfo[1]);
+	return new Point(width, fontInfo[0] + fontInfo[1]);
+(2029) <-> (2013)
+	} finally {
+	} finally {
+(2030) <-> (2014)
+	unfocus(false);
+	unfocus(false);
+(2031) <-> (2015)
+	}
+	}
+(2032) <-> (2016)
+	}
+	}
+(2033) <-> (2017)
+	/**
+	/**
+(2034) <-> (2018)
+	* Returns a string containing a concise, human-readable
+	* Returns a string containing a concise, human-readable
+(2035) <-> (2019)
+	* description of the receiver.
+	* description of the receiver.
+(2036) <-> (2020)
+	*
+	*
+(2037) <-> (2021)
+	* @return a string representation of the receiver
+	* @return a string representation of the receiver
+(2038) <-> (2022)
+	*/
+	*/
+(2039) <-> (2023)
+	public String toString () {
+	public String toString () {
+(2040) <-> (2024)
+	if (isDisposed()) return "GC {*DISPOSED*}";
+	if (isDisposed()) return "GC {*DISPOSED*}";
+(2041) <-> (2025)
+	return "GC {" + handle + "}";
+	return "GC {" + handle + "}";
+(2042) <-> (2026)
+	}
+	}
+(2044) <-> (2028)
+	//---- MacOS X Carbon-only API
+	//---- Mac Stuff
+(2048) <-> (2080)
+	}
+	}
+(2050) <-> (2030)
+	public void carbon_installFont() {
+	public void installFont() {
+(2051) <-> (2031)
+	if (data != null && data.font != null)
+	if (data != null && data.font != null)
+(2052) <-> (2032)
+	data.font.installInGrafPort();
+	data.font.installInGrafPort();
+(2053) <-> (2033)
+	}
+	}
+(2055) <-> (2035)
+	private boolean focus(boolean doClip, Rect bounds) {
+	private boolean focus(boolean doClip, MacRect bounds) {
+(2057) <-> (2037)
+	if (data.isFocused && !data.pendingClip) {
+	if (fIsFocused && !fPendingClip) {
+(2058) <-> (2038)
+	return true;
+	return true;
+(2059) <-> (2039)
+	}
+	}
+(2061) <-> (2041)
+	// save global state
+	// save global state
+(2062) <-> (2042)
+	OS.GetGWorld(data.savePort, data.saveGWorld);
+	OS.GetGWorld(fSavePort, fSaveGWorld);
+(2063) <-> (2043)
+	OS.SetGWorld(handle, data.saveGWorld[0]);
+	OS.SetGWorld(handle, fSaveGWorld[0]);
+(2065) <-> (2045)
+	if (!doClip)
+	if (!doClip)
+(2066) <-> (2046)
+	return true;
+	return true;
+(2068) <-> (2048)
+	int dx= 0, dy= 0;
+	int dx= 0, dy= 0;
+(2070) <-> (2050)
+	// set origin of port using drawable bounds
+	// set origin of port using drawable bounds
+(2071) <-> (2051)
+	if (data.controlHandle != 0) {
+	if (data.controlHandle != 0) {
+(2073) <-> (2052)
+	MacUtil.getControlBounds(data.controlHandle, r);
+	OS.GetControlBounds(data.controlHandle, fRect.getData());
+(2074) <-> (2054)
+	dx= r.left;
+	dy= fRect.getY();
+(2076) <-> (2055)
+	OS.SetOrigin((short)-dx, (short)-dy);
+	OS.SetOrigin((short)-dx, (short)-dy);
+(2080) <-> (2057)
+	OS.QDSetPatternOrigin(p);
+	OS.QDSetPatternOrigin(p.getData());
+(2081) <-> (2058)
+	}
+	}
+(2082) <-> (2059)
+	// save clip region
+	// save clip region
+(2084) <-> (41)
+	data.saveClip= OS.NewRgn();
+	private int fSaveClip= OS.NewRgn();
+(2085) <-> (2060)
+	OS.GetClip(data.saveClip);
+	OS.GetClip(fSaveClip);
+(2087) <-> (2062)
+	// calculate new clip based on the Control's bound and GC clipping region
+	// calculate new clip based on the controls bound and GC clipping region
+(2088) <-> (2063)
+	if (data.controlHandle != 0) {
+	if (data.controlHandle != 0) {
+(2090) <-> (2065)
+	int result= OS.NewRgn();
+	int result= OS.NewRgn();
+(2092) <-> (2070)
+	if (data.damageRgn == 0) {
+	if (fDamageRgn != 0) {
+(2096) <-> (2066)
+	MacUtil.getVisibleRegion(data.controlHandle, result, data.clipAgainstChildren);
+	MacUtil.getVisibleRegion(data.controlHandle, result, true);
+(2097) <-> (2067)
+	OS.OffsetRgn(result, (short)-dx, (short)-dy);
+	OS.OffsetRgn(result, (short)-dx, (short)-dy);
+(2100) <-> (2074)
+	OS.CopyRgn(data.damageRgn, result);
+	OS.SectRgn(result, dRgn, result);
+(2101) <-> (2075)
+	}
+	}
+(2103) <-> (2077)
+	// clip against GC clipping region
+	// clip against GC clipping region
+(2104) <-> (2078)
+	if (data.clipRgn != 0)
+	if (data.clipRgn != 0) {
+(2105) <-> (2079)
+	OS.SectRgn(result, data.clipRgn, result);
+	OS.SectRgn(result, data.clipRgn, result);
+(2107) <-> (2082)
+	OS.SetClip(result);
+	OS.SetClip(result);
+(2110) <-> (2083)
+	if (bounds != null)
+	if (bounds != null)
+(2111) <-> (2084)
+	OS.GetRegionBounds(result, bounds);
+	OS.GetRegionBounds(result, bounds.getData());
+(2113) <-> (2085)
+	OS.DisposeRgn(result);
+	OS.DisposeRgn(result);
+(2115) <-> (2087)
+	} else {
+	} else {
+(2116) <-> (2088)
+	// clip against GC clipping region
+	// clip against GC clipping region
+(2117) <-> (2089)
+	if (data.clipRgn != 0) {
+	if (data.clipRgn != 0) {
+(2118) <-> (2090)
+	OS.SetClip(data.clipRgn);
+	OS.SetClip(data.clipRgn);
+(2119) <-> (2091)
+	if (bounds != null)
+	if (bounds != null)
+(2120) <-> (2092)
+	OS.GetRegionBounds(data.clipRgn, bounds);
+	OS.GetRegionBounds(data.clipRgn, bounds.getData());
+(2121) <-> (2093)
+	} else {
+	} else {
+(2122) <-> (2094)
+	if (bounds != null)
+	if (bounds != null)
+(2123) <-> (2095)
+	OS.SetRect(bounds, (short)0, (short)0, (short)0x7fff, (short)0x7fff);
+	bounds.set(0, 0, 0x8fff, 0x8fff);
+(2124) <-> (2096)
+	}
+	}
+(2125) <-> (2097)
+	}
+	}
+(2126) <-> (2098)
+	data.pendingClip= false;
+	fPendingClip= false;
+(2128) <-> (2100)
+	return true;
+	return true;
+(2129) <-> (2101)
+	}
+	}
+(2131) <-> (2103)
+	private void unfocus(boolean doClip) {
+	private void unfocus(boolean doClip) {
+(2133) <-> (2105)
+	if (data.isFocused)
+	if (fIsFocused)
+(2134) <-> (2106)
+	return;
+	return;
+(2136) <-> (2108)
+	if (doClip) {
+	if (doClip) {
+(2137) <-> (2109)
+	// restore clipping and origin of port
+	// restore clipping and origin of port
+(2139) <-> (2110)
+	OS.SetClip(data.saveClip);
+	OS.SetClip(fSaveClip);
+(2140) <-> (2111)
+	OS.SetOrigin((short)0, (short)0);
+	OS.SetOrigin((short)0, (short)0);
+(2141) <-> (2112)
+	}
+	}
+(2143) <-> (2114)
+	// restore globals
+	// restore globals
+(2144) <-> (2115)
+	OS.SetGWorld(data.savePort[0], data.saveGWorld[0]);
+	OS.SetGWorld(fSavePort[0], fSaveGWorld[0]);
+(2145) <-> (2116)
+	}
+	}
+(2147) <-> (2118)
+	public Rectangle carbon_focus(int damageRgn) {
+	public Rectangle carbon_focus(int damageRgn) {
+(2152) <-> (2121)
+	Rect bounds= new Rect();
+	MacRect bounds= new MacRect();
+(2153) <-> (2120)
+	data.damageRgn= damageRgn;
+	fDamageRgn= damageRgn;
+(2154) <-> (2151)
+	data.context[0]= cgcontext;
+	int context= fContext[0];
+(2155) <-> (2119)
+	OS.LockPortBits(handle);
+	OS.LockPortBits(handle);
+(2156) <-> (2122)
+	focus(true, bounds);
+	focus(true, bounds);
+(2157) <-> (2123)
+	data.isFocused= true;
+	fIsFocused= true;
+(2161) <-> (2125)
+	}
+	}
+(2163) <-> (2127)
+	public void carbon_unfocus() {
+	public void carbon_unfocus() {
+(2164) <-> (2128)
+	data.isFocused= false;
+	fIsFocused= false;
+(2166) <-> (2129)
+	unfocus(true);
+	unfocus(true);
+(2167) <-> (2130)
+	data.damageRgn= 0;
+	fDamageRgn= 0;
+(2168) <-> (2131)
+	OS.UnlockPortBits(handle);
+	OS.UnlockPortBits(handle);
+(2169) <-> (2132)
+	}
+	}
+(2171) <-> (2134)
+	private short getCurrentScreenDepth() {
+	private short getCurrentScreenDepth() {
+(2172) <-> (2135)
+	int gd= OS.GetGDevice();
+	int gd= OS.GetGDevice();
+(2173) <-> (2136)
+	if (gd != 0) {
+	if (gd != 0) {
+(2174) <-> (2137)
+	int pm= OS.getgdPMap(gd);
+	int pm= OS.getgdPMap(gd);
+(2175) <-> (2138)
+	if (pm != 0)
+	if (pm != 0)
+(2176) <-> (2139)
+	return OS.GetPixDepth(pm);
+	return OS.GetPixDepth(pm);
+(2177) <-> (2140)
+	}
+	}
+(2178) <-> (2141)
+	return 32;
+	return 32;
+(2179) <-> (2142)
+	}
+	}
+(2181) <-> (2144)
+	// new Core Graphic stuff
+	// new Core Graphic stuff
+(2183) <-> (2146)
+	public int carbon_CG_focus() {
+	public int carbon_CG_focus() {
+(2186) <-> (2148)
+	if (OS.QDBeginCGContext(handle, data.context) != OS.noErr)
+	if (OS.QDBeginCGContext(handle, fContext) != OS.kNoErr)
+(2187) <-> (2149)
+	return 0;
+	return 0;
+(2190) <-> (2153)
+	Rect b= new Rect();
+	MacRect b= new MacRect();
+(2191) <-> (2154)
+	OS.GetPortBounds(handle, b);
+	OS.GetPortBounds(handle, b.getData());
+(2193) <-> (2156)
+	int clip= OS.NewRgn();
+	int clip= OS.NewRgn();
+(2194) <-> (2157)
+	OS.GetPortClipRegion(handle, clip);
+	OS.GetPortClipRegion(handle, clip);
+(2195) <-> (2158)
+	OS.ClipCGContextToRegion(data.context[0], b, clip);
+	OS.ClipCGContextToRegion(context, b.getData(), clip);
+(2196) <-> (2159)
+	OS.DisposeRgn(clip);
+	OS.DisposeRgn(clip);
+(2198) <-> (2161)
+	OS.CGContextTranslateCTM(data.context[0], 0, b.bottom-b.top);
+	OS.CGContextTranslateCTM(context, 0, b.getHeight());
+(2199) <-> (2162)
+	OS.CGContextScaleCTM(data.context[0], 1, -1);
+	OS.CGContextScaleCTM(context, 1, -1);
+(2201) <-> (2163)
+	return data.context[0];
+	return context;
+(2202) <-> (2164)
+	}
+	}
+(2204) <-> (2166)
+	public void carbon_CG_unfocus() {
+	public void carbon_CG_unfocus() {
+(2206) <-> (2167)
+	OS.QDEndCGContext(handle, data.context);
+	OS.QDEndCGContext(handle, fContext);
+(2208) <-> (2168)
+	}
+	}
+(2209) <-> (2170)
+	}
+	}
+Number of lines in left file: 2109
+Number of lines in right file: 2070
+Number of lines matched: 2034

@@ -1,0 +1,337 @@
+Diff: ./reference/dataset/BuildPathsPropertyPage_1.java ./reference/dataset/BuildPathsPropertyPage_2.java
+(1) <-> (1)
+	/*
+	/*
+(2) <-> (2)
+	* (c) Copyright IBM Corp. 2000, 2001.
+	* (c) Copyright IBM Corp. 2000, 2001.
+(3) <-> (3)
+	* All Rights Reserved.
+	* All Rights Reserved.
+(4) <-> (4)
+	*/
+	*/
+(5) <-> (5)
+	package org.eclipse.jdt.internal.ui.preferences;
+	package org.eclipse.jdt.internal.ui.preferences;
+(7) <-> (7)
+	import java.lang.reflect.InvocationTargetException;
+	import java.lang.reflect.InvocationTargetException;
+(9) <-> (9)
+	import org.eclipse.swt.SWT;
+	import org.eclipse.swt.SWT;
+(10) <-> (30)
+	import org.eclipse.swt.layout.FillLayout;
+	import org.eclipse.jdt.core.IJavaElement;
+(11) <-> (10)
+	import org.eclipse.swt.widgets.Composite;
+	import org.eclipse.swt.widgets.Composite;
+(12) <-> (11)
+	import org.eclipse.swt.widgets.Control;
+	import org.eclipse.swt.widgets.Control;
+(13) <-> (12)
+	import org.eclipse.swt.widgets.Label;
+	import org.eclipse.swt.widgets.Label;
+(14) <-> (13)
+	import org.eclipse.swt.widgets.Shell;
+	import org.eclipse.swt.widgets.Shell;
+(16) <-> (15)
+	import org.eclipse.core.resources.IProject;
+	import org.eclipse.core.resources.IProject;
+(17) <-> (16)
+	import org.eclipse.core.resources.IWorkspaceRoot;
+	import org.eclipse.core.resources.IWorkspaceRoot;
+(18) <-> (17)
+	import org.eclipse.core.runtime.CoreException;
+	import org.eclipse.core.runtime.CoreException;
+(19) <-> (19)
+	import org.eclipse.core.runtime.IStatus;
+	import org.eclipse.core.runtime.IStatus;
+(21) <-> (18)
+	import org.eclipse.jface.dialogs.ErrorDialog;
+	import org.eclipse.core.runtime.IAdaptable;
+(22) <-> (21)
+	import org.eclipse.jface.dialogs.MessageDialog;
+	import org.eclipse.jface.dialogs.MessageDialog;
+(23) <-> (22)
+	import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+	import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+(24) <-> (23)
+	import org.eclipse.jface.operation.IRunnableWithProgress;
+	import org.eclipse.jface.operation.IRunnableWithProgress;
+(26) <-> (25)
+	import org.eclipse.ui.actions.WorkspaceModifyDelegatingOperation;
+	import org.eclipse.ui.actions.WorkspaceModifyDelegatingOperation;
+(27) <-> (26)
+	import org.eclipse.ui.dialogs.PropertyPage;
+	import org.eclipse.ui.dialogs.PropertyPage;
+(28) <-> (27)
+	import org.eclipse.ui.help.DialogPageContextComputer;
+	import org.eclipse.ui.help.DialogPageContextComputer;
+(29) <-> (28)
+	import org.eclipse.ui.help.WorkbenchHelp;
+	import org.eclipse.ui.help.WorkbenchHelp;
+(31) <-> (31)
+	import org.eclipse.jdt.core.IJavaProject;
+	import org.eclipse.jdt.core.IJavaProject;
+(32) <-> (32)
+	import org.eclipse.jdt.core.JavaCore;
+	import org.eclipse.jdt.core.JavaCore;
+(34) <-> (34)
+	import org.eclipse.jdt.internal.ui.IJavaHelpContextIds;
+	import org.eclipse.jdt.internal.ui.IJavaHelpContextIds;
+(35) <-> (35)
+	import org.eclipse.jdt.internal.ui.JavaPlugin;
+	import org.eclipse.jdt.internal.ui.JavaPlugin;
+(36) <-> (37)
+	import org.eclipse.jdt.internal.ui.dialogs.IStatusChangeListener;
+	import org.eclipse.jdt.internal.ui.dialogs.IStatusChangeListener;
+(37) <-> (38)
+	import org.eclipse.jdt.internal.ui.dialogs.StatusTool;
+	import org.eclipse.jdt.internal.ui.dialogs.StatusTool;
+(38) <-> (39)
+	import org.eclipse.jdt.internal.ui.util.ExceptionHandler;
+	import org.eclipse.jdt.internal.ui.util.ExceptionHandler;
+(39) <-> (40)
+	import org.eclipse.jdt.internal.ui.wizards.buildpaths.BuildPathsBlock;
+	import org.eclipse.jdt.internal.ui.wizards.buildpaths.BuildPathsBlock;
+(40) <-> (36)
+	import org.eclipse.jdt.internal.ui.JavaUIMessages;
+	import org.eclipse.jdt.internal.ui.JavaUIMessages;
+(42) <-> (45)
+	public class BuildPathsPropertyPage extends PropertyPage implements IStatusChangeListener {
+	public class BuildPathsPropertyPage extends PropertyPage implements IStatusChangeListener {
+(44) <-> (47)
+	private BuildPathsBlock fBuildPathsBlock;
+	private BuildPathsBlock fBuildPathsBlock;
+(47) <-> (52)
+	protected Control createContents(Composite parent) {
+	protected Control createContents(Composite parent) {
+(48) <-> (55)
+	// ensure the page has no special buttons
+	// ensure the page has no special buttons
+(49) <-> (56)
+	noDefaultAndApplyButton();
+	noDefaultAndApplyButton();
+(53) <-> (58)
+	IProject project= getProject();
+	IProject project= getProject();
+(54) <-> (61)
+	if (!project.isOpen()) {
+	} else if (!project.isOpen()) {
+(55) <-> (62)
+	createForClosedProject(composite);
+	return createForClosedProject(parent);
+(56) <-> (59)
+	} else if (!isJavaProject(project)) {
+	if (project == null || !isJavaProject(project)) {
+(57) <-> (60)
+	createWithoutJava(composite);
+	return createWithoutJava(parent);
+(58) <-> (63)
+	} else {
+	} else {
+(60) <-> (65)
+	}
+	}
+(63) <-> (53)
+	WorkbenchHelp.setHelp(parent, new DialogPageContextComputer(this, IJavaHelpContextIds.BUILD_PATH_PROPERTY_PAGE));
+	WorkbenchHelp.setHelp(parent, new DialogPageContextComputer(this, IJavaHelpContextIds.BUILD_PATH_PROPERTY_PAGE));
+(65) <-> (66)
+	}
+	}
+(67) <-> (71)
+	private void createWithJava(Composite parent) {
+	private Control createWithJava(Composite parent, IProject project) {
+(68) <-> (72)
+	IWorkspaceRoot root= JavaPlugin.getWorkspace().getRoot();
+	IWorkspaceRoot root= JavaPlugin.getWorkspace().getRoot();
+(69) <-> (73)
+	fBuildPathsBlock= new BuildPathsBlock(root, this, false);
+	fBuildPathsBlock= new BuildPathsBlock(root, this, false);
+(70) <-> (75)
+	fBuildPathsBlock.createControl(parent);
+	return fBuildPathsBlock.createControl(parent);
+(71) <-> (74)
+	fBuildPathsBlock.init(getProject(), false);
+	fBuildPathsBlock.init(project, false);
+(72) <-> (76)
+	}
+	}
+(74) <-> (81)
+	private void createWithoutJava(Composite parent) {
+	private Control createWithoutJava(Composite parent) {
+(75) <-> (82)
+	Label label= new Label(parent, SWT.LEFT);
+	Label label= new Label(parent, SWT.LEFT);
+(76) <-> (135)
+	label.setText(JavaUIMessages.getString("BuildPathspropertyPage.notJava")); //$NON-NLS-1$
+	String title= JavaUIMessages.getString("BuildPathsPropertyPage.error.title"); //$NON-NLS-1$
+(79) <-> (85)
+	fBuildPathsBlock= null;
+	fBuildPathsBlock= null;
+(80) <-> (86)
+	setValid(true);
+	setValid(true);
+(81) <-> (88)
+	}
+	}
+(83) <-> (93)
+	private void createForClosedProject(Composite parent) {
+	private Control createForClosedProject(Composite parent) {
+(84) <-> (94)
+	Label label= new Label(parent, SWT.LEFT);
+	Label label= new Label(parent, SWT.LEFT);
+(85) <-> (95)
+	label.setText(JavaUIMessages.getString("BuildPathspropertyPage.closed")); //$NON-NLS-1$
+	label.setText(JavaUIMessages.getString("BuildPathsPropertyPage.closed_project.message")); //$NON-NLS-1$
+(88) <-> (97)
+	fBuildPathsBlock= null;
+	fBuildPathsBlock= null;
+(89) <-> (98)
+	setValid(true);
+	setValid(true);
+(90) <-> (100)
+	}
+	}
+(92) <-> (150)
+	/**
+	/**
+(93) <-> (123)
+	* @see IPreferencePage#performOk
+	* @see IPreferencePage#performOk
+(94) <-> (124)
+	*/
+	*/
+(95) <-> (125)
+	public boolean performOk() {
+	public boolean performOk() {
+(96) <-> (126)
+	if (fBuildPathsBlock != null) {
+	if (fBuildPathsBlock != null) {
+(97) <-> (127)
+	fBuildPathsBlock.init(getProject(), false);
+	fBuildPathsBlock.init(getProject(), false);
+(98) <-> (128)
+	IRunnableWithProgress runnable= fBuildPathsBlock.getRunnable();
+	IRunnableWithProgress runnable= fBuildPathsBlock.getRunnable();
+(100) <-> (130)
+	IRunnableWithProgress op= new WorkspaceModifyDelegatingOperation(runnable);
+	IRunnableWithProgress op= new WorkspaceModifyDelegatingOperation(runnable);
+(101) <-> (131)
+	Shell shell= getControl().getShell();
+	Shell shell= getControl().getShell();
+(102) <-> (132)
+	try {
+	try {
+(103) <-> (133)
+	new ProgressMonitorDialog(shell).run(true, true, op);
+	new ProgressMonitorDialog(shell).run(true, true, op);
+(104) <-> (134)
+	} catch (InvocationTargetException e) {
+	} catch (InvocationTargetException e) {
+(105) <-> (137)
+	if (!ExceptionHandler.handle(e.getTargetException(), shell, JavaUIMessages.getString("BuildPathspropertyPage.errorTitle"), //$NON-NLS-1$
+	if (!ExceptionHandler.handle(e.getTargetException(), shell, title, message)) {
+(106) <-> (136)
+	JavaUIMessages.getString("BuildPathspropertyPage.errorMessage"))) { //$NON-NLS-1$
+	String message= JavaUIMessages.getString("BuildPathsPropertyPage.error.message"); //$NON-NLS-1$
+(107) <-> (139)
+	MessageDialog.openError(shell, JavaUIMessages.getString("BuildPathspropertyPage.error"), e.getMessage()); //$NON-NLS-1$
+	MessageDialog.openError(shell, title, e.getMessage());
+(108) <-> (140)
+	}
+	}
+(109) <-> (141)
+	return false;
+	return false;
+(110) <-> (142)
+	} catch (InterruptedException e) {
+	} catch (InterruptedException e) {
+(111) <-> (144)
+	return false;
+	return false;
+(112) <-> (145)
+	}
+	}
+(113) <-> (146)
+	}
+	}
+(114) <-> (147)
+	return true;
+	return true;
+(115) <-> (148)
+	}
+	}
+(117) <-> (102)
+	private IProject getProject() {
+	private IProject getProject() {
+(118) <-> (103)
+	Object element= getElement();
+	IAdaptable adaptable= getElement();
+(119) <-> (104)
+	if (element instanceof IProject) {
+	if (adaptable != null) {
+(120) <-> (105)
+	return (IProject)element;
+	IJavaElement elem= (IJavaElement) adaptable.getAdapter(IJavaElement.class);
+(121) <-> (106)
+	} else if (element instanceof IJavaProject) {
+	if (elem instanceof IJavaProject) {
+(122) <-> (107)
+	return ((IJavaProject)element).getProject();
+	return ((IJavaProject) elem).getProject();
+(123) <-> (111)
+	}
+	}
+(124) <-> (110)
+	return null;
+	return null;
+(125) <-> (120)
+	}
+	}
+(127) <-> (113)
+	private boolean isJavaProject(IProject proj) {
+	private boolean isJavaProject(IProject proj) {
+(128) <-> (114)
+	try {
+	try {
+(129) <-> (115)
+	return proj.hasNature(JavaCore.NATURE_ID);
+	return proj.hasNature(JavaCore.NATURE_ID);
+(130) <-> (116)
+	} catch (CoreException e) {
+	} catch (CoreException e) {
+(131) <-> (117)
+	ErrorDialog.openError(getControl().getShell(), JavaUIMessages.getString("BuildPathspropertyPage.error"), null, e.getStatus()); //$NON-NLS-1$
+	JavaPlugin.log(e);
+(132) <-> (118)
+	}
+	}
+(133) <-> (119)
+	return false;
+	return false;
+(134) <-> (109)
+	}
+	}
+(137) <-> (151)
+	// ------- IStatusChangeListener --------
+	* @see IStatusChangeListener#statusChanged
+(139) <-> (153)
+	public void statusChanged(IStatus status) {
+	public void statusChanged(IStatus status) {
+(140) <-> (154)
+	setValid(!status.matches(IStatus.ERROR));
+	setValid(!status.matches(IStatus.ERROR));
+(141) <-> (155)
+	StatusTool.applyToStatusLine(this, status);
+	StatusTool.applyToStatusLine(this, status);
+(142) <-> (156)
+	}
+	}
+(144) <-> (158)
+	}
+	}
+Number of lines in left file: 119
+Number of lines in right file: 135
+Number of lines matched: 111

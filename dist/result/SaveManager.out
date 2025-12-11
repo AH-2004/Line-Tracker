@@ -1,0 +1,3814 @@
+Diff: ./reference/dataset/SaveManager_1.java ./reference/dataset/SaveManager_2.java
+(1) <-> (1)
+	package org.eclipse.core.internal.resources;
+	package org.eclipse.core.internal.resources;
+(3) <-> (3)
+	/*
+	/*
+(4) <-> (4)
+	* Licensed Materials - Property of IBM,
+	* Licensed Materials - Property of IBM,
+(5) <-> (5)
+	* WebSphere Studio Workbench
+	* WebSphere Studio Workbench
+(6) <-> (6)
+	* (c) Copyright IBM Corp 2000
+	* (c) Copyright IBM Corp 2000
+(7) <-> (7)
+	*/
+	*/
+(9) <-> (8)
+	import org.eclipse.core.runtime.*;
+	import org.eclipse.core.runtime.*;
+(10) <-> (9)
+	import org.eclipse.core.resources.*;
+	import org.eclipse.core.resources.*;
+(11) <-> (10)
+	import org.eclipse.core.internal.events.*;
+	import org.eclipse.core.internal.events.*;
+(12) <-> (11)
+	import org.eclipse.core.internal.localstore.*;
+	import org.eclipse.core.internal.localstore.*;
+(13) <-> (12)
+	import org.eclipse.core.internal.utils.*;
+	import org.eclipse.core.internal.utils.*;
+(14) <-> (13)
+	import org.eclipse.core.internal.watson.*;
+	import org.eclipse.core.internal.watson.*;
+(15) <-> (14)
+	import java.io.*;
+	import java.io.*;
+(16) <-> (15)
+	import java.util.*;
+	import java.util.*;
+(18) <-> (17)
+	public class SaveManager implements IElementInfoFlattener, ICoreConstants, IManager {
+	public class SaveManager implements IElementInfoFlattener, IManager {
+(19) <-> (18)
+	protected Workspace workspace;
+	protected Workspace workspace;
+(20) <-> (19)
+	protected Properties masterTable;
+	protected Properties masterTable;
+(21) <-> (20)
+	protected ElementTree lastSnap;
+	protected ElementTree lastSnap;
+(22) <-> (21)
+	protected int operationCount = 0;
+	protected int operationCount = 0;
+(23) <-> (22)
+	protected boolean snapshotRequested;
+	protected boolean snapshotRequested;
+(25) <-> (24)
+	/** plugins that participate on a workspace save */
+	/** plugins that participate on a workspace save */
+(26) <-> (25)
+	protected HashMap saveParticipants;
+	protected HashMap saveParticipants;
+(28) <-> (27)
+	/** in-memory representation of plugins saved state */
+	/** in-memory representation of plugins saved state */
+(29) <-> (28)
+	protected HashMap savedStates;
+	protected HashMap savedStates;
+(31) <-> (732)
+	class SavedState implements ISavedState {
+	this.savedStates = savedStates;
+(85) <-> (30)
+	/** constants */
+	/** constants */
+(86) <-> (31)
+	protected static final int PREPARE_TO_SAVE = 1;
+	protected static final int PREPARE_TO_SAVE = 1;
+(87) <-> (32)
+	protected static final int SAVING = 2;
+	protected static final int SAVING = 2;
+(88) <-> (33)
+	protected static final int DONE_SAVING = 3;
+	protected static final int DONE_SAVING = 3;
+(89) <-> (34)
+	protected static final int ROLLBACK = 4;
+	protected static final int ROLLBACK = 4;
+(90) <-> (35)
+	protected static final String SAVE_NUMBER_PREFIX = "saveNumber_";
+	protected static final String SAVE_NUMBER_PREFIX = "saveNumber_";
+(91) <-> (36)
+	protected static final String CLEAR_DELTA_PREFIX = "clearDelta_";
+	protected static final String CLEAR_DELTA_PREFIX = "clearDelta_";
+(92) <-> (37)
+	protected static final String DELTA_EXPIRATION_PREFIX = "deltaExpiration_";
+	protected static final String DELTA_EXPIRATION_PREFIX = "deltaExpiration_";
+(93) <-> (39)
+	public SaveManager(IWorkspace workspace) {
+	public SaveManager(Workspace workspace) {
+(94) <-> (40)
+	this.workspace = (Workspace) workspace;
+	this.workspace = workspace;
+(95) <-> (41)
+	snapshotRequested = false;
+	snapshotRequested = false;
+(96) <-> (42)
+	saveParticipants = new HashMap(10);
+	saveParticipants = new HashMap(10);
+(97) <-> (43)
+	}
+	}
+(98) <-> (44)
+	public ISavedState addParticipant(Plugin plugin, ISaveParticipant participant) throws CoreException {
+	public ISavedState addParticipant(Plugin plugin, ISaveParticipant participant) throws CoreException {
+(99) <-> (45)
+	synchronized (saveParticipants) {
+	synchronized (saveParticipants) {
+(100) <-> (46)
+	// If the plugin was already registered as a save participant we return null
+	// If the plugin was already registered as a save participant we return null
+(101) <-> (47)
+	if (saveParticipants.put(plugin, participant) != null)
+	if (saveParticipants.put(plugin, participant) != null)
+(102) <-> (48)
+	return null;
+	return null;
+(103) <-> (49)
+	}
+	}
+(104) <-> (50)
+	String id = plugin.getDescriptor().getUniqueIdentifier();
+	String id = plugin.getDescriptor().getUniqueIdentifier();
+(105) <-> (51)
+	SavedState state = (SavedState) savedStates.get(id);
+	SavedState state = (SavedState) savedStates.get(id);
+(106) <-> (52)
+	if (state != null) {
+	if (state != null) {
+(107) <-> (53)
+	if (isDeltaCleared(id)) {
+	if (isDeltaCleared(id)) {
+(108) <-> (54)
+	// this plugin was marked not to receive deltas
+	// this plugin was marked not to receive deltas
+(109) <-> (55)
+	state.forgetTrees();
+	state.forgetTrees();
+(110) <-> (56)
+	removeClearDeltaMarks(id);
+	removeClearDeltaMarks(id);
+(111) <-> (57)
+	} else {
+	} else {
+(112) <-> (58)
+	try {
+	try {
+(113) <-> (59)
+	// thread safety: (we need to guarantee that the tree is imutable when computing deltas)
+	// thread safety: (we need to guarantee that the tree is imutable when computing deltas)
+(114) <-> (60)
+	// so, the tree inside the saved state needs to be immutable
+	// so, the tree inside the saved state needs to be immutable
+(115) <-> (61)
+	workspace.prepareOperation();
+	workspace.prepareOperation();
+(116) <-> (62)
+	workspace.beginOperation(true);
+	workspace.beginOperation(true);
+(117) <-> (63)
+	state.newTree = workspace.getElementTree();
+	state.newTree = workspace.getElementTree();
+(118) <-> (64)
+	} finally {
+	} finally {
+(119) <-> (65)
+	workspace.endOperation(false, null);
+	workspace.endOperation(false, null);
+(120) <-> (66)
+	}
+	}
+(121) <-> (67)
+	return state;
+	return state;
+(122) <-> (68)
+	}
+	}
+(123) <-> (69)
+	}
+	}
+(124) <-> (70)
+	// if the plug-in has a previous save number, we return a state, otherwise we return null
+	// if the plug-in has a previous save number, we return a state, otherwise we return null
+(125) <-> (71)
+	if (getSaveNumber(id) > 0)
+	if (getSaveNumber(id) > 0)
+(126) <-> (72)
+	return new SavedState(id, null, null);
+	return new SavedState(workspace, id, null, null);
+(127) <-> (73)
+	return null;
+	return null;
+(128) <-> (74)
+	}
+	}
+(129) <-> (75)
+	protected void broadcastLifecycle(final int lifecycle, Map contexts, final MultiStatus warnings, IProgressMonitor monitor) {
+	protected void broadcastLifecycle(final int lifecycle, Map contexts, final MultiStatus warnings, IProgressMonitor monitor) {
+(130) <-> (76)
+	monitor = Policy.monitorFor(monitor);
+	monitor = Policy.monitorFor(monitor);
+(131) <-> (77)
+	try {
+	try {
+(132) <-> (78)
+	monitor.beginTask("", contexts.size());
+	monitor.beginTask("", contexts.size());
+(133) <-> (79)
+	for (final Iterator it = contexts.entrySet().iterator(); it.hasNext();) {
+	for (final Iterator it = contexts.entrySet().iterator(); it.hasNext();) {
+(134) <-> (80)
+	Map.Entry entry = (Map.Entry) it.next();
+	Map.Entry entry = (Map.Entry) it.next();
+(135) <-> (81)
+	Plugin plugin = (Plugin) entry.getKey();
+	Plugin plugin = (Plugin) entry.getKey();
+(136) <-> (82)
+	final ISaveParticipant participant = (ISaveParticipant) saveParticipants.get(plugin);
+	final ISaveParticipant participant = (ISaveParticipant) saveParticipants.get(plugin);
+(137) <-> (83)
+	final SaveContext context = (SaveContext) entry.getValue();
+	final SaveContext context = (SaveContext) entry.getValue();
+(138) <-> (84)
+	/* Be extra careful when calling lifecycle method on arbitary plugin */
+	/* Be extra careful when calling lifecycle method on arbitary plugin */
+(139) <-> (85)
+	ISafeRunnable code = new ISafeRunnable() {
+	ISafeRunnable code = new ISafeRunnable() {
+(140) <-> (86)
+	public void run() throws Exception {
+	public void run() throws Exception {
+(141) <-> (87)
+	executeLifecycle(lifecycle, participant, context);
+	executeLifecycle(lifecycle, participant, context);
+(142) <-> (88)
+	}
+	}
+(143) <-> (89)
+	public void handleException(Throwable e) {
+	public void handleException(Throwable e) {
+(144) <-> (90)
+	String message = "Problems occurred during save";
+	String message = "Problems occurred during save";
+(145) <-> (91)
+	IStatus status = new Status(Status.WARNING, ResourcesPlugin.PI_RESOURCES, IResourceStatus.INTERNAL_ERROR, message, e);
+	IStatus status = new Status(Status.WARNING, ResourcesPlugin.PI_RESOURCES, IResourceStatus.INTERNAL_ERROR, message, e);
+(146) <-> (92)
+	warnings.add(status);
+	warnings.add(status);
+(148) <-> (94)
+	/* Remove entry for defective plug-in from this save operation */
+	/* Remove entry for defective plug-in from this save operation */
+(149) <-> (95)
+	it.remove();
+	it.remove();
+(150) <-> (96)
+	}
+	}
+(151) <-> (97)
+	};
+	};
+(152) <-> (98)
+	Platform.run(code);
+	Platform.run(code);
+(153) <-> (99)
+	monitor.worked(1);
+	monitor.worked(1);
+(154) <-> (100)
+	}
+	}
+(155) <-> (101)
+	} finally {
+	} finally {
+(156) <-> (102)
+	monitor.done();
+	monitor.done();
+(157) <-> (103)
+	}
+	}
+(158) <-> (104)
+	}
+	}
+(159) <-> (105)
+	protected void cleanMasterTable() {
+	protected void cleanMasterTable() {
+(160) <-> (106)
+	String pluginId = ResourcesPlugin.getPlugin().getDescriptor().getUniqueIdentifier();
+	String pluginId = ResourcesPlugin.getPlugin().getDescriptor().getUniqueIdentifier();
+(161) <-> (107)
+	IPath location = workspace.getMetaArea().getSafeTableLocationFor(pluginId);
+	IPath location = workspace.getMetaArea().getSafeTableLocationFor(pluginId);
+(162) <-> (108)
+	IPath backup = workspace.getMetaArea().getBackupLocationFor(location);
+	IPath backup = workspace.getMetaArea().getBackupLocationFor(location);
+(163) <-> (109)
+	try {
+	try {
+(164) <-> (110)
+	saveMasterTable(backup);
+	saveMasterTable(backup);
+(165) <-> (111)
+	} catch (CoreException e) {
+	} catch (CoreException e) {
+(166) <-> (112)
+	ResourcesPlugin.getPlugin().getLog().log(e.getStatus());
+	ResourcesPlugin.getPlugin().getLog().log(e.getStatus());
+(167) <-> (113)
+	backup.toFile().delete();
+	backup.toFile().delete();
+(168) <-> (114)
+	return;
+	return;
+(169) <-> (115)
+	}
+	}
+(170) <-> (116)
+	if (location.toFile().exists() && !location.toFile().delete())
+	if (location.toFile().exists() && !location.toFile().delete())
+(171) <-> (117)
+	return;
+	return;
+(172) <-> (118)
+	try {
+	try {
+(173) <-> (119)
+	saveMasterTable(location);
+	saveMasterTable(location);
+(174) <-> (120)
+	} catch (CoreException e) {
+	} catch (CoreException e) {
+(175) <-> (121)
+	ResourcesPlugin.getPlugin().getLog().log(e.getStatus());
+	ResourcesPlugin.getPlugin().getLog().log(e.getStatus());
+(176) <-> (122)
+	location.toFile().delete();
+	location.toFile().delete();
+(177) <-> (123)
+	return;
+	return;
+(178) <-> (124)
+	}
+	}
+(179) <-> (125)
+	backup.toFile().delete();
+	backup.toFile().delete();
+(180) <-> (126)
+	}
+	}
+(181) <-> (127)
+	/**
+	/**
+(182) <-> (128)
+	* Marks the current participants to not receive deltas next time they are registered
+	* Marks the current participants to not receive deltas next time they are registered
+(183) <-> (129)
+	* as save participants. This is done in order to maintain consistency if we crash
+	* as save participants. This is done in order to maintain consistency if we crash
+(184) <-> (130)
+	* after a snapshot. It would force plug-ins to rebuild their state.
+	* after a snapshot. It would force plug-ins to rebuild their state.
+(185) <-> (131)
+	*/
+	*/
+(186) <-> (132)
+	protected void clearSavedDelta() {
+	protected void clearSavedDelta() {
+(187) <-> (133)
+	for (Iterator i = saveParticipants.keySet().iterator(); i.hasNext();) {
+	for (Iterator i = saveParticipants.keySet().iterator(); i.hasNext();) {
+(188) <-> (134)
+	String pluginId = ((Plugin) i.next()).getDescriptor().getUniqueIdentifier();
+	String pluginId = ((Plugin) i.next()).getDescriptor().getUniqueIdentifier();
+(189) <-> (135)
+	masterTable.setProperty(CLEAR_DELTA_PREFIX + pluginId, "true");
+	masterTable.setProperty(CLEAR_DELTA_PREFIX + pluginId, "true");
+(190) <-> (136)
+	}
+	}
+(191) <-> (137)
+	}
+	}
+(192) <-> (138)
+	/**
+	/**
+(193) <-> (139)
+	* Collects the set of ElementTrees we are still interested in,
+	* Collects the set of ElementTrees we are still interested in,
+(194) <-> (140)
+	* and removes references to any other trees.
+	* and removes references to any other trees.
+(195) <-> (141)
+	*/
+	*/
+(196) <-> (142)
+	protected void collapseTrees() throws CoreException {
+	protected void collapseTrees() throws CoreException {
+(197) <-> (143)
+	//collect trees we're interested in
+	//collect trees we're interested in
+(199) <-> (145)
+	//trees for plugin saved states
+	//trees for plugin saved states
+(200) <-> (146)
+	ArrayList trees = new ArrayList();
+	ArrayList trees = new ArrayList();
+(201) <-> (147)
+	for (Iterator i = savedStates.values().iterator(); i.hasNext();) {
+	for (Iterator i = savedStates.values().iterator(); i.hasNext();) {
+(202) <-> (148)
+	SavedState state = (SavedState) i.next();
+	SavedState state = (SavedState) i.next();
+(203) <-> (149)
+	if (state.oldTree != null) {
+	if (state.oldTree != null) {
+(204) <-> (150)
+	trees.add(state.oldTree);
+	trees.add(state.oldTree);
+(205) <-> (151)
+	}
+	}
+(206) <-> (152)
+	}
+	}
+(208) <-> (154)
+	//trees for builders
+	//trees for builders
+(209) <-> (155)
+	IProject[] projects = workspace.getRoot().getProjects();
+	IProject[] projects = workspace.getRoot().getProjects();
+(210) <-> (156)
+	for (int i = 0; i < projects.length; i++) {
+	for (int i = 0; i < projects.length; i++) {
+(211) <-> (157)
+	IProject project = projects[i];
+	IProject project = projects[i];
+(212) <-> (158)
+	if (project.isOpen()) {
+	if (project.isOpen()) {
+(213) <-> (159)
+	Hashtable namesToBuilderTrees = workspace.getBuildManager().createBuilderMap(project);
+	Map builderInfos = workspace.getBuildManager().createBuildersPersistentInfo(project);
+(214) <-> (160)
+	if (namesToBuilderTrees != null) {
+	if (builderInfos != null) {
+(218) <-> (897)
+	trees.add(tree);
+	trees.add(current);
+(219) <-> (164)
+	}
+	}
+(220) <-> (165)
+	}
+	}
+(221) <-> (166)
+	}
+	}
+(222) <-> (167)
+	}
+	}
+(224) <-> (169)
+	//no need to collapse if there's no trees at this point
+	//no need to collapse if there's no trees at this point
+(225) <-> (170)
+	if (trees.isEmpty())
+	if (trees.isEmpty())
+(226) <-> (171)
+	return;
+	return;
+(228) <-> (173)
+	//the complete tree
+	//the complete tree
+(229) <-> (174)
+	trees.add(workspace.getElementTree());
+	trees.add(workspace.getElementTree());
+(231) <-> (176)
+	//collapse the trees
+	//collapse the trees
+(232) <-> (177)
+	//sort trees in topological order, and set the parent of each
+	//sort trees in topological order, and set the parent of each
+(233) <-> (178)
+	//tree to its parent in the topological ordering.
+	//tree to its parent in the topological ordering.
+(234) <-> (179)
+	ElementTree[] treeArray = new ElementTree[trees.size()];
+	ElementTree[] treeArray = new ElementTree[trees.size()];
+(235) <-> (180)
+	trees.toArray(treeArray);
+	trees.toArray(treeArray);
+(236) <-> (181)
+	ElementTree[] sorted = sortTrees(treeArray);
+	ElementTree[] sorted = sortTrees(treeArray);
+(238) <-> (183)
+	for (int i = 1; i < sorted.length; i++) {
+	for (int i = 1; i < sorted.length; i++) {
+(239) <-> (184)
+	ElementTree oldTree = sorted[i].collapseTo(sorted[i - 1]);
+	ElementTree oldTree = sorted[i].collapseTo(sorted[i - 1]);
+(240) <-> (185)
+	}
+	}
+(241) <-> (186)
+	}
+	}
+(242) <-> (187)
+	protected void commit(Map contexts) throws CoreException {
+	protected void commit(Map contexts) throws CoreException {
+(243) <-> (188)
+	for (Iterator i = contexts.values().iterator(); i.hasNext();)
+	for (Iterator i = contexts.values().iterator(); i.hasNext();)
+(244) <-> (189)
+	((SaveContext) i.next()).commit();
+	((SaveContext) i.next()).commit();
+(245) <-> (190)
+	}
+	}
+(246) <-> (191)
+	/**
+	/**
+(247) <-> (192)
+	* Given a collection of save participants, compute the collection of
+	* Given a collection of save participants, compute the collection of
+(248) <-> (193)
+	* <code>SaveContexts</code> to use during the save lifecycle.
+	* <code>SaveContexts</code> to use during the save lifecycle.
+(249) <-> (194)
+	* The keys are plugins and values are SaveContext objects.
+	* The keys are plugins and values are SaveContext objects.
+(250) <-> (195)
+	*/
+	*/
+(251) <-> (196)
+	protected Map computeSaveContexts(Plugin[] plugins, int kind, IProject project) {
+	protected Map computeSaveContexts(Plugin[] plugins, int kind, IProject project) {
+(252) <-> (197)
+	HashMap result = new HashMap(plugins.length);
+	HashMap result = new HashMap(plugins.length);
+(253) <-> (198)
+	for (int i = 0; i < plugins.length; i++) {
+	for (int i = 0; i < plugins.length; i++) {
+(254) <-> (199)
+	Plugin plugin = plugins[i];
+	Plugin plugin = plugins[i];
+(255) <-> (200)
+	try {
+	try {
+(256) <-> (201)
+	SaveContext context = new SaveContext(plugin, kind, project);
+	SaveContext context = new SaveContext(plugin, kind, project);
+(257) <-> (202)
+	result.put(plugin, context);
+	result.put(plugin, context);
+(258) <-> (203)
+	} catch (CoreException e) {
+	} catch (CoreException e) {
+(259) <-> (204)
+	// FIXME: should return a status to the user and not just log it
+	// FIXME: should return a status to the user and not just log it
+(260) <-> (205)
+	ResourcesPlugin.getPlugin().getLog().log(e.getStatus());
+	ResourcesPlugin.getPlugin().getLog().log(e.getStatus());
+(261) <-> (206)
+	}
+	}
+(262) <-> (207)
+	}
+	}
+(263) <-> (208)
+	return result;
+	return result;
+(264) <-> (209)
+	}
+	}
+(265) <-> (210)
+	/**
+	/**
+(266) <-> (211)
+	* Returns a table mapping having the plug-in id as the key and the old tree
+	* Returns a table mapping having the plug-in id as the key and the old tree
+(267) <-> (212)
+	* as the value.
+	* as the value.
+(268) <-> (213)
+	* This table is based on the union of the current savedStates</code>
+	* This table is based on the union of the current savedStates</code>
+(269) <-> (214)
+	* and the given table of contexts. The specified tree is used as the tree for
+	* and the given table of contexts. The specified tree is used as the tree for
+(270) <-> (215)
+	* any newly created saved states. This method is used to compute the set of
+	* any newly created saved states. This method is used to compute the set of
+(271) <-> (216)
+	* saved states to be written out.
+	* saved states to be written out.
+(272) <-> (217)
+	*/
+	*/
+(273) <-> (218)
+	protected Map computeStatesToSave(Map contexts, ElementTree current) {
+	protected Map computeStatesToSave(Map contexts, ElementTree current) {
+(274) <-> (219)
+	HashMap result = new HashMap(savedStates.size());
+	HashMap result = new HashMap(savedStates.size());
+(275) <-> (220)
+	for (Iterator i = savedStates.values().iterator(); i.hasNext();) {
+	for (Iterator i = savedStates.values().iterator(); i.hasNext();) {
+(276) <-> (221)
+	SavedState state = (SavedState) i.next();
+	SavedState state = (SavedState) i.next();
+(277) <-> (222)
+	if (state.oldTree != null)
+	if (state.oldTree != null)
+(278) <-> (223)
+	result.put(state.pluginId, state.oldTree);
+	result.put(state.pluginId, state.oldTree);
+(279) <-> (224)
+	}
+	}
+(280) <-> (225)
+	for (Iterator i = contexts.values().iterator(); i.hasNext();) {
+	for (Iterator i = contexts.values().iterator(); i.hasNext();) {
+(281) <-> (226)
+	SaveContext context = (SaveContext) i.next();
+	SaveContext context = (SaveContext) i.next();
+(282) <-> (227)
+	if (!context.isDeltaNeeded())
+	if (!context.isDeltaNeeded())
+(283) <-> (228)
+	continue;
+	continue;
+(284) <-> (229)
+	String pluginId = context.getPlugin().getDescriptor().getUniqueIdentifier();
+	String pluginId = context.getPlugin().getDescriptor().getUniqueIdentifier();
+(285) <-> (230)
+	result.put(pluginId, current);
+	result.put(pluginId, current);
+(286) <-> (231)
+	}
+	}
+(287) <-> (232)
+	return result;
+	return result;
+(288) <-> (233)
+	}
+	}
+(289) <-> (234)
+	protected void executeLifecycle(int lifecycle, ISaveParticipant participant, SaveContext context) throws CoreException {
+	protected void executeLifecycle(int lifecycle, ISaveParticipant participant, SaveContext context) throws CoreException {
+(290) <-> (235)
+	switch (lifecycle) {
+	switch (lifecycle) {
+(291) <-> (236)
+	case PREPARE_TO_SAVE :
+	case PREPARE_TO_SAVE :
+(292) <-> (237)
+	participant.prepareToSave(context);
+	participant.prepareToSave(context);
+(293) <-> (238)
+	break;
+	break;
+(294) <-> (239)
+	case SAVING :
+	case SAVING :
+(295) <-> (240)
+	participant.saving(context);
+	participant.saving(context);
+(296) <-> (241)
+	break;
+	break;
+(297) <-> (242)
+	case DONE_SAVING :
+	case DONE_SAVING :
+(298) <-> (243)
+	participant.doneSaving(context);
+	participant.doneSaving(context);
+(299) <-> (244)
+	break;
+	break;
+(300) <-> (245)
+	case ROLLBACK :
+	case ROLLBACK :
+(301) <-> (246)
+	participant.rollback(context);
+	participant.rollback(context);
+(302) <-> (247)
+	break;
+	break;
+(303) <-> (248)
+	default :
+	default :
+(304) <-> (249)
+	Assert.isTrue(false, "Invalid save lifecycle code");
+	Assert.isTrue(false, "Invalid save lifecycle code");
+(305) <-> (250)
+	}
+	}
+(306) <-> (251)
+	}
+	}
+(307) <-> (252)
+	public void forgetSavedTree(String pluginId) {
+	public void forgetSavedTree(String pluginId) {
+(308) <-> (253)
+	if (pluginId == null) {
+	if (pluginId == null) {
+(309) <-> (254)
+	for (Iterator i = savedStates.values().iterator(); i.hasNext();)
+	for (Iterator i = savedStates.values().iterator(); i.hasNext();)
+(310) <-> (255)
+	((SavedState) i.next()).forgetTrees();
+	((SavedState) i.next()).forgetTrees();
+(311) <-> (256)
+	} else {
+	} else {
+(312) <-> (257)
+	SavedState state = (SavedState) savedStates.get(pluginId);
+	SavedState state = (SavedState) savedStates.get(pluginId);
+(313) <-> (258)
+	if (state != null)
+	if (state != null)
+(314) <-> (259)
+	state.forgetTrees();
+	state.forgetTrees();
+(315) <-> (260)
+	}
+	}
+(316) <-> (261)
+	}
+	}
+(317) <-> (262)
+	/**
+	/**
+(318) <-> (263)
+	* Used in the policy for cleaning up tree's of plug-ins that are not often activated.
+	* Used in the policy for cleaning up tree's of plug-ins that are not often activated.
+(319) <-> (264)
+	*/
+	*/
+(320) <-> (265)
+	protected long getDeltaExpiration(String pluginId) {
+	protected long getDeltaExpiration(String pluginId) {
+(321) <-> (266)
+	String result = masterTable.getProperty(DELTA_EXPIRATION_PREFIX + pluginId);
+	String result = masterTable.getProperty(DELTA_EXPIRATION_PREFIX + pluginId);
+(322) <-> (267)
+	return (result == null) ? System.currentTimeMillis() : new Long(result).longValue();
+	return (result == null) ? System.currentTimeMillis() : new Long(result).longValue();
+(323) <-> (268)
+	}
+	}
+(324) <-> (269)
+	protected Properties getMasterTable() {
+	protected Properties getMasterTable() {
+(325) <-> (270)
+	return masterTable;
+	return masterTable;
+(326) <-> (271)
+	}
+	}
+(327) <-> (272)
+	public int getSaveNumber(String pluginId) {
+	public int getSaveNumber(String pluginId) {
+(328) <-> (273)
+	String value = masterTable.getProperty(SAVE_NUMBER_PREFIX + pluginId);
+	String value = masterTable.getProperty(SAVE_NUMBER_PREFIX + pluginId);
+(329) <-> (274)
+	return (value == null) ? 0 : new Integer(value).intValue();
+	return (value == null) ? 0 : new Integer(value).intValue();
+(330) <-> (275)
+	}
+	}
+(331) <-> (276)
+	protected Plugin[] getSaveParticipantPlugins() {
+	protected Plugin[] getSaveParticipantPlugins() {
+(332) <-> (277)
+	synchronized (saveParticipants) {
+	synchronized (saveParticipants) {
+(333) <-> (278)
+	return (Plugin[]) saveParticipants.keySet().toArray(new Plugin[saveParticipants.size()]);
+	return (Plugin[]) saveParticipants.keySet().toArray(new Plugin[saveParticipants.size()]);
+(334) <-> (279)
+	}
+	}
+(335) <-> (280)
+	}
+	}
+(336) <-> (281)
+	/**
+	/**
+(337) <-> (282)
+	* Initializes the snapshot mechanism for this workspace.
+	* Initializes the snapshot mechanism for this workspace.
+(338) <-> (283)
+	*/
+	*/
+(339) <-> (284)
+	protected void initSnap(IProgressMonitor monitor) throws CoreException {
+	protected void initSnap(IProgressMonitor monitor) throws CoreException {
+(340) <-> (285)
+	lastSnap = workspace.getElementTree();
+	lastSnap = workspace.getElementTree();
+(341) <-> (286)
+	operationCount = 0;
+	operationCount = 0;
+(342) <-> (287)
+	// delete the snapshot file, if any
+	// delete the snapshot file, if any
+(343) <-> (288)
+	IPath snapPath = workspace.getMetaArea().getSnapshotLocationFor(workspace.getRoot());
+	IPath snapPath = workspace.getMetaArea().getSnapshotLocationFor(workspace.getRoot());
+(344) <-> (289)
+	java.io.File file = snapPath.toFile();
+	java.io.File file = snapPath.toFile();
+(345) <-> (290)
+	if (file.exists())
+	if (file.exists())
+(346) <-> (291)
+	file.delete();
+	file.delete();
+(347) <-> (292)
+	if (file.exists()) {
+	if (file.exists()) {
+(348) <-> (293)
+	String message = "Could not initialize snapshot file";
+	String message = "Could not initialize snapshot file";
+(349) <-> (294)
+	throw new ResourceException(IResourceStatus.FAILED_DELETE_METADATA, null, message, null);
+	throw new ResourceException(IResourceStatus.FAILED_DELETE_METADATA, null, message, null);
+(350) <-> (295)
+	}
+	}
+(351) <-> (296)
+	}
+	}
+(352) <-> (297)
+	protected boolean isDeltaCleared(String pluginId) {
+	protected boolean isDeltaCleared(String pluginId) {
+(353) <-> (298)
+	String clearDelta = masterTable.getProperty(CLEAR_DELTA_PREFIX + pluginId);
+	String clearDelta = masterTable.getProperty(CLEAR_DELTA_PREFIX + pluginId);
+(354) <-> (299)
+	return clearDelta != null && clearDelta.equals("true");
+	return clearDelta != null && clearDelta.equals("true");
+(355) <-> (300)
+	}
+	}
+(356) <-> (301)
+	protected boolean isOldPluginTree(String pluginId) {
+	protected boolean isOldPluginTree(String pluginId) {
+(357) <-> (302)
+	// first, check if this plug-ins was marked not to receive a delta
+	// first, check if this plug-ins was marked not to receive a delta
+(358) <-> (303)
+	if (isDeltaCleared(pluginId))
+	if (isDeltaCleared(pluginId))
+(359) <-> (304)
+	return false;
+	return false;
+(360) <-> (305)
+	long deltaAge = System.currentTimeMillis() - getDeltaExpiration(pluginId);
+	long deltaAge = System.currentTimeMillis() - getDeltaExpiration(pluginId);
+(361) <-> (306)
+	return deltaAge > workspace.internalGetDescription().getDeltaExpiration();
+	return deltaAge > workspace.internalGetDescription().getDeltaExpiration();
+(362) <-> (307)
+	}
+	}
+(363) <-> (991)
+	/**
+	/**
+(364) <-> (992)
+	* @see IElementInfoFlattener#readElement
+	* @see IElementInfoFlattener#readElement
+(365) <-> (993)
+	*/
+	*/
+(366) <-> (994)
+	public Object readElement(IPath path, DataInput input) throws IOException {
+	public Object readElement(IPath path, DataInput input) throws IOException {
+(367) <-> (995)
+	Assert.isNotNull(path);
+	Assert.isNotNull(path);
+(368) <-> (996)
+	Assert.isNotNull(input);
+	Assert.isNotNull(input);
+(369) <-> (997)
+	// read the flags and pull out the type.
+	// read the flags and pull out the type.
+(370) <-> (998)
+	int flags = input.readInt();
+	int flags = input.readInt();
+(371) <-> (999)
+	int type = (flags & M_TYPE) >> M_TYPE_START;
+	int type = (flags & ICoreConstants.M_TYPE) >> ICoreConstants.M_TYPE_START;
+(372) <-> (1000)
+	ResourceInfo info = (ResourceInfo) workspace.newElement(type);
+	ResourceInfo info = (ResourceInfo) workspace.newElement(type);
+(373) <-> (1001)
+	info.readFrom(flags, input);
+	info.readFrom(flags, input);
+(374) <-> (1002)
+	return info;
+	return info;
+(375) <-> (1003)
+	}
+	}
+(376) <-> (308)
+	protected int readVersionNumber(DataInputStream input) throws IOException {
+	protected int readVersionNumber(DataInputStream input) throws IOException {
+(377) <-> (309)
+	return input.readInt();
+	return input.readInt();
+(378) <-> (310)
+	}
+	}
+(381) <-> (857)
+	try {
+	try {
+(390) <-> (987)
+	} finally {
+	} finally {
+(391) <-> (988)
+	monitor.done();
+	monitor.done();
+(392) <-> (989)
+	}
+	}
+(393) <-> (975)
+	}
+	}
+(394) <-> (855)
+	protected void readWorkspaceTree(DataInputStream input, IProgressMonitor monitor) throws CoreException, IOException {
+	protected void writeTree(Map statesToSave, DataOutputStream output, IProgressMonitor monitor) throws IOException, CoreException {
+(395) <-> (856)
+	monitor = Policy.monitorFor(monitor);
+	monitor = Policy.monitorFor(monitor);
+(411) <-> (733)
+	}
+	}
+(445) <-> (1325)
+	for (int i = 0; i < buildersToBeLinked.size(); i++) {
+	for (int i = 0; i < builders.size(); i++) {
+(460) <-> (990)
+	}
+	}
+(461) <-> (1123)
+	}
+	}
+(462) <-> (311)
+	/**
+	/**
+(463) <-> (312)
+	* Remove marks from current save participants. This marks prevent them to receive their
+	* Remove marks from current save participants. This marks prevent them to receive their
+(464) <-> (313)
+	* deltas when they register themselves as save participants.
+	* deltas when they register themselves as save participants.
+(465) <-> (314)
+	*/
+	*/
+(466) <-> (315)
+	protected void removeClearDeltaMarks() {
+	protected void removeClearDeltaMarks() {
+(467) <-> (316)
+	for (Iterator i = saveParticipants.keySet().iterator(); i.hasNext();) {
+	for (Iterator i = saveParticipants.keySet().iterator(); i.hasNext();) {
+(468) <-> (317)
+	String pluginId = ((Plugin) i.next()).getDescriptor().getUniqueIdentifier();
+	String pluginId = ((Plugin) i.next()).getDescriptor().getUniqueIdentifier();
+(469) <-> (318)
+	removeClearDeltaMarks(pluginId);
+	removeClearDeltaMarks(pluginId);
+(470) <-> (319)
+	}
+	}
+(471) <-> (320)
+	}
+	}
+(472) <-> (321)
+	protected void removeClearDeltaMarks(String pluginId) {
+	protected void removeClearDeltaMarks(String pluginId) {
+(473) <-> (322)
+	masterTable.setProperty(CLEAR_DELTA_PREFIX + pluginId, "false");
+	masterTable.setProperty(CLEAR_DELTA_PREFIX + pluginId, "false");
+(474) <-> (323)
+	}
+	}
+(475) <-> (324)
+	protected void removeFiles(java.io.File root, String[] candidates, List exclude) {
+	protected void removeFiles(java.io.File root, String[] candidates, List exclude) {
+(476) <-> (325)
+	for (int i = 0; i < candidates.length; i++) {
+	for (int i = 0; i < candidates.length; i++) {
+(477) <-> (326)
+	boolean delete = true;
+	boolean delete = true;
+(478) <-> (327)
+	for (ListIterator it = exclude.listIterator(); it.hasNext();) {
+	for (ListIterator it = exclude.listIterator(); it.hasNext();) {
+(479) <-> (328)
+	String s = (String) it.next();
+	String s = (String) it.next();
+(480) <-> (329)
+	if (s.equals(candidates[i])) {
+	if (s.equals(candidates[i])) {
+(481) <-> (330)
+	it.remove();
+	it.remove();
+(482) <-> (331)
+	delete = false;
+	delete = false;
+(483) <-> (332)
+	break;
+	break;
+(484) <-> (333)
+	}
+	}
+(485) <-> (334)
+	}
+	}
+(486) <-> (335)
+	if (delete)
+	if (delete)
+(487) <-> (336)
+	new java.io.File(root, candidates[i]).delete();
+	new java.io.File(root, candidates[i]).delete();
+(488) <-> (337)
+	}
+	}
+(489) <-> (338)
+	}
+	}
+(490) <-> (339)
+	private void removeGarbage(DataOutputStream output, IPath location, IPath tempLocation) throws IOException {
+	private void removeGarbage(DataOutputStream output, IPath location, IPath tempLocation) throws IOException {
+(491) <-> (340)
+	if (output.size() == 0) {
+	if (output.size() == 0) {
+(492) <-> (341)
+	output.close();
+	output.close();
+(493) <-> (342)
+	location.toFile().delete();
+	location.toFile().delete();
+(494) <-> (343)
+	tempLocation.toFile().delete();
+	tempLocation.toFile().delete();
+(495) <-> (344)
+	}
+	}
+(496) <-> (345)
+	}
+	}
+(497) <-> (346)
+	public void removeParticipant(Plugin plugin) {
+	public void removeParticipant(Plugin plugin) {
+(498) <-> (347)
+	synchronized (saveParticipants) {
+	synchronized (saveParticipants) {
+(499) <-> (348)
+	saveParticipants.remove(plugin);
+	saveParticipants.remove(plugin);
+(500) <-> (349)
+	}
+	}
+(501) <-> (350)
+	}
+	}
+(502) <-> (351)
+	protected void removeUnusedSafeTables() {
+	protected void removeUnusedSafeTables() {
+(503) <-> (352)
+	List valuables = new ArrayList(10);
+	List valuables = new ArrayList(10);
+(504) <-> (353)
+	IPath location = workspace.getMetaArea().getSafeTableLocationFor(ResourcesPlugin.getPlugin().getDescriptor().getUniqueIdentifier());
+	IPath location = workspace.getMetaArea().getSafeTableLocationFor(ResourcesPlugin.getPlugin().getDescriptor().getUniqueIdentifier());
+(505) <-> (354)
+	valuables.add(location.lastSegment()); // add master table
+	valuables.add(location.lastSegment()); // add master table
+(506) <-> (355)
+	for (Enumeration enum = masterTable.keys(); enum.hasMoreElements();) {
+	for (Enumeration enum = masterTable.keys(); enum.hasMoreElements();) {
+(507) <-> (356)
+	String key = (String) enum.nextElement();
+	String key = (String) enum.nextElement();
+(508) <-> (357)
+	if (key.startsWith(SAVE_NUMBER_PREFIX)) {
+	if (key.startsWith(SAVE_NUMBER_PREFIX)) {
+(509) <-> (358)
+	String pluginId = key.substring(SAVE_NUMBER_PREFIX.length());
+	String pluginId = key.substring(SAVE_NUMBER_PREFIX.length());
+(510) <-> (359)
+	valuables.add(workspace.getMetaArea().getSafeTableLocationFor(pluginId).lastSegment());
+	valuables.add(workspace.getMetaArea().getSafeTableLocationFor(pluginId).lastSegment());
+(511) <-> (360)
+	}
+	}
+(512) <-> (361)
+	}
+	}
+(513) <-> (362)
+	java.io.File target = location.toFile().getParentFile();
+	java.io.File target = location.toFile().getParentFile();
+(514) <-> (363)
+	String[] candidates = target.list();
+	String[] candidates = target.list();
+(515) <-> (364)
+	if (candidates == null)
+	if (candidates == null)
+(516) <-> (365)
+	return;
+	return;
+(517) <-> (366)
+	removeFiles(target, candidates, valuables);
+	removeFiles(target, candidates, valuables);
+(518) <-> (367)
+	}
+	}
+(519) <-> (368)
+	protected void removeUnusedTreeFiles() {
+	protected void removeUnusedTreeFiles() {
+(520) <-> (369)
+	// root resource
+	// root resource
+(521) <-> (370)
+	List valuables = new ArrayList(10);
+	List valuables = new ArrayList(10);
+(522) <-> (371)
+	IPath location = workspace.getMetaArea().getTreeLocationFor(workspace.getRoot(), false);
+	IPath location = workspace.getMetaArea().getTreeLocationFor(workspace.getRoot(), false);
+(523) <-> (372)
+	valuables.add(location.lastSegment());
+	valuables.add(location.lastSegment());
+(524) <-> (373)
+	java.io.File target = location.toFile().getParentFile();
+	java.io.File target = location.toFile().getParentFile();
+(525) <-> (374)
+	FilenameFilter filter = new FilenameFilter() {
+	FilenameFilter filter = new FilenameFilter() {
+(526) <-> (375)
+	public boolean accept(java.io.File dir, String name) {
+	public boolean accept(java.io.File dir, String name) {
+(527) <-> (376)
+	return name.endsWith(LocalMetaArea.F_TREE);
+	return name.endsWith(LocalMetaArea.F_TREE);
+(528) <-> (377)
+	}
+	}
+(529) <-> (378)
+	};
+	};
+(530) <-> (379)
+	String[] candidates = target.list(filter);
+	String[] candidates = target.list(filter);
+(531) <-> (380)
+	if (candidates != null)
+	if (candidates != null)
+(532) <-> (381)
+	removeFiles(target, candidates, valuables);
+	removeFiles(target, candidates, valuables);
+(534) <-> (383)
+	// projects
+	// projects
+(535) <-> (384)
+	IProject[] projects = workspace.getRoot().getProjects();
+	IProject[] projects = workspace.getRoot().getProjects();
+(536) <-> (385)
+	for (int i = 0; i < projects.length; i++) {
+	for (int i = 0; i < projects.length; i++) {
+(537) <-> (386)
+	location = workspace.getMetaArea().getTreeLocationFor(projects[i], false);
+	location = workspace.getMetaArea().getTreeLocationFor(projects[i], false);
+(538) <-> (387)
+	valuables.add(location.lastSegment());
+	valuables.add(location.lastSegment());
+(539) <-> (388)
+	target = location.toFile().getParentFile();
+	target = location.toFile().getParentFile();
+(540) <-> (389)
+	candidates = target.list(filter);
+	candidates = target.list(filter);
+(541) <-> (390)
+	if (candidates != null)
+	if (candidates != null)
+(542) <-> (391)
+	removeFiles(target, candidates, valuables);
+	removeFiles(target, candidates, valuables);
+(543) <-> (392)
+	}
+	}
+(544) <-> (393)
+	}
+	}
+(545) <-> (394)
+	public void requestSnapshot() {
+	public void requestSnapshot() {
+(546) <-> (395)
+	snapshotRequested = true;
+	snapshotRequested = true;
+(547) <-> (396)
+	}
+	}
+(548) <-> (1015)
+	/**
+	/**
+(549) <-> (1016)
+	* Reset the snapshot mechanism for the non-workspace files. This
+	* Reset the snapshot mechanism for the non-workspace files. This
+(550) <-> (1017)
+	* includes the markers and sync info.
+	* includes the markers and sync info.
+(551) <-> (1018)
+	*/
+	*/
+(552) <-> (1019)
+	protected void resetSnapshots(IResource resource) throws CoreException {
+	protected void resetSnapshots(IResource resource) throws CoreException {
+(553) <-> (1020)
+	Assert.isLegal(resource.getType() == IResource.ROOT || resource.getType() == IResource.PROJECT);
+	Assert.isLegal(resource.getType() == IResource.ROOT || resource.getType() == IResource.PROJECT);
+(555) <-> (1022)
+	// delete the snapshot file, if any
+	// delete the snapshot file, if any
+(556) <-> (1023)
+	java.io.File file = workspace.getMetaArea().getMarkersSnapshotLocationFor(resource).toFile();
+	java.io.File file = workspace.getMetaArea().getMarkersSnapshotLocationFor(resource).toFile();
+(557) <-> (1024)
+	if (file.exists())
+	if (file.exists())
+(558) <-> (1025)
+	file.delete();
+	file.delete();
+(559) <-> (1026)
+	if (file.exists())
+	if (file.exists())
+(560) <-> (1027)
+	throw new ResourceException(IResourceStatus.FAILED_DELETE_METADATA, resource.getFullPath(), "Could not reset markers snapshot file.", null);
+	throw new ResourceException(IResourceStatus.FAILED_DELETE_METADATA, resource.getFullPath(), "Could not reset markers snapshot file.", null);
+(562) <-> (1029)
+	// delete the snapshot file, if any
+	// delete the snapshot file, if any
+(563) <-> (1030)
+	file = workspace.getMetaArea().getSyncInfoSnapshotLocationFor(resource).toFile();
+	file = workspace.getMetaArea().getSyncInfoSnapshotLocationFor(resource).toFile();
+(564) <-> (1031)
+	if (file.exists())
+	if (file.exists())
+(565) <-> (1032)
+	file.delete();
+	file.delete();
+(566) <-> (1033)
+	if (file.exists())
+	if (file.exists())
+(567) <-> (1034)
+	throw new ResourceException(IResourceStatus.FAILED_DELETE_METADATA, resource.getFullPath(), "Could not reset syncinfo snapshot file.", null);
+	throw new ResourceException(IResourceStatus.FAILED_DELETE_METADATA, resource.getFullPath(), "Could not reset syncinfo snapshot file.", null);
+(569) <-> (1036)
+	// if we have the workspace root then recursive over the projects.
+	// if we have the workspace root then recursive over the projects.
+(570) <-> (1037)
+	// only do open projects since closed ones are saved elsewhere
+	// only do open projects since closed ones are saved elsewhere
+(571) <-> (1038)
+	if (resource.getType() == IResource.PROJECT)
+	if (resource.getType() == IResource.PROJECT)
+(572) <-> (1039)
+	return;
+	return;
+(573) <-> (1040)
+	IProject[] projects = ((IWorkspaceRoot) resource).getProjects();
+	IProject[] projects = ((IWorkspaceRoot) resource).getProjects();
+(574) <-> (1332)
+	for (int i = 0; i < projects.length; i++)
+	for (int j = 0; j < interestingProjects.length; j++)
+(575) <-> (1042)
+	resetSnapshots(projects[i]);
+	resetSnapshots(projects[i]);
+(576) <-> (1043)
+	}
+	}
+(577) <-> (397)
+	protected DataInputStream resetStream(DataInputStream input, IPath location, IPath tempLocation) throws IOException {
+	protected DataInputStream resetStream(DataInputStream input, IPath location, IPath tempLocation) throws IOException {
+(578) <-> (398)
+	input.close();
+	input.close();
+(579) <-> (399)
+	return new DataInputStream(new SafeFileInputStream(location.toOSString(), tempLocation.toOSString()));
+	return new DataInputStream(new SafeFileInputStream(location.toOSString(), tempLocation.toOSString()));
+(580) <-> (400)
+	}
+	}
+(581) <-> (401)
+	/**
+	/**
+(582) <-> (402)
+	* Restores the contents of this project. Throw
+	* Restores the contents of this project. Throw
+(583) <-> (403)
+	* an exception if the project could not be restored.
+	* an exception if the project could not be restored.
+(584) <-> (404)
+	*/
+	*/
+(585) <-> (405)
+	protected void restore(Project project, IProgressMonitor monitor) throws CoreException {
+	protected void restore(Project project, IProgressMonitor monitor) throws CoreException {
+(586) <-> (406)
+	monitor = Policy.monitorFor(monitor);
+	monitor = Policy.monitorFor(monitor);
+(587) <-> (407)
+	try {
+	try {
+(588) <-> (408)
+	monitor.beginTask("", 40);
+	monitor.beginTask("", 40);
+(589) <-> (409)
+	if (project.isOpen()) {
+	if (project.isOpen()) {
+(590) <-> (410)
+	restoreTree(project, Policy.subMonitorFor(monitor, 10));
+	restoreTree(project, Policy.subMonitorFor(monitor, 10));
+(591) <-> (411)
+	} else {
+	} else {
+(592) <-> (412)
+	monitor.worked(10);
+	monitor.worked(10);
+(593) <-> (413)
+	}
+	}
+(594) <-> (414)
+	restoreMarkers(project, true, Policy.subMonitorFor(monitor, 10));
+	restoreMarkers(project, true, Policy.subMonitorFor(monitor, 10));
+(595) <-> (415)
+	restoreSyncInfo(project, Policy.subMonitorFor(monitor, 10));
+	restoreSyncInfo(project, Policy.subMonitorFor(monitor, 10));
+(596) <-> (416)
+	// restore meta info last because it might delete a project if its description is not found
+	// restore meta info last because it might delete a project if its description is not found
+(597) <-> (417)
+	restoreMetaInfo(project, Policy.subMonitorFor(monitor, 10));
+	restoreMetaInfo(project, Policy.subMonitorFor(monitor, 10));
+(598) <-> (418)
+	} finally {
+	} finally {
+(599) <-> (419)
+	monitor.done();
+	monitor.done();
+(600) <-> (420)
+	}
+	}
+(601) <-> (421)
+	}
+	}
+(602) <-> (422)
+	/**
+	/**
+(603) <-> (423)
+	* Restores the state of this workspace by opening the projects
+	* Restores the state of this workspace by opening the projects
+(604) <-> (424)
+	* which were open when it was last saved.
+	* which were open when it was last saved.
+(605) <-> (425)
+	*/
+	*/
+(606) <-> (426)
+	protected void restore(IProgressMonitor monitor) throws CoreException {
+	protected void restore(IProgressMonitor monitor) throws CoreException {
+(607) <-> (427)
+	monitor = Policy.monitorFor(monitor);
+	monitor = Policy.monitorFor(monitor);
+(608) <-> (428)
+	try {
+	try {
+(609) <-> (429)
+	monitor.beginTask("", 50);
+	monitor.beginTask("", 50);
+(610) <-> (430)
+	// need to open the tree to restore, but since we're not
+	// need to open the tree to restore, but since we're not
+(611) <-> (431)
+	// inside an operation, be sure to close it afterwards
+	// inside an operation, be sure to close it afterwards
+(612) <-> (432)
+	workspace.newWorkingTree();
+	workspace.newWorkingTree();
+(613) <-> (433)
+	try {
+	try {
+(614) <-> (434)
+	restoreMasterTable();
+	restoreMasterTable();
+(615) <-> (435)
+	// restore the saved tree and overlay the snapshots if any
+	// restore the saved tree and overlay the snapshots if any
+(616) <-> (436)
+	restoreTree(workspace, Policy.subMonitorFor(monitor, 10));
+	restoreTree(workspace, Policy.subMonitorFor(monitor, 10));
+(617) <-> (437)
+	restoreSnapshots(Policy.subMonitorFor(monitor, 10));
+	restoreSnapshots(Policy.subMonitorFor(monitor, 10));
+(618) <-> (438)
+	restoreMarkers(workspace.getRoot(), false, Policy.subMonitorFor(monitor, 10));
+	restoreMarkers(workspace.getRoot(), false, Policy.subMonitorFor(monitor, 10));
+(619) <-> (439)
+	restoreSyncInfo(workspace.getRoot(), Policy.subMonitorFor(monitor, 10));
+	restoreSyncInfo(workspace.getRoot(), Policy.subMonitorFor(monitor, 10));
+(620) <-> (440)
+	// restore meta info last because it might delete a project if its description is not found
+	// restore meta info last because it might delete a project if its description is not found
+(621) <-> (441)
+	restoreMetaInfo(workspace, Policy.subMonitorFor(monitor, 10));
+	restoreMetaInfo(workspace, Policy.subMonitorFor(monitor, 10));
+(622) <-> (442)
+	IProject[] roots = workspace.getRoot().getProjects();
+	IProject[] roots = workspace.getRoot().getProjects();
+(623) <-> (443)
+	for (int i = 0; i < roots.length; i++)
+	for (int i = 0; i < roots.length; i++)
+(624) <-> (444)
+	((Project) roots[i]).startup();
+	((Project) roots[i]).startup();
+(625) <-> (445)
+	} finally {
+	} finally {
+(626) <-> (446)
+	workspace.getElementTree().immutable();
+	workspace.getElementTree().immutable();
+(627) <-> (447)
+	}
+	}
+(628) <-> (448)
+	} finally {
+	} finally {
+(629) <-> (449)
+	monitor.done();
+	monitor.done();
+(630) <-> (450)
+	}
+	}
+(631) <-> (451)
+	}
+	}
+(632) <-> (452)
+	/**
+	/**
+(633) <-> (453)
+	* Reads the markers which were originally saved
+	* Reads the markers which were originally saved
+(634) <-> (454)
+	* for the tree rooted by the given resource.
+	* for the tree rooted by the given resource.
+(635) <-> (455)
+	*/
+	*/
+(636) <-> (456)
+	protected void restoreMarkers(IResource resource, boolean generateDeltas, IProgressMonitor monitor) throws CoreException {
+	protected void restoreMarkers(IResource resource, boolean generateDeltas, IProgressMonitor monitor) throws CoreException {
+(637) <-> (457)
+	Assert.isLegal(resource.getType() == IResource.ROOT || resource.getType() == IResource.PROJECT);
+	Assert.isLegal(resource.getType() == IResource.ROOT || resource.getType() == IResource.PROJECT);
+(638) <-> (458)
+	MarkerManager markerManager = workspace.getMarkerManager();
+	MarkerManager markerManager = workspace.getMarkerManager();
+(639) <-> (459)
+	// when restoring a project, only load markers if it is open
+	// when restoring a project, only load markers if it is open
+(640) <-> (460)
+	if (resource.isAccessible())
+	if (resource.isAccessible())
+(641) <-> (461)
+	markerManager.restore(resource, generateDeltas, monitor);
+	markerManager.restore(resource, generateDeltas, monitor);
+(643) <-> (463)
+	// if we have the workspace root then restore markers for its projects
+	// if we have the workspace root then restore markers for its projects
+(644) <-> (464)
+	if (resource.getType() == IResource.PROJECT)
+	if (resource.getType() == IResource.PROJECT)
+(645) <-> (465)
+	return;
+	return;
+(646) <-> (466)
+	IProject[] projects = ((IWorkspaceRoot) resource).getProjects();
+	IProject[] projects = ((IWorkspaceRoot) resource).getProjects();
+(647) <-> (467)
+	for (int i = 0; i < projects.length; i++)
+	for (int i = 0; i < projects.length; i++)
+(648) <-> (468)
+	if (projects[i].isAccessible())
+	if (projects[i].isAccessible())
+(649) <-> (469)
+	markerManager.restore(projects[i], generateDeltas, monitor);
+	markerManager.restore(projects[i], generateDeltas, monitor);
+(650) <-> (470)
+	}
+	}
+(651) <-> (471)
+	protected void restoreMasterTable() throws CoreException {
+	protected void restoreMasterTable() throws CoreException {
+(652) <-> (472)
+	masterTable = new Properties();
+	masterTable = new Properties();
+(653) <-> (473)
+	String pluginId = ResourcesPlugin.getPlugin().getDescriptor().getUniqueIdentifier();
+	String pluginId = ResourcesPlugin.getPlugin().getDescriptor().getUniqueIdentifier();
+(654) <-> (474)
+	IPath location = workspace.getMetaArea().getSafeTableLocationFor(pluginId);
+	IPath location = workspace.getMetaArea().getSafeTableLocationFor(pluginId);
+(655) <-> (475)
+	java.io.File target = location.toFile();
+	java.io.File target = location.toFile();
+(656) <-> (476)
+	if (!target.exists()) {
+	if (!target.exists()) {
+(657) <-> (477)
+	location = workspace.getMetaArea().getBackupLocationFor(location);
+	location = workspace.getMetaArea().getBackupLocationFor(location);
+(658) <-> (478)
+	target = location.toFile();
+	target = location.toFile();
+(659) <-> (479)
+	if (!target.exists())
+	if (!target.exists())
+(660) <-> (480)
+	return;
+	return;
+(661) <-> (481)
+	}
+	}
+(662) <-> (482)
+	try {
+	try {
+(663) <-> (483)
+	SafeChunkyInputStream input = new SafeChunkyInputStream(target);
+	SafeChunkyInputStream input = new SafeChunkyInputStream(target);
+(664) <-> (484)
+	try {
+	try {
+(665) <-> (485)
+	masterTable.load(input);
+	masterTable.load(input);
+(666) <-> (486)
+	} finally {
+	} finally {
+(667) <-> (487)
+	input.close();
+	input.close();
+(668) <-> (488)
+	}
+	}
+(669) <-> (489)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(670) <-> (490)
+	String message = "Could not read master table.";
+	String message = "Could not read master table.";
+(671) <-> (491)
+	throw new ResourceException(IResourceStatus.INTERNAL_ERROR, null, message, e);
+	throw new ResourceException(IResourceStatus.INTERNAL_ERROR, null, message, e);
+(672) <-> (492)
+	}
+	}
+(673) <-> (493)
+	}
+	}
+(674) <-> (494)
+	/**
+	/**
+(675) <-> (495)
+	* Restores the contents of this project. Throw
+	* Restores the contents of this project. Throw
+(676) <-> (496)
+	* an exception if the project could not be restored.
+	* an exception if the project could not be restored.
+(677) <-> (497)
+	*/
+	*/
+(678) <-> (498)
+	protected void restoreMetaInfo(Project project, IProgressMonitor monitor) throws CoreException {
+	protected void restoreMetaInfo(Project project, IProgressMonitor monitor) throws CoreException {
+(679) <-> (499)
+	// load the description even if this project is not open.
+	// load the description even if this project is not open.
+(680) <-> (500)
+	ProjectDescription description = workspace.getMetaArea().read(project);
+	ProjectDescription description = workspace.getMetaArea().read(project);
+(681) <-> (501)
+	if (description == null && project.internalGetDescription() == null) {
+	if (description == null && project.internalGetDescription() == null) {
+(682) <-> (502)
+	// Somebody has probably deleted the .prj file from disk
+	// Somebody has probably deleted the .prj file from disk
+(683) <-> (503)
+	// delete the project from the workspace but leave its contents
+	// delete the project from the workspace but leave its contents
+(684) <-> (504)
+	project.basicDelete(new MultiStatus(ResourcesPlugin.PI_RESOURCES, 0, "ignored", null));
+	project.basicDelete(new MultiStatus(ResourcesPlugin.PI_RESOURCES, 0, "ignored", null));
+(685) <-> (505)
+	return;
+	return;
+(686) <-> (506)
+	}
+	}
+(687) <-> (507)
+	if (description != null) {
+	if (description != null) {
+(688) <-> (508)
+	// FIXME: decide what it means to validate
+	// FIXME: decide what it means to validate
+(689) <-> (509)
+	// validate(desc);
+	// validate(desc);
+(690) <-> (510)
+	project.internalSetDescription(description, false);
+	project.internalSetDescription(description, false);
+(691) <-> (511)
+	}
+	}
+(692) <-> (512)
+	}
+	}
+(693) <-> (513)
+	/**
+	/**
+(694) <-> (514)
+	* Restores the state of this workspace by opening the projects
+	* Restores the state of this workspace by opening the projects
+(695) <-> (515)
+	* which were open when it was last saved.
+	* which were open when it was last saved.
+(696) <-> (516)
+	*/
+	*/
+(697) <-> (517)
+	protected void restoreMetaInfo(Workspace workspace, IProgressMonitor monitor) throws CoreException {
+	protected void restoreMetaInfo(Workspace workspace, IProgressMonitor monitor) throws CoreException {
+(698) <-> (518)
+	// FIXME: read the meta info for the workspace?
+	// FIXME: read the meta info for the workspace?
+(699) <-> (519)
+	IProject[] roots = workspace.getRoot().getProjects();
+	IProject[] roots = workspace.getRoot().getProjects();
+(700) <-> (520)
+	for (int i = 0; i < roots.length; i++)
+	for (int i = 0; i < roots.length; i++)
+(701) <-> (521)
+	restoreMetaInfo((Project) roots[i], monitor);
+	restoreMetaInfo((Project) roots[i], monitor);
+(702) <-> (522)
+	}
+	}
+(703) <-> (523)
+	/**
+	/**
+(704) <-> (524)
+	* Restores the workspace tree from snapshot files in the event
+	* Restores the workspace tree from snapshot files in the event
+(705) <-> (525)
+	* of a crash. The workspace tree must be open when this method
+	* of a crash. The workspace tree must be open when this method
+(706) <-> (526)
+	* is called, and will be open at the end of this method. In the
+	* is called, and will be open at the end of this method. In the
+(707) <-> (527)
+	* event of a crash recovery, the snapshot file is not deleted until
+	* event of a crash recovery, the snapshot file is not deleted until
+(708) <-> (528)
+	* the next successful save.
+	* the next successful save.
+(709) <-> (529)
+	*/
+	*/
+(710) <-> (530)
+	protected void restoreSnapshots(IProgressMonitor monitor) throws CoreException {
+	protected void restoreSnapshots(IProgressMonitor monitor) throws CoreException {
+(711) <-> (531)
+	monitor = Policy.monitorFor(monitor);
+	monitor = Policy.monitorFor(monitor);
+(712) <-> (532)
+	try {
+	try {
+(713) <-> (533)
+	monitor.beginTask("", Policy.totalWork);
+	monitor.beginTask("", Policy.totalWork);
+(714) <-> (534)
+	IPath snapLocation = workspace.getMetaArea().getSnapshotLocationFor(workspace.getRoot());
+	IPath snapLocation = workspace.getMetaArea().getSnapshotLocationFor(workspace.getRoot());
+(715) <-> (535)
+	java.io.File localFile = snapLocation.toFile();
+	java.io.File localFile = snapLocation.toFile();
+(717) <-> (537)
+	// If the snapshot file doesn't exist, there was no crash.
+	// If the snapshot file doesn't exist, there was no crash.
+(718) <-> (538)
+	// Just initialize the snapshot file and return
+	// Just initialize the snapshot file and return.
+(719) <-> (539)
+	if (!localFile.exists()) {
+	if (!localFile.exists()) {
+(720) <-> (540)
+	initSnap(Policy.subMonitorFor(monitor, Policy.totalWork / 2));
+	initSnap(Policy.subMonitorFor(monitor, Policy.totalWork / 2));
+(721) <-> (541)
+	return;
+	return;
+(722) <-> (542)
+	}
+	}
+(723) <-> (543)
+	// If we have a snapshot file, the workspace was shutdown without being saved
+	// If we have a snapshot file, the workspace was shutdown without being saved or crashed.
+(725) <-> (544)
+	workspace.setCrashed(true);
+	workspace.setCrashed(true);
+(726) <-> (545)
+	try {
+	try {
+(727) <-> (546)
+	/* Read each of the snapshots and lay them on top of the current tree.*/
+	/* Read each of the snapshots and lay them on top of the current tree.*/
+(728) <-> (547)
+	ElementTree complete = workspace.getElementTree();
+	ElementTree complete = workspace.getElementTree();
+(729) <-> (548)
+	complete.immutable();
+	complete.immutable();
+(730) <-> (549)
+	SafeChunkyInputStream safeStream = new SafeChunkyInputStream(localFile);
+	DataInputStream input = new DataInputStream(new SafeChunkyInputStream(localFile));
+(732) <-> (550)
+	try {
+	try {
+(733) <-> (900)
+	ElementTreeReader reader = new ElementTreeReader(this);
+	ElementTreeWriter writer = new ElementTreeWriter(this);
+(735) <-> (615)
+	readWorkspaceFields(in, Policy.subMonitorFor(monitor, Policy.totalWork / 2));
+	reader.readTree(project, input, Policy.subMonitorFor(monitor, Policy.totalWork));
+(736) <-> (552)
+	complete = reader.readDelta(complete, in);
+	complete = reader.readSnapshotTree(input, complete, monitor);
+(738) <-> (553)
+	} finally {
+	} finally {
+(739) <-> (647)
+	in.close();
+	input.close();
+(740) <-> (555)
+	//reader returned an immutable tree, but since we're inside
+	//reader returned an immutable tree, but since we're inside
+(741) <-> (556)
+	//an operation, we must return an open tree
+	//an operation, we must return an open tree
+(742) <-> (557)
+	complete = complete.newEmptyDelta();
+	complete = complete.newEmptyDelta();
+(743) <-> (558)
+	workspace.tree = complete;
+	workspace.tree = complete;
+(744) <-> (559)
+	lastSnap = complete;
+	lastSnap = complete;
+(745) <-> (560)
+	}
+	}
+(746) <-> (561)
+	} catch (Exception e) {
+	} catch (Exception e) {
+(747) <-> (562)
+	// only log the exception, we should not fail restoring the snapshot
+	// only log the exception, we should not fail restoring the snapshot
+(748) <-> (563)
+	String message = "Could not read snapshot file";
+	String message = "Could not read snapshot file";
+(749) <-> (564)
+	ResourcesPlugin.getPlugin().getLog().log(new ResourceStatus(IResourceStatus.FAILED_READ_METADATA, null, message, e));
+	ResourcesPlugin.getPlugin().getLog().log(new ResourceStatus(IResourceStatus.FAILED_READ_METADATA, null, message, e));
+(750) <-> (565)
+	}
+	}
+(751) <-> (566)
+	} finally {
+	} finally {
+(752) <-> (567)
+	monitor.done();
+	monitor.done();
+(753) <-> (568)
+	}
+	}
+(754) <-> (569)
+	}
+	}
+(755) <-> (570)
+	/**
+	/**
+(756) <-> (571)
+	* Reads the sync info which was originally saved
+	* Reads the sync info which was originally saved
+(757) <-> (572)
+	* for the tree rooted by the given resource.
+	* for the tree rooted by the given resource.
+(758) <-> (573)
+	*/
+	*/
+(759) <-> (574)
+	protected void restoreSyncInfo(IResource resource, IProgressMonitor monitor) throws CoreException {
+	protected void restoreSyncInfo(IResource resource, IProgressMonitor monitor) throws CoreException {
+(760) <-> (575)
+	Assert.isLegal(resource.getType() == IResource.ROOT || resource.getType() == IResource.PROJECT);
+	Assert.isLegal(resource.getType() == IResource.ROOT || resource.getType() == IResource.PROJECT);
+(761) <-> (576)
+	Synchronizer synchronizer = (Synchronizer) workspace.getSynchronizer();
+	Synchronizer synchronizer = (Synchronizer) workspace.getSynchronizer();
+(762) <-> (577)
+	// when restoring a project, only load sync info if it is open
+	// when restoring a project, only load sync info if it is open
+(763) <-> (578)
+	if (resource.isAccessible())
+	if (resource.isAccessible())
+(764) <-> (579)
+	synchronizer.restore(resource, monitor);
+	synchronizer.restore(resource, monitor);
+(766) <-> (581)
+	// restore sync info for all projects if we were given the workspace root.
+	// restore sync info for all projects if we were given the workspace root.
+(767) <-> (582)
+	if (resource.getType() == IResource.PROJECT)
+	if (resource.getType() == IResource.PROJECT)
+(768) <-> (583)
+	return;
+	return;
+(769) <-> (584)
+	IProject[] projects = ((IWorkspaceRoot) resource).getProjects();
+	IProject[] projects = ((IWorkspaceRoot) resource).getProjects();
+(770) <-> (585)
+	for (int i = 0; i < projects.length; i++)
+	for (int i = 0; i < projects.length; i++)
+(771) <-> (586)
+	if (projects[i].isAccessible())
+	if (projects[i].isAccessible())
+(772) <-> (587)
+	synchronizer.restore(projects[i], monitor);
+	synchronizer.restore(projects[i], monitor);
+(773) <-> (588)
+	}
+	}
+(774) <-> (589)
+	/**
+	/**
+(775) <-> (590)
+	* Restores the trees for the builders of this project from the local disk.
+	* Restores the trees for the builders of this project from the local disk.
+(776) <-> (591)
+	* Does nothing if the tree file does not exist (this means the
+	* Does nothing if the tree file does not exist (this means the
+(777) <-> (592)
+	* project has never been saved). This method is
+	* project has never been saved). This method is
+(778) <-> (593)
+	* used when restoring a saved/closed project. restoreTree(Workspace) is
+	* used when restoring a saved/closed project. restoreTree(Workspace) is
+(779) <-> (594)
+	* used when restoring a complete workspace after workspace save/shutdown.
+	* used when restoring a complete workspace after workspace save/shutdown.
+(780) <-> (595)
+	* @exception if the project could not be restored.
+	* @exception if the project could not be restored.
+(781) <-> (596)
+	*/
+	*/
+(782) <-> (597)
+	protected void restoreTree(Project project, IProgressMonitor monitor) throws CoreException {
+	protected void restoreTree(Project project, IProgressMonitor monitor) throws CoreException {
+(783) <-> (598)
+	monitor = Policy.monitorFor(monitor);
+	monitor = Policy.monitorFor(monitor);
+(784) <-> (599)
+	try {
+	try {
+(785) <-> (600)
+	monitor.beginTask("", 10);
+	monitor.beginTask("", Policy.totalWork);
+(786) <-> (601)
+	IPath treeLocation = workspace.getMetaArea().getTreeLocationFor(project, false);
+	IPath treeLocation = workspace.getMetaArea().getTreeLocationFor(project, false);
+(787) <-> (602)
+	IPath tempLocation = workspace.getMetaArea().getBackupLocationFor(treeLocation);
+	IPath tempLocation = workspace.getMetaArea().getBackupLocationFor(treeLocation);
+(788) <-> (603)
+	if (!treeLocation.toFile().exists() && !tempLocation.toFile().exists())
+	if (!treeLocation.toFile().exists() && !tempLocation.toFile().exists())
+(789) <-> (604)
+	return;
+	return;
+(792) <-> (606)
+	try {
+	try {
+(793) <-> (613)
+	input = new DataInputStream(new SafeFileInputStream(treeLocation.toOSString(), tempLocation.toOSString()));
+	input = new DataInputStream(new SafeFileInputStream(treeLocation.toOSString(), tempLocation.toOSString()));
+(794) <-> (608)
+	// FIXME: implement version reader code.
+	// FIXME: In the future, this code should be removed.
+(810) <-> (614)
+	}
+	}
+(813) <-> (646)
+	/* read the trees */
+	// reset the stream
+(826) <-> (886)
+	for (int i = 0; i < numBuilders; i++) {
+	for (int i = 0; i < projects.length; i++) {
+(833) <-> (616)
+	} finally {
+	} finally {
+(835) <-> (617)
+	input.close();
+	input.close();
+(836) <-> (618)
+	}
+	}
+(837) <-> (619)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(838) <-> (620)
+	String msg = Policy.bind("readMeta", new String[] { project.getFullPath().toString()});
+	String msg = Policy.bind("readMeta", new String[] { project.getFullPath().toString()});
+(839) <-> (621)
+	throw new ResourceException(IResourceStatus.FAILED_READ_METADATA, project.getFullPath(), msg, e);
+	throw new ResourceException(IResourceStatus.FAILED_READ_METADATA, project.getFullPath(), msg, e);
+(840) <-> (649)
+	}
+	}
+(841) <-> (622)
+	} finally {
+	} finally {
+(842) <-> (623)
+	monitor.done();
+	monitor.done();
+(843) <-> (624)
+	}
+	}
+(844) <-> (625)
+	}
+	}
+(845) <-> (626)
+	/**
+	/**
+(846) <-> (627)
+	* Reads the contents of the tree rooted by the given resource from the
+	* Reads the contents of the tree rooted by the given resource from the
+(847) <-> (628)
+	* file system. This method is used when restoring a complete workspace
+	* file system. This method is used when restoring a complete workspace
+(848) <-> (629)
+	* after workspace save/shutdown.
+	* after workspace save/shutdown.
+(849) <-> (630)
+	* @exception if the workspace could not be restored.
+	* @exception if the workspace could not be restored.
+(850) <-> (631)
+	*/
+	*/
+(851) <-> (632)
+	protected void restoreTree(Workspace workspace, IProgressMonitor monitor) throws CoreException {
+	protected void restoreTree(Workspace workspace, IProgressMonitor monitor) throws CoreException {
+(852) <-> (633)
+	IPath treeLocation = workspace.getMetaArea().getTreeLocationFor(workspace.getRoot(), false);
+	IPath treeLocation = workspace.getMetaArea().getTreeLocationFor(workspace.getRoot(), false);
+(853) <-> (634)
+	IPath tempLocation = workspace.getMetaArea().getBackupLocationFor(treeLocation);
+	IPath tempLocation = workspace.getMetaArea().getBackupLocationFor(treeLocation);
+(854) <-> (635)
+	if (!treeLocation.toFile().exists() && !tempLocation.toFile().exists()) {
+	if (!treeLocation.toFile().exists() && !tempLocation.toFile().exists()) {
+(855) <-> (636)
+	savedStates = new HashMap(10);
+	savedStates = new HashMap(10);
+(856) <-> (637)
+	return;
+	return;
+(857) <-> (638)
+	}
+	}
+(858) <-> (639)
+	try {
+	try {
+(860) <-> (641)
+	try {
+	try {
+(861) <-> (648)
+	input = new DataInputStream(new SafeFileInputStream(treeLocation.toOSString(), tempLocation.toOSString()));
+	input = new DataInputStream(new SafeFileInputStream(treeLocation.toOSString(), tempLocation.toOSString()));
+(862) <-> (643)
+	// FIXME: implement version reader code.
+	// FIXME: In the future, this code should be removed.
+(867) <-> (781)
+	if (version != ICoreConstants.WORKSPACE_VERSION)
+	out.writeInt(ICoreConstants.WORKSPACE_TREE_VERSION_2);
+(870) <-> (650)
+	readWorkspaceTree(input, monitor);
+	reader.readTree(input, monitor);
+(871) <-> (651)
+	} finally {
+	} finally {
+(872) <-> (890)
+	if (input != null)
+	if (infos != null)
+(873) <-> (652)
+	input.close();
+	input.close();
+(874) <-> (653)
+	}
+	}
+(875) <-> (654)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(876) <-> (655)
+	String msg = Policy.bind("readMeta", new String[] { treeLocation.toOSString()});
+	String msg = Policy.bind("readMeta", new String[] { treeLocation.toOSString()});
+(877) <-> (656)
+	throw new ResourceException(IResourceStatus.FAILED_READ_METADATA, treeLocation, msg, e);
+	throw new ResourceException(IResourceStatus.FAILED_READ_METADATA, treeLocation, msg, e);
+(878) <-> (657)
+	}
+	}
+(879) <-> (658)
+	}
+	}
+(880) <-> (1044)
+	public IStatus save(int kind, Project project, IProgressMonitor monitor) throws CoreException {
+	public IStatus save(int kind, Project project, IProgressMonitor monitor) throws CoreException {
+(881) <-> (1045)
+	monitor = Policy.monitorFor(monitor);
+	monitor = Policy.monitorFor(monitor);
+(882) <-> (1046)
+	try {
+	try {
+(883) <-> (1047)
+	String taskName = Policy.bind("saving.1", null);
+	String taskName = Policy.bind("saving.1", null);
+(884) <-> (1048)
+	monitor.beginTask(taskName, 6);
+	monitor.beginTask(taskName, 6);
+(885) <-> (1049)
+	MultiStatus warnings = new MultiStatus(ResourcesPlugin.PI_RESOURCES, Status.WARNING, "Save operation warnings", null);
+	MultiStatus warnings = new MultiStatus(ResourcesPlugin.PI_RESOURCES, Status.WARNING, "Save operation warnings", null);
+(886) <-> (1050)
+	try {
+	try {
+(887) <-> (1051)
+	workspace.prepareOperation();
+	workspace.prepareOperation();
+(888) <-> (1052)
+	workspace.beginOperation(false);
+	workspace.beginOperation(false);
+(889) <-> (1053)
+	Map contexts = computeSaveContexts(getSaveParticipantPlugins(), kind, project);
+	Map contexts = computeSaveContexts(getSaveParticipantPlugins(), kind, project);
+(890) <-> (1054)
+	broadcastLifecycle(PREPARE_TO_SAVE, contexts, warnings, Policy.subMonitorFor(monitor, 1));
+	broadcastLifecycle(PREPARE_TO_SAVE, contexts, warnings, Policy.subMonitorFor(monitor, 1));
+(891) <-> (1055)
+	try {
+	try {
+(892) <-> (1056)
+	broadcastLifecycle(SAVING, contexts, warnings, Policy.subMonitorFor(monitor, 1));
+	broadcastLifecycle(SAVING, contexts, warnings, Policy.subMonitorFor(monitor, 1));
+(893) <-> (1057)
+	switch (kind) {
+	switch (kind) {
+(894) <-> (1058)
+	case ISaveContext.FULL_SAVE :
+	case ISaveContext.FULL_SAVE :
+(895) <-> (1059)
+	// save the complete tree and remember all of the required saved states
+	// save the complete tree and remember all of the required saved states
+(896) <-> (1060)
+	saveTree(contexts, Policy.subMonitorFor(monitor, 1));
+	saveTree(contexts, Policy.subMonitorFor(monitor, 1));
+(897) <-> (1061)
+	// reset the snapshot state.
+	// reset the snapshot state.
+(898) <-> (1062)
+	initSnap(null);
+	initSnap(null);
+(899) <-> (1063)
+	// save all of the markers and all sync info in the workspace
+	// save all of the markers and all sync info in the workspace
+(900) <-> (1064)
+	visitAndSave(workspace.getRoot());
+	visitAndSave(workspace.getRoot());
+(901) <-> (1065)
+	// reset the snap shot files
+	// reset the snap shot files
+(902) <-> (1066)
+	resetSnapshots(workspace.getRoot());
+	resetSnapshots(workspace.getRoot());
+(903) <-> (1067)
+	break;
+	break;
+(904) <-> (1068)
+	case ISaveContext.SNAPSHOT :
+	case ISaveContext.SNAPSHOT :
+(905) <-> (1069)
+	snapTree(workspace.getElementTree(), Policy.subMonitorFor(monitor, 1));
+	snapTree(workspace.getElementTree(), Policy.subMonitorFor(monitor, 1));
+(906) <-> (1070)
+	// snapshot the markers and sync info for the workspace
+	// snapshot the markers and sync info for the workspace
+(907) <-> (1071)
+	visitAndSnap(workspace.getRoot());
+	visitAndSnap(workspace.getRoot());
+(908) <-> (1072)
+	collapseTrees();
+	collapseTrees();
+(909) <-> (1073)
+	clearSavedDelta();
+	clearSavedDelta();
+(910) <-> (1074)
+	break;
+	break;
+(911) <-> (1075)
+	case ISaveContext.PROJECT_SAVE :
+	case ISaveContext.PROJECT_SAVE :
+(912) <-> (1076)
+	writeTree(project, IResource.DEPTH_INFINITE);
+	writeTree(project, IResource.DEPTH_INFINITE);
+(913) <-> (1077)
+	// save markers and sync info
+	// save markers and sync info
+(914) <-> (1078)
+	visitAndSave(project);
+	visitAndSave(project);
+(915) <-> (1079)
+	// reset the snapshot file
+	// reset the snapshot file
+(916) <-> (1080)
+	resetSnapshots(project);
+	resetSnapshots(project);
+(917) <-> (1081)
+	saveMetaInfo(project, null);
+	saveMetaInfo(project, null);
+(918) <-> (1082)
+	monitor.worked(1);
+	monitor.worked(1);
+(919) <-> (1083)
+	break;
+	break;
+(920) <-> (1084)
+	}
+	}
+(921) <-> (1085)
+	if (kind == ISaveContext.FULL_SAVE || kind == ISaveContext.SNAPSHOT) {
+	if (kind == ISaveContext.FULL_SAVE || kind == ISaveContext.SNAPSHOT) {
+(922) <-> (1086)
+	// write out all metainfo (e.g., workspace/project descriptions)
+	// write out all metainfo (e.g., workspace/project descriptions)
+(923) <-> (1087)
+	saveMetaInfo(workspace, Policy.subMonitorFor(monitor, 1));
+	saveMetaInfo(workspace, Policy.subMonitorFor(monitor, 1));
+(924) <-> (1088)
+	// save all of the markers and all sync info in the workspace
+	// save all of the markers and all sync info in the workspace
+(925) <-> (1089)
+	monitor.worked(1);
+	monitor.worked(1);
+(926) <-> (1090)
+	} else {
+	} else {
+(927) <-> (1091)
+	monitor.worked(2);
+	monitor.worked(2);
+(928) <-> (1092)
+	}
+	}
+(929) <-> (1093)
+	// save contexts
+	// save contexts
+(930) <-> (1094)
+	commit(contexts);
+	commit(contexts);
+(931) <-> (1095)
+	if (kind == ISaveContext.FULL_SAVE)
+	if (kind == ISaveContext.FULL_SAVE)
+(932) <-> (1096)
+	removeClearDeltaMarks();
+	removeClearDeltaMarks();
+(933) <-> (1097)
+	// commit ResourcesPlugin master table
+	// commit ResourcesPlugin master table
+(934) <-> (1098)
+	saveMasterTable();
+	saveMasterTable();
+(935) <-> (1099)
+	broadcastLifecycle(DONE_SAVING, contexts, warnings, Policy.subMonitorFor(monitor, 1));
+	broadcastLifecycle(DONE_SAVING, contexts, warnings, Policy.subMonitorFor(monitor, 1));
+(936) <-> (1100)
+	// as this save operation was successful, we may need to update its participants' save numbers
+	// as this save operation was successful, we may need to update its participants' save numbers
+(937) <-> (1101)
+	return warnings;
+	return warnings;
+(938) <-> (1102)
+	} catch (CoreException e) {
+	} catch (CoreException e) {
+(939) <-> (1103)
+	broadcastLifecycle(ROLLBACK, contexts, warnings, Policy.subMonitorFor(monitor, 1));
+	broadcastLifecycle(ROLLBACK, contexts, warnings, Policy.subMonitorFor(monitor, 1));
+(940) <-> (1104)
+	// rollback ResourcesPlugin master table
+	// rollback ResourcesPlugin master table
+(941) <-> (1105)
+	restoreMasterTable();
+	restoreMasterTable();
+(942) <-> (1106)
+	throw e; // re-throw
+	throw e; // re-throw
+(943) <-> (1107)
+	}
+	}
+(944) <-> (1108)
+	} catch (OperationCanceledException e) {
+	} catch (OperationCanceledException e) {
+(945) <-> (1109)
+	workspace.getWorkManager().operationCanceled();
+	workspace.getWorkManager().operationCanceled();
+(946) <-> (1110)
+	throw e;
+	throw e;
+(947) <-> (1111)
+	} finally {
+	} finally {
+(948) <-> (1112)
+	if (kind == ISaveContext.FULL_SAVE) {
+	if (kind == ISaveContext.FULL_SAVE) {
+(949) <-> (1113)
+	removeUnusedSafeTables();
+	removeUnusedSafeTables();
+(950) <-> (1114)
+	removeUnusedTreeFiles();
+	removeUnusedTreeFiles();
+(951) <-> (1115)
+	cleanMasterTable();
+	cleanMasterTable();
+(952) <-> (1116)
+	workspace.getFileSystemManager().getHistoryStore().clean();
+	workspace.getFileSystemManager().getHistoryStore().clean();
+(953) <-> (1117)
+	}
+	}
+(954) <-> (1118)
+	workspace.endOperation(false, null);
+	workspace.endOperation(false, null);
+(955) <-> (1119)
+	}
+	}
+(956) <-> (1120)
+	} finally {
+	} finally {
+(957) <-> (1121)
+	monitor.done();
+	monitor.done();
+(958) <-> (910)
+	}
+	}
+(960) <-> (659)
+	protected void saveMasterTable() throws CoreException {
+	protected void saveMasterTable() throws CoreException {
+(961) <-> (660)
+	String pluginId = ResourcesPlugin.getPlugin().getDescriptor().getUniqueIdentifier();
+	String pluginId = ResourcesPlugin.getPlugin().getDescriptor().getUniqueIdentifier();
+(962) <-> (661)
+	saveMasterTable(workspace.getMetaArea().getSafeTableLocationFor(pluginId));
+	saveMasterTable(workspace.getMetaArea().getSafeTableLocationFor(pluginId));
+(963) <-> (662)
+	}
+	}
+(964) <-> (663)
+	protected void saveMasterTable(IPath location) throws CoreException {
+	protected void saveMasterTable(IPath location) throws CoreException {
+(965) <-> (664)
+	java.io.File target = location.toFile();
+	java.io.File target = location.toFile();
+(966) <-> (665)
+	try {
+	try {
+(967) <-> (666)
+	SafeChunkyOutputStream output = new SafeChunkyOutputStream(target);
+	SafeChunkyOutputStream output = new SafeChunkyOutputStream(target);
+(968) <-> (667)
+	try {
+	try {
+(969) <-> (668)
+	masterTable.store(output, "master table");
+	masterTable.store(output, "master table");
+(970) <-> (669)
+	output.succeed();
+	output.succeed();
+(971) <-> (670)
+	} finally {
+	} finally {
+(972) <-> (671)
+	output.close();
+	output.close();
+(973) <-> (672)
+	}
+	}
+(974) <-> (673)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(975) <-> (674)
+	String message = "Could not save master table.";
+	String message = "Could not save master table.";
+(976) <-> (675)
+	throw new ResourceException(IResourceStatus.INTERNAL_ERROR, null, message, e);
+	throw new ResourceException(IResourceStatus.INTERNAL_ERROR, null, message, e);
+(977) <-> (676)
+	}
+	}
+(978) <-> (677)
+	}
+	}
+(979) <-> (678)
+	protected void saveMetaInfo(Project project, IProgressMonitor monitor) throws CoreException {
+	protected void saveMetaInfo(Project project, IProgressMonitor monitor) throws CoreException {
+(980) <-> (679)
+	ProjectDescription description = (ProjectDescription) project.internalGetDescription();
+	ProjectDescription description = (ProjectDescription) project.internalGetDescription();
+(981) <-> (680)
+	if (description.isDirty()) {
+	if (description.isDirty()) {
+(982) <-> (681)
+	workspace.getFileSystemManager().write(project, null);
+	workspace.getFileSystemManager().write(project, null);
+(983) <-> (682)
+	description.clean();
+	description.clean();
+(984) <-> (683)
+	}
+	}
+(985) <-> (684)
+	}
+	}
+(986) <-> (685)
+	/**
+	/**
+(987) <-> (686)
+	* Writes the metainfo (e.g. descriptions) of the given workspace and
+	* Writes the metainfo (e.g. descriptions) of the given workspace and
+(988) <-> (687)
+	* all projects to the local disk.
+	* all projects to the local disk.
+(989) <-> (688)
+	*/
+	*/
+(990) <-> (689)
+	protected void saveMetaInfo(Workspace workspace, IProgressMonitor monitor) throws CoreException {
+	protected void saveMetaInfo(Workspace workspace, IProgressMonitor monitor) throws CoreException {
+(991) <-> (690)
+	WorkspaceDescription description = workspace.internalGetDescription();
+	WorkspaceDescription description = workspace.internalGetDescription();
+(992) <-> (691)
+	if (description.isDirty())
+	if (description.isDirty())
+(993) <-> (692)
+	workspace.getMetaArea().writeWorkspace(description);
+	workspace.getMetaArea().writeWorkspace(description);
+(994) <-> (693)
+	IProject[] roots = workspace.getRoot().getProjects();
+	IProject[] roots = workspace.getRoot().getProjects();
+(995) <-> (694)
+	for (int i = 0; i < roots.length; i++)
+	for (int i = 0; i < roots.length; i++)
+(996) <-> (695)
+	saveMetaInfo((Project) roots[i], null);
+	saveMetaInfo((Project) roots[i], null);
+(997) <-> (696)
+	}
+	}
+(998) <-> (697)
+	/**
+	/**
+(999) <-> (698)
+	* Writes the current state of the entire workspace tree to disk.
+	* Writes the current state of the entire workspace tree to disk.
+(1000) <-> (699)
+	* This is used during workspace save. saveTree(Project)
+	* This is used during workspace save. saveTree(Project)
+(1001) <-> (700)
+	* is used to save the state of an individual project.
+	* is used to save the state of an individual project.
+(1002) <-> (701)
+	* @exception CoreException if there is a problem writing the tree to disk.
+	* @exception CoreException if there is a problem writing the tree to disk.
+(1003) <-> (702)
+	*/
+	*/
+(1004) <-> (703)
+	protected void saveTree(Map contexts, IProgressMonitor monitor) throws CoreException {
+	protected void saveTree(Map contexts, IProgressMonitor monitor) throws CoreException {
+(1005) <-> (704)
+	try {
+	try {
+(1006) <-> (705)
+	IPath treeLocation = workspace.getMetaArea().getTreeLocationFor(workspace.getRoot(), true);
+	IPath treeLocation = workspace.getMetaArea().getTreeLocationFor(workspace.getRoot(), true);
+(1007) <-> (706)
+	IPath tempLocation = workspace.getMetaArea().getBackupLocationFor(treeLocation);
+	IPath tempLocation = workspace.getMetaArea().getBackupLocationFor(treeLocation);
+(1008) <-> (707)
+	DataOutputStream output = new DataOutputStream(new SafeFileOutputStream(treeLocation.toOSString(), tempLocation.toOSString()));
+	DataOutputStream output = new DataOutputStream(new SafeFileOutputStream(treeLocation.toOSString(), tempLocation.toOSString()));
+(1009) <-> (708)
+	try {
+	try {
+(1010) <-> (709)
+	writeVersionNumber(output);
+	output.writeInt(ICoreConstants.WORKSPACE_TREE_VERSION_2);
+(1011) <-> (710)
+	writeTree(computeStatesToSave(contexts, workspace.getElementTree()), output, monitor);
+	writeTree(computeStatesToSave(contexts, workspace.getElementTree()), output, monitor);
+(1012) <-> (711)
+	} finally {
+	} finally {
+(1013) <-> (712)
+	output.close();
+	output.close();
+(1014) <-> (713)
+	}
+	}
+(1015) <-> (714)
+	} catch (Exception e) {
+	} catch (Exception e) {
+(1016) <-> (715)
+	String msg = Policy.bind("writeMeta", new String[] { Path.ROOT.toString()});
+	String msg = Policy.bind("writeMeta", new String[] { Path.ROOT.toString()});
+(1017) <-> (716)
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, Path.ROOT, msg, e);
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, Path.ROOT, msg, e);
+(1018) <-> (717)
+	}
+	}
+(1019) <-> (718)
+	}
+	}
+(1020) <-> (719)
+	/**
+	/**
+(1021) <-> (720)
+	* Used in the policy for cleaning up tree's of plug-ins that are not often activated.
+	* Used in the policy for cleaning up tree's of plug-ins that are not often activated.
+(1022) <-> (721)
+	*/
+	*/
+(1023) <-> (722)
+	protected void setDeltaExpiration(String pluginId, long timestamp) {
+	protected void setDeltaExpiration(String pluginId, long timestamp) {
+(1024) <-> (723)
+	masterTable.setProperty(DELTA_EXPIRATION_PREFIX + pluginId, new Long(timestamp).toString());
+	masterTable.setProperty(DELTA_EXPIRATION_PREFIX + pluginId, new Long(timestamp).toString());
+(1025) <-> (724)
+	}
+	}
+(1026) <-> (725)
+	protected void setSaveNumber(String pluginId, int number) {
+	protected void setSaveNumber(String pluginId, int number) {
+(1027) <-> (726)
+	masterTable.setProperty(SAVE_NUMBER_PREFIX + pluginId, new Integer(number).toString());
+	masterTable.setProperty(SAVE_NUMBER_PREFIX + pluginId, new Integer(number).toString());
+(1028) <-> (727)
+	}
+	}
+(1029) <-> (734)
+	public void shutdown(IProgressMonitor monitor) {
+	public void shutdown(IProgressMonitor monitor) {
+(1030) <-> (735)
+	}
+	}
+(1031) <-> (736)
+	/**
+	/**
+(1032) <-> (737)
+	* Performs a snapshot if one is deemed necessary.
+	* Performs a snapshot if one is deemed necessary.
+(1033) <-> (738)
+	* Encapsulates rules for determining when a snapshot is needed.
+	* Encapsulates rules for determining when a snapshot is needed.
+(1034) <-> (739)
+	* This should be called at the end of every top level operation.
+	* This should be called at the end of every top level operation.
+(1035) <-> (740)
+	*/
+	*/
+(1036) <-> (741)
+	public void snapshotIfNeeded() throws CoreException {
+	public void snapshotIfNeeded() throws CoreException {
+(1037) <-> (742)
+	if (!workspace.internalGetDescription().isSnapshotEnabled() && !snapshotRequested)
+	if (!workspace.internalGetDescription().isSnapshotEnabled() && !snapshotRequested)
+(1038) <-> (743)
+	return;
+	return;
+(1039) <-> (744)
+	if (snapshotRequested || operationCount >= workspace.internalGetDescription().getOperationsPerSnapshot()) {
+	if (snapshotRequested || operationCount >= workspace.internalGetDescription().getOperationsPerSnapshot()) {
+(1040) <-> (745)
+	try {
+	try {
+(1041) <-> (746)
+	ResourceStats.startSnapshot();
+	ResourceStats.startSnapshot();
+(1042) <-> (747)
+	long begin = System.currentTimeMillis();
+	long begin = System.currentTimeMillis();
+(1043) <-> (748)
+	save(ISaveContext.SNAPSHOT, null, Policy.monitorFor(null));
+	save(ISaveContext.SNAPSHOT, null, Policy.monitorFor(null));
+(1044) <-> (749)
+	if (ResourcesPlugin.getPlugin().isDebugging()) {
+	if (ResourcesPlugin.getPlugin().isDebugging()) {
+(1045) <-> (750)
+	long end = System.currentTimeMillis();
+	long end = System.currentTimeMillis();
+(1046) <-> (751)
+	System.out.println("Snapshot took: " + (end - begin) + " milliseconds.");
+	System.out.println("Snapshot took: " + (end - begin) + " milliseconds.");
+(1047) <-> (752)
+	}
+	}
+(1048) <-> (753)
+	} finally {
+	} finally {
+(1049) <-> (754)
+	operationCount = 0;
+	operationCount = 0;
+(1050) <-> (755)
+	snapshotRequested = false;
+	snapshotRequested = false;
+(1051) <-> (756)
+	ResourceStats.endSnapshot();
+	ResourceStats.endSnapshot();
+(1052) <-> (757)
+	}
+	}
+(1053) <-> (758)
+	} else {
+	} else {
+(1054) <-> (759)
+	operationCount++;
+	operationCount++;
+(1055) <-> (760)
+	}
+	}
+(1056) <-> (761)
+	}
+	}
+(1057) <-> (762)
+	/**
+	/**
+(1058) <-> (763)
+	* Performs a snapshot of the workspace tree.
+	* Performs a snapshot of the workspace tree.
+(1059) <-> (764)
+	*/
+	*/
+(1060) <-> (765)
+	protected void snapTree(ElementTree tree, IProgressMonitor monitor) throws CoreException {
+	protected void snapTree(ElementTree tree, IProgressMonitor monitor) throws CoreException {
+(1061) <-> (766)
+	monitor = Policy.monitorFor(monitor);
+	monitor = Policy.monitorFor(monitor);
+(1062) <-> (767)
+	try {
+	try {
+(1063) <-> (768)
+	monitor.beginTask("", Policy.totalWork);
+	monitor.beginTask("", Policy.totalWork);
+(1064) <-> (769)
+	// don't need to snapshot if there are no changes
+	// don't need to snapshot if there are no changes
+(1065) <-> (770)
+	if (tree == lastSnap)
+	if (tree == lastSnap)
+(1066) <-> (771)
+	return;
+	return;
+(1067) <-> (772)
+	Assert.isTrue(tree.isImmutable(), "The tree must be immutable in a snapshot."); // sanity check
+	Assert.isTrue(tree.isImmutable(), "The tree must be immutable in a snapshot."); // sanity check
+(1068) <-> (773)
+	operationCount = 0;
+	operationCount = 0;
+(1069) <-> (774)
+	IPath snapPath = workspace.getMetaArea().getSnapshotLocationFor(workspace.getRoot());
+	IPath snapPath = workspace.getMetaArea().getSnapshotLocationFor(workspace.getRoot());
+(1070) <-> (775)
+	ElementTreeWriter writer = new ElementTreeWriter(this);
+	ElementTreeWriter writer = new ElementTreeWriter(this);
+(1071) <-> (776)
+	java.io.File localFile = snapPath.toFile();
+	java.io.File localFile = snapPath.toFile();
+(1072) <-> (777)
+	try {
+	try {
+(1073) <-> (778)
+	SafeChunkyOutputStream safeStream = new SafeChunkyOutputStream(localFile);
+	SafeChunkyOutputStream safeStream = new SafeChunkyOutputStream(localFile);
+(1074) <-> (779)
+	DataOutputStream out = new DataOutputStream(safeStream);
+	DataOutputStream out = new DataOutputStream(safeStream);
+(1075) <-> (780)
+	try {
+	try {
+(1076) <-> (782)
+	writeWorkspaceFields(out, monitor);
+	writeWorkspaceFields(out, monitor);
+(1077) <-> (783)
+	writer.writeDelta(tree, lastSnap, Path.ROOT, writer.D_INFINITE, out, ResourceComparator.getComparator());
+	writer.writeDelta(tree, lastSnap, Path.ROOT, writer.D_INFINITE, out, ResourceComparator.getComparator());
+(1078) <-> (784)
+	safeStream.succeed();
+	safeStream.succeed();
+(1079) <-> (785)
+	} finally {
+	} finally {
+(1080) <-> (786)
+	out.close();
+	out.close();
+(1081) <-> (787)
+	}
+	}
+(1082) <-> (788)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1083) <-> (789)
+	String message = Policy.bind("writeWorkspaceMeta", new String[] { localFile.getAbsolutePath()});
+	String message = Policy.bind("writeWorkspaceMeta", new String[] { localFile.getAbsolutePath()});
+(1084) <-> (790)
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, Path.ROOT, message, e);
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, Path.ROOT, message, e);
+(1085) <-> (791)
+	}
+	}
+(1086) <-> (792)
+	lastSnap = tree;
+	lastSnap = tree;
+(1087) <-> (793)
+	} finally {
+	} finally {
+(1088) <-> (794)
+	monitor.done();
+	monitor.done();
+(1089) <-> (795)
+	}
+	}
+(1090) <-> (796)
+	}
+	}
+(1091) <-> (797)
+	/**
+	/**
+(1092) <-> (798)
+	* Sorts the given array of trees so that the following rules are true:
+	* Sorts the given array of trees so that the following rules are true:
+(1093) <-> (799)
+	* - The first tree has no parent
+	* - The first tree has no parent
+(1094) <-> (800)
+	* - No tree has an ancestor with a greater index in the array.
+	* - No tree has an ancestor with a greater index in the array.
+(1095) <-> (801)
+	* If there are no missing parents in the given trees array, this means
+	* If there are no missing parents in the given trees array, this means
+(1096) <-> (802)
+	* that in the resulting array, the i'th tree's parent will be tree i-1.
+	* that in the resulting array, the i'th tree's parent will be tree i-1.
+(1097) <-> (803)
+	* The input tree array may contain duplicate trees.
+	* The input tree array may contain duplicate trees.
+(1098) <-> (804)
+	*/
+	*/
+(1099) <-> (805)
+	protected ElementTree[] sortTrees(ElementTree[] trees) {
+	protected ElementTree[] sortTrees(ElementTree[] trees) {
+(1100) <-> (806)
+	/* the sorted list */
+	/* the sorted list */
+(1101) <-> (807)
+	int numTrees = trees.length;
+	int numTrees = trees.length;
+(1102) <-> (808)
+	ElementTree[] sorted = new ElementTree[numTrees];
+	ElementTree[] sorted = new ElementTree[numTrees];
+(1104) <-> (810)
+	/* first build a table of ElementTree -> List of Integers(indices in trees array) */
+	/* first build a table of ElementTree -> List of Integers(indices in trees array) */
+(1105) <-> (811)
+	Map table = new HashMap(numTrees * 2 + 1);
+	Map table = new HashMap(numTrees * 2 + 1);
+(1106) <-> (812)
+	for (int i = 0; i < trees.length; i++) {
+	for (int i = 0; i < trees.length; i++) {
+(1107) <-> (813)
+	List indices = (List) table.get(trees[i]);
+	List indices = (List) table.get(trees[i]);
+(1108) <-> (814)
+	if (indices == null) {
+	if (indices == null) {
+(1109) <-> (815)
+	indices = new ArrayList(10);
+	indices = new ArrayList(10);
+(1110) <-> (816)
+	table.put(trees[i], indices);
+	table.put(trees[i], indices);
+(1111) <-> (817)
+	}
+	}
+(1112) <-> (818)
+	indices.add(new Integer(i));
+	indices.add(new Integer(i));
+(1113) <-> (819)
+	}
+	}
+(1115) <-> (821)
+	/* find the oldest tree (a descendent of all other trees) */
+	/* find the oldest tree (a descendent of all other trees) */
+(1116) <-> (822)
+	ElementTree oldest = trees[ElementTree.findOldest(trees)];
+	ElementTree oldest = trees[ElementTree.findOldest(trees)];
+(1118) <-> (824)
+	/**
+	/**
+(1119) <-> (825)
+	* Walk through the chain of trees from oldest to newest,
+	* Walk through the chain of trees from oldest to newest,
+(1120) <-> (826)
+	* adding them to the sorted list as we go.
+	* adding them to the sorted list as we go.
+(1121) <-> (827)
+	*/
+	*/
+(1122) <-> (828)
+	int i = numTrees - 1;
+	int i = numTrees - 1;
+(1123) <-> (829)
+	while (i >= 0) {
+	while (i >= 0) {
+(1124) <-> (830)
+	/* add all instances of the current oldest tree to the sorted list */
+	/* add all instances of the current oldest tree to the sorted list */
+(1125) <-> (831)
+	List indices = (List) table.remove(oldest);
+	List indices = (List) table.remove(oldest);
+(1126) <-> (832)
+	for (Enumeration e = Collections.enumeration(indices); e.hasMoreElements();) {
+	for (Enumeration e = Collections.enumeration(indices); e.hasMoreElements();) {
+(1127) <-> (833)
+	Integer next = (Integer) e.nextElement();
+	Integer next = (Integer) e.nextElement();
+(1128) <-> (834)
+	sorted[i] = oldest;
+	sorted[i] = oldest;
+(1129) <-> (835)
+	i--;
+	i--;
+(1130) <-> (836)
+	}
+	}
+(1131) <-> (837)
+	if (i >= 0) {
+	if (i >= 0) {
+(1132) <-> (838)
+	/* find the next tree in the list */
+	/* find the next tree in the list */
+(1133) <-> (839)
+	ElementTree parent = oldest.getParent();
+	ElementTree parent = oldest.getParent();
+(1134) <-> (840)
+	while (table.get(parent) == null) {
+	while (table.get(parent) == null) {
+(1135) <-> (841)
+	parent = parent.getParent();
+	parent = parent.getParent();
+(1136) <-> (842)
+	}
+	}
+(1137) <-> (843)
+	oldest = parent;
+	oldest = parent;
+(1138) <-> (844)
+	}
+	}
+(1139) <-> (845)
+	}
+	}
+(1140) <-> (846)
+	return sorted;
+	return sorted;
+(1141) <-> (847)
+	}
+	}
+(1142) <-> (848)
+	public void startup(IProgressMonitor monitor) throws CoreException {
+	public void startup(IProgressMonitor monitor) throws CoreException {
+(1143) <-> (849)
+	restore(monitor);
+	restore(monitor);
+(1144) <-> (850)
+	String pluginId = ResourcesPlugin.getPlugin().getDescriptor().getUniqueIdentifier();
+	String pluginId = ResourcesPlugin.getPlugin().getDescriptor().getUniqueIdentifier();
+(1145) <-> (851)
+	java.io.File masterTable = workspace.getMetaArea().getSafeTableLocationFor(pluginId).toFile();
+	java.io.File masterTable = workspace.getMetaArea().getSafeTableLocationFor(pluginId).toFile();
+(1146) <-> (852)
+	if (!masterTable.exists())
+	if (!masterTable.exists())
+(1147) <-> (853)
+	masterTable.getParentFile().mkdirs();
+	masterTable.getParentFile().mkdirs();
+(1148) <-> (854)
+	}
+	}
+(1149) <-> (930)
+	/**
+	/**
+(1150) <-> (1125)
+	* Visit the given resource (to depth infinite) and write out extra information
+	* Visit the given resource (to depth infinite) and write out extra information
+(1151) <-> (1126)
+	* like markers and sync info. To be called during a full save and project save.
+	* like markers and sync info. To be called during a full save and project save.
+(1152) <-> (1127)
+	*
+	*
+(1153) <-> (1128)
+	* This method is ugly. Fix it up and look at merging with #visitAndSnap
+	* This method is ugly. Fix it up and look at merging with #visitAndSnap
+(1154) <-> (1129)
+	*/
+	*/
+(1155) <-> (1130)
+	public void visitAndSave(IResource root) throws CoreException {
+	public void visitAndSave(IResource root) throws CoreException {
+(1156) <-> (1131)
+	// Ensure we have either a project or the workspace root
+	// Ensure we have either a project or the workspace root
+(1157) <-> (1132)
+	Assert.isLegal(root.getType() == IResource.ROOT || root.getType() == IResource.PROJECT);
+	Assert.isLegal(root.getType() == IResource.ROOT || root.getType() == IResource.PROJECT);
+(1158) <-> (1133)
+	// only write out info for accessible resources
+	// only write out info for accessible resources
+(1159) <-> (1134)
+	if (!root.isAccessible())
+	if (!root.isAccessible())
+(1160) <-> (1135)
+	return;
+	return;
+(1162) <-> (1137)
+	// Setup vars
+	// Setup vars
+(1163) <-> (1138)
+	final Synchronizer synchronizer = (Synchronizer) workspace.getSynchronizer();
+	final Synchronizer synchronizer = (Synchronizer) workspace.getSynchronizer();
+(1164) <-> (1139)
+	final MarkerManager markerManager = workspace.getMarkerManager();
+	final MarkerManager markerManager = workspace.getMarkerManager();
+(1165) <-> (1140)
+	IPath markersLocation = workspace.getMetaArea().getMarkersLocationFor(root);
+	IPath markersLocation = workspace.getMetaArea().getMarkersLocationFor(root);
+(1166) <-> (1141)
+	IPath markersTempLocation = workspace.getMetaArea().getBackupLocationFor(markersLocation);
+	IPath markersTempLocation = workspace.getMetaArea().getBackupLocationFor(markersLocation);
+(1167) <-> (1142)
+	IPath syncInfoLocation = workspace.getMetaArea().getSyncInfoLocationFor(root);
+	IPath syncInfoLocation = workspace.getMetaArea().getSyncInfoLocationFor(root);
+(1168) <-> (1143)
+	IPath syncInfoTempLocation = workspace.getMetaArea().getBackupLocationFor(syncInfoLocation);
+	IPath syncInfoTempLocation = workspace.getMetaArea().getBackupLocationFor(syncInfoLocation);
+(1169) <-> (1144)
+	final List writtenTypes = new ArrayList(5);
+	final List writtenTypes = new ArrayList(5);
+(1170) <-> (1145)
+	final List writtenPartners = new ArrayList(synchronizer.registry.size());
+	final List writtenPartners = new ArrayList(synchronizer.registry.size());
+(1171) <-> (1146)
+	DataOutputStream o1 = null;
+	DataOutputStream o1 = null;
+(1172) <-> (1147)
+	DataOutputStream o2 = null;
+	DataOutputStream o2 = null;
+(1174) <-> (1149)
+	// Create the output streams
+	// Create the output streams
+(1175) <-> (1150)
+	try {
+	try {
+(1176) <-> (1151)
+	o1 = new DataOutputStream(new SafeFileOutputStream(markersLocation.toOSString(), markersTempLocation.toOSString()));
+	o1 = new DataOutputStream(new SafeFileOutputStream(markersLocation.toOSString(), markersTempLocation.toOSString()));
+(1177) <-> (1152)
+	// we don't store the sync info for the workspace root so don't create
+	// we don't store the sync info for the workspace root so don't create
+(1178) <-> (1153)
+	// an empty file
+	// an empty file
+(1179) <-> (1154)
+	if (root.getType() != IResource.ROOT)
+	if (root.getType() != IResource.ROOT)
+(1180) <-> (1155)
+	o2 = new DataOutputStream(new SafeFileOutputStream(syncInfoLocation.toOSString(), syncInfoTempLocation.toOSString()));
+	o2 = new DataOutputStream(new SafeFileOutputStream(syncInfoLocation.toOSString(), syncInfoTempLocation.toOSString()));
+(1181) <-> (1156)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1182) <-> (1157)
+	if (o1 != null)
+	if (o1 != null)
+(1183) <-> (1158)
+	try {
+	try {
+(1184) <-> (1159)
+	o1.close();
+	o1.close();
+(1185) <-> (1160)
+	} catch (IOException e2) {
+	} catch (IOException e2) {
+(1186) <-> (1161)
+	}
+	}
+(1187) <-> (1162)
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+(1188) <-> (1163)
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+(1189) <-> (1164)
+	}
+	}
+(1191) <-> (1166)
+	final DataOutputStream markersOutput = o1;
+	final DataOutputStream markersOutput = o1;
+(1192) <-> (1167)
+	final DataOutputStream syncInfoOutput = o2;
+	final DataOutputStream syncInfoOutput = o2;
+(1194) <-> (1169)
+	// Create the visitor
+	// Create the visitor
+(1195) <-> (1170)
+	IResourceVisitor visitor = new IResourceVisitor() {
+	IResourceVisitor visitor = new IResourceVisitor() {
+(1196) <-> (1171)
+	public boolean visit(IResource resource) throws CoreException {
+	public boolean visit(IResource resource) throws CoreException {
+(1197) <-> (1172)
+	try {
+	try {
+(1198) <-> (1173)
+	// phantom resources don't have markers so skip them
+	// phantom resources don't have markers so skip them
+(1199) <-> (1174)
+	if (!resource.isPhantom())
+	if (!resource.isPhantom())
+(1200) <-> (1175)
+	markerManager.save(resource, markersOutput, writtenTypes);
+	markerManager.save(resource, markersOutput, writtenTypes);
+(1201) <-> (1176)
+	// if we have the workspace root then the output stream will be null
+	// if we have the workspace root then the output stream will be null
+(1202) <-> (1177)
+	if (syncInfoOutput != null)
+	if (syncInfoOutput != null)
+(1203) <-> (1178)
+	synchronizer.saveSyncInfo(resource, syncInfoOutput, writtenPartners);
+	synchronizer.saveSyncInfo(resource, syncInfoOutput, writtenPartners);
+(1204) <-> (1179)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1205) <-> (1180)
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_LOCAL, resource.getFullPath(), "Failed to write meta info for resource.", e);
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_LOCAL, resource.getFullPath(), "Failed to write meta info for resource.", e);
+(1206) <-> (1181)
+	}
+	}
+(1207) <-> (1182)
+	return true;
+	return true;
+(1208) <-> (1183)
+	}
+	}
+(1209) <-> (1184)
+	};
+	};
+(1211) <-> (1186)
+	// Call the visitor
+	// Call the visitor
+(1212) <-> (1187)
+	try {
+	try {
+(1213) <-> (1188)
+	int depth = root.getType() == IResource.ROOT ? IResource.DEPTH_ZERO : IResource.DEPTH_INFINITE;
+	int depth = root.getType() == IResource.ROOT ? IResource.DEPTH_ZERO : IResource.DEPTH_INFINITE;
+(1214) <-> (1189)
+	root.accept(visitor, depth, true);
+	root.accept(visitor, depth, true);
+(1215) <-> (1190)
+	removeGarbage(markersOutput, markersLocation, markersTempLocation);
+	removeGarbage(markersOutput, markersLocation, markersTempLocation);
+(1216) <-> (1191)
+	// if we have the workspace root the output stream will be null and we
+	// if we have the workspace root the output stream will be null and we
+(1217) <-> (1192)
+	// don't have to perform cleanup code
+	// don't have to perform cleanup code
+(1218) <-> (1193)
+	if (syncInfoOutput != null)
+	if (syncInfoOutput != null)
+(1219) <-> (1194)
+	removeGarbage(syncInfoOutput, syncInfoLocation, syncInfoTempLocation);
+	removeGarbage(syncInfoOutput, syncInfoLocation, syncInfoTempLocation);
+(1220) <-> (1195)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1221) <-> (1196)
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+(1222) <-> (1197)
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+(1223) <-> (1198)
+	} catch (CoreException e) {
+	} catch (CoreException e) {
+(1224) <-> (1199)
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+(1225) <-> (1200)
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+(1226) <-> (1201)
+	} finally {
+	} finally {
+(1227) <-> (1202)
+	if (markersOutput != null)
+	if (markersOutput != null)
+(1228) <-> (1203)
+	try {
+	try {
+(1229) <-> (1204)
+	markersOutput.close();
+	markersOutput.close();
+(1230) <-> (1205)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1231) <-> (1206)
+	}
+	}
+(1232) <-> (1207)
+	if (syncInfoOutput != null)
+	if (syncInfoOutput != null)
+(1233) <-> (1208)
+	try {
+	try {
+(1234) <-> (1209)
+	syncInfoOutput.close();
+	syncInfoOutput.close();
+(1235) <-> (1210)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1236) <-> (1211)
+	}
+	}
+(1237) <-> (1212)
+	}
+	}
+(1239) <-> (1214)
+	// recurse over the projects in the workspace if we were given the workspace root
+	// recurse over the projects in the workspace if we were given the workspace root
+(1240) <-> (1215)
+	if (root.getType() == IResource.PROJECT)
+	if (root.getType() == IResource.PROJECT)
+(1241) <-> (1216)
+	return;
+	return;
+(1242) <-> (1217)
+	IProject[] projects = ((IWorkspaceRoot) root).getProjects();
+	IProject[] projects = ((IWorkspaceRoot) root).getProjects();
+(1243) <-> (1218)
+	for (int i = 0; i < projects.length; i++)
+	for (int i = 0; i < projects.length; i++)
+(1244) <-> (1219)
+	visitAndSave(projects[i]);
+	visitAndSave(projects[i]);
+(1245) <-> (1220)
+	}
+	}
+(1246) <-> (1221)
+	/**
+	/**
+(1247) <-> (1222)
+	* Visit the given resource (to depth infinite) and write out extra information
+	* Visit the given resource (to depth infinite) and write out extra information
+(1248) <-> (1223)
+	* like markers and sync info. To be called during a snapshot
+	* like markers and sync info. To be called during a snapshot
+(1249) <-> (1224)
+	*
+	*
+(1250) <-> (1225)
+	* This method is ugly. Fix it up and look at merging with #visitAndSnap
+	* This method is ugly. Fix it up and look at merging with #visitAndSnap
+(1251) <-> (1226)
+	*/
+	*/
+(1252) <-> (1227)
+	public void visitAndSnap(IResource root) throws CoreException {
+	public void visitAndSnap(IResource root) throws CoreException {
+(1253) <-> (1228)
+	// Ensure we have either a project or the workspace root
+	// Ensure we have either a project or the workspace root
+(1254) <-> (1229)
+	Assert.isLegal(root.getType() == IResource.ROOT || root.getType() == IResource.PROJECT);
+	Assert.isLegal(root.getType() == IResource.ROOT || root.getType() == IResource.PROJECT);
+(1255) <-> (1230)
+	// only write out info for accessible resources
+	// only write out info for accessible resources
+(1256) <-> (1231)
+	if (!root.isAccessible())
+	if (!root.isAccessible())
+(1257) <-> (1232)
+	return;
+	return;
+(1259) <-> (1234)
+	// Setup vars
+	// Setup vars
+(1260) <-> (1235)
+	final Synchronizer synchronizer = (Synchronizer) workspace.getSynchronizer();
+	final Synchronizer synchronizer = (Synchronizer) workspace.getSynchronizer();
+(1261) <-> (1236)
+	final MarkerManager markerManager = workspace.getMarkerManager();
+	final MarkerManager markerManager = workspace.getMarkerManager();
+(1262) <-> (1237)
+	IPath markersLocation = workspace.getMetaArea().getMarkersSnapshotLocationFor(root);
+	IPath markersLocation = workspace.getMetaArea().getMarkersSnapshotLocationFor(root);
+(1263) <-> (1238)
+	IPath syncInfoLocation = workspace.getMetaArea().getSyncInfoSnapshotLocationFor(root);
+	IPath syncInfoLocation = workspace.getMetaArea().getSyncInfoSnapshotLocationFor(root);
+(1264) <-> (1239)
+	SafeChunkyOutputStream safeMarkerStream = null;
+	SafeChunkyOutputStream safeMarkerStream = null;
+(1265) <-> (1240)
+	SafeChunkyOutputStream safeSyncInfoStream = null;
+	SafeChunkyOutputStream safeSyncInfoStream = null;
+(1266) <-> (1241)
+	DataOutputStream o1 = null;
+	DataOutputStream o1 = null;
+(1267) <-> (1242)
+	DataOutputStream o2 = null;
+	DataOutputStream o2 = null;
+(1269) <-> (1244)
+	// Create the output streams
+	// Create the output streams
+(1270) <-> (1245)
+	try {
+	try {
+(1271) <-> (1246)
+	safeMarkerStream = new SafeChunkyOutputStream(markersLocation.toFile());
+	safeMarkerStream = new SafeChunkyOutputStream(markersLocation.toFile());
+(1272) <-> (1247)
+	o1 = new DataOutputStream(safeMarkerStream);
+	o1 = new DataOutputStream(safeMarkerStream);
+(1273) <-> (1248)
+	// we don't store the sync info for the workspace root so don't create
+	// we don't store the sync info for the workspace root so don't create
+(1274) <-> (1249)
+	// an empty file
+	// an empty file
+(1275) <-> (1250)
+	if (root.getType() != IResource.ROOT) {
+	if (root.getType() != IResource.ROOT) {
+(1276) <-> (1251)
+	safeSyncInfoStream = new SafeChunkyOutputStream(syncInfoLocation.toFile());
+	safeSyncInfoStream = new SafeChunkyOutputStream(syncInfoLocation.toFile());
+(1277) <-> (1252)
+	o2 = new DataOutputStream(safeSyncInfoStream);
+	o2 = new DataOutputStream(safeSyncInfoStream);
+(1278) <-> (1253)
+	}
+	}
+(1279) <-> (1254)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1280) <-> (1255)
+	if (o1 != null)
+	if (o1 != null)
+(1281) <-> (1256)
+	try {
+	try {
+(1282) <-> (1257)
+	o1.close();
+	o1.close();
+(1283) <-> (1258)
+	} catch (IOException e2) {
+	} catch (IOException e2) {
+(1284) <-> (1259)
+	}
+	}
+(1285) <-> (1260)
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+(1286) <-> (1261)
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+(1287) <-> (1262)
+	}
+	}
+(1289) <-> (1264)
+	final DataOutputStream markersOutput = o1;
+	final DataOutputStream markersOutput = o1;
+(1290) <-> (1265)
+	final DataOutputStream syncInfoOutput = o2;
+	final DataOutputStream syncInfoOutput = o2;
+(1291) <-> (1266)
+	int markerFileSize = markersOutput.size();
+	int markerFileSize = markersOutput.size();
+(1292) <-> (1267)
+	int syncInfoFileSize = safeSyncInfoStream == null ? -1 : syncInfoOutput.size();
+	int syncInfoFileSize = safeSyncInfoStream == null ? -1 : syncInfoOutput.size();
+(1294) <-> (1269)
+	// Create the visitor
+	// Create the visitor
+(1295) <-> (1270)
+	IResourceVisitor visitor = new IResourceVisitor() {
+	IResourceVisitor visitor = new IResourceVisitor() {
+(1296) <-> (1271)
+	public boolean visit(IResource resource) throws CoreException {
+	public boolean visit(IResource resource) throws CoreException {
+(1297) <-> (1272)
+	try {
+	try {
+(1298) <-> (1273)
+	// phantom resources don't have markers so skip them
+	// phantom resources don't have markers so skip them
+(1299) <-> (1274)
+	if (!resource.isPhantom())
+	if (!resource.isPhantom())
+(1300) <-> (1275)
+	markerManager.snap(resource, markersOutput);
+	markerManager.snap(resource, markersOutput);
+(1301) <-> (1276)
+	// if we have the workspace root then the output stream will be null
+	// if we have the workspace root then the output stream will be null
+(1302) <-> (1277)
+	if (syncInfoOutput != null)
+	if (syncInfoOutput != null)
+(1303) <-> (1278)
+	synchronizer.snapSyncInfo(resource, syncInfoOutput);
+	synchronizer.snapSyncInfo(resource, syncInfoOutput);
+(1304) <-> (1279)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1305) <-> (1280)
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_LOCAL, resource.getFullPath(), "Failed to write meta info for resource.", e);
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_LOCAL, resource.getFullPath(), "Failed to write meta info for resource.", e);
+(1306) <-> (1281)
+	}
+	}
+(1307) <-> (1282)
+	return true;
+	return true;
+(1308) <-> (1283)
+	}
+	}
+(1309) <-> (1284)
+	};
+	};
+(1311) <-> (1286)
+	// Call the visitor
+	// Call the visitor
+(1312) <-> (1287)
+	try {
+	try {
+(1313) <-> (1288)
+	int depth = root.getType() == IResource.ROOT ? IResource.DEPTH_ZERO : IResource.DEPTH_INFINITE;
+	int depth = root.getType() == IResource.ROOT ? IResource.DEPTH_ZERO : IResource.DEPTH_INFINITE;
+(1314) <-> (1289)
+	root.accept(visitor, depth, true);
+	root.accept(visitor, depth, true);
+(1315) <-> (1290)
+	if (safeMarkerStream != null && markerFileSize != markersOutput.size())
+	if (safeMarkerStream != null && markerFileSize != markersOutput.size())
+(1316) <-> (1291)
+	safeMarkerStream.succeed();
+	safeMarkerStream.succeed();
+(1317) <-> (1292)
+	if (safeSyncInfoStream != null && syncInfoFileSize != syncInfoOutput.size())
+	if (safeSyncInfoStream != null && syncInfoFileSize != syncInfoOutput.size())
+(1318) <-> (1293)
+	safeSyncInfoStream.succeed();
+	safeSyncInfoStream.succeed();
+(1319) <-> (1294)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1320) <-> (1295)
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+(1321) <-> (1296)
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+(1322) <-> (1297)
+	} catch (CoreException e) {
+	} catch (CoreException e) {
+(1323) <-> (1298)
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+	String msg = Policy.bind("writeMeta", new String[] { root.getFullPath().toString()});
+(1324) <-> (1299)
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, root.getFullPath(), msg, e);
+(1325) <-> (1300)
+	} finally {
+	} finally {
+(1326) <-> (1301)
+	if (markersOutput != null)
+	if (markersOutput != null)
+(1327) <-> (1302)
+	try {
+	try {
+(1328) <-> (1303)
+	markersOutput.close();
+	markersOutput.close();
+(1329) <-> (1304)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1330) <-> (1305)
+	}
+	}
+(1331) <-> (1306)
+	if (syncInfoOutput != null)
+	if (syncInfoOutput != null)
+(1332) <-> (1307)
+	try {
+	try {
+(1333) <-> (1308)
+	syncInfoOutput.close();
+	syncInfoOutput.close();
+(1334) <-> (1309)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1335) <-> (1310)
+	}
+	}
+(1336) <-> (1311)
+	}
+	}
+(1338) <-> (1313)
+	// recurse over the projects in the workspace if we were given the workspace root
+	// recurse over the projects in the workspace if we were given the workspace root
+(1339) <-> (1314)
+	if (root.getType() == IResource.PROJECT)
+	if (root.getType() == IResource.PROJECT)
+(1340) <-> (1315)
+	return;
+	return;
+(1341) <-> (1316)
+	IProject[] projects = ((IWorkspaceRoot) root).getProjects();
+	IProject[] projects = ((IWorkspaceRoot) root).getProjects();
+(1342) <-> (1317)
+	for (int i = 0; i < projects.length; i++)
+	for (int i = 0; i < projects.length; i++)
+(1343) <-> (1318)
+	visitAndSnap(projects[i]);
+	visitAndSnap(projects[i]);
+(1344) <-> (1319)
+	}
+	}
+(1345) <-> (1004)
+	/**
+	/**
+(1346) <-> (1005)
+	* @see IElementInfoFlattener#writeElement
+	* @see IElementInfoFlattener#writeElement
+(1347) <-> (1006)
+	*/
+	*/
+(1348) <-> (1007)
+	public void writeElement(IPath path, Object element, DataOutput output) throws IOException {
+	public void writeElement(IPath path, Object element, DataOutput output) throws IOException {
+(1349) <-> (1008)
+	Assert.isNotNull(path);
+	Assert.isNotNull(path);
+(1350) <-> (1009)
+	Assert.isNotNull(element);
+	Assert.isNotNull(element);
+(1351) <-> (1010)
+	Assert.isNotNull(output);
+	Assert.isNotNull(output);
+(1352) <-> (1011)
+	ResourceInfo info = (ResourceInfo) element;
+	ResourceInfo info = (ResourceInfo) element;
+(1353) <-> (1331)
+	output.writeInt(info.getFlags());
+	output.writeInt(interestingProjects.length);
+(1354) <-> (1013)
+	info.writeTo(output);
+	info.writeTo(output);
+(1355) <-> (1014)
+	}
+	}
+(1356) <-> (1320)
+	protected void writeTree(Map statesToSave, DataOutputStream output, IProgressMonitor monitor) throws IOException, CoreException {
+	protected void writeBuilderPersistenInfo(DataOutputStream output, List builders, List trees, IProgressMonitor monitor) throws IOException {
+(1357) <-> (937)
+	monitor = Policy.monitorFor(monitor);
+	monitor = Policy.monitorFor(monitor);
+(1358) <-> (938)
+	try {
+	try {
+(1359) <-> (858)
+	monitor.beginTask("", Policy.totalWork);
+	monitor.beginTask("", Policy.totalWork);
+(1360) <-> (859)
+	boolean wasImmutable = false;
+	boolean wasImmutable = false;
+(1361) <-> (860)
+	try {
+	try {
+(1362) <-> (861)
+	// Create an array of trees to save. Ensure that the current one is in the list
+	// Create an array of trees to save. Ensure that the current one is in the list
+(1363) <-> (862)
+	ElementTree current = workspace.getElementTree();
+	ElementTree current = workspace.getElementTree();
+(1364) <-> (863)
+	wasImmutable = current.isImmutable();
+	wasImmutable = current.isImmutable();
+(1365) <-> (864)
+	current.immutable();
+	current.immutable();
+(1366) <-> (865)
+	ArrayList trees = new ArrayList(statesToSave.size() * 2); // pick a number
+	ArrayList trees = new ArrayList(statesToSave.size() * 2); // pick a number
+(1367) <-> (866)
+	monitor.worked(Policy.totalWork * 10 / 100);
+	monitor.worked(Policy.totalWork * 10 / 100);
+(1369) <-> (868)
+	// write out the workspace fields
+	// write out the workspace fields
+(1370) <-> (869)
+	writeWorkspaceFields(output, Policy.subMonitorFor(monitor, Policy.opWork * 20 / 100));
+	writeWorkspaceFields(output, Policy.subMonitorFor(monitor, Policy.opWork * 20 / 100));
+(1372) <-> (871)
+	// save plugin info
+	// save plugin info
+(1373) <-> (872)
+	long lastTreeTimestamp = System.currentTimeMillis();
+	long lastTreeTimestamp = System.currentTimeMillis();
+(1374) <-> (873)
+	output.writeInt(statesToSave.size()); // write the number of plugins we are saving
+	output.writeInt(statesToSave.size()); // write the number of plugins we are saving
+(1375) <-> (874)
+	for (Iterator i = statesToSave.entrySet().iterator(); i.hasNext();) {
+	for (Iterator i = statesToSave.entrySet().iterator(); i.hasNext();) {
+(1376) <-> (875)
+	Map.Entry entry = (Map.Entry) i.next();
+	Map.Entry entry = (Map.Entry) i.next();
+(1377) <-> (876)
+	String pluginId = (String) entry.getKey();
+	String pluginId = (String) entry.getKey();
+(1378) <-> (877)
+	output.writeUTF(pluginId);
+	output.writeUTF(pluginId);
+(1379) <-> (878)
+	trees.add((ElementTree) entry.getValue()); // tree
+	trees.add((ElementTree) entry.getValue()); // tree
+(1380) <-> (879)
+	setDeltaExpiration(pluginId, lastTreeTimestamp);
+	setDeltaExpiration(pluginId, lastTreeTimestamp);
+(1381) <-> (880)
+	}
+	}
+(1382) <-> (881)
+	monitor.worked(Policy.totalWork * 10 / 100);
+	monitor.worked(Policy.totalWork * 10 / 100);
+(1384) <-> (883)
+	// add builders' trees
+	// add builders' trees
+(1385) <-> (1330)
+	IProject[] projects = workspace.getRoot().getProjects();
+	IProject[] interestingProjects = info.getInterestingProjects();
+(1386) <-> (885)
+	Map builders = new HashMap(projects.length);
+	List builders = new ArrayList(projects.length * 2);
+(1388) <-> (1041)
+	for (int i = 0; i < projects.length; i++) {
+	for (int i = 0; i < projects.length; i++)
+(1389) <-> (887)
+	IProject project = projects[i];
+	IProject project = projects[i];
+(1390) <-> (888)
+	if (project.isOpen()) {
+	if (project.isOpen()) {
+(1391) <-> (889)
+	Hashtable namesToBuilderTrees = workspace.getBuildManager().createBuilderMap(project);
+	Map infos = workspace.getBuildManager().createBuildersPersistentInfo(project);
+(1398) <-> (1323)
+	output.writeInt(nBuilders); // write the number of builders we are saving
+	// write the number of builders we are saving
+(1399) <-> (161)
+	for (Iterator i = builders.keySet().iterator(); i.hasNext();) {
+	for (Iterator it = builderInfos.values().iterator(); it.hasNext();) {
+(1404) <-> (1333)
+	output.writeUTF(project.getName());
+	output.writeUTF(interestingProjects[j].getName());
+(1405) <-> (1328)
+	output.writeUTF(builderName);
+	output.writeUTF(info.getBuilderName());
+(1407) <-> (892)
+	}
+	}
+(1408) <-> (893)
+	}
+	}
+(1409) <-> (894)
+	monitor.worked(Policy.totalWork * 10 / 100);
+	writeBuilderPersistenInfo(output, builders, trees, Policy.subMonitorFor(monitor, Policy.totalWork * 10 / 100));
+(1411) <-> (896)
+	// add the current tree in the list as the last element
+	// add the current tree in the list as the last element
+(1412) <-> (959)
+	trees.add(current);
+	trees.add(current);
+(1414) <-> (961)
+	/* save the forest! */
+	/* save the forest! */
+(1415) <-> (962)
+	ElementTreeWriter writer = new ElementTreeWriter(this);
+	ElementTreeWriter writer = new ElementTreeWriter(this);
+(1416) <-> (963)
+	ElementTree[] treesToSave = (ElementTree[]) trees.toArray(new ElementTree[trees.size()]);
+	ElementTree[] treesToSave = (ElementTree[]) trees.toArray(new ElementTree[trees.size()]);
+(1417) <-> (964)
+	writer.writeDeltaChain(treesToSave, Path.ROOT, writer.D_INFINITE, output, ResourceComparator.getComparator());
+	writer.writeDeltaChain(treesToSave, project.getFullPath(), writer.D_INFINITE, output, ResourceComparator.getComparator());
+(1418) <-> (903)
+	monitor.worked(Policy.totalWork * 50 / 100);
+	monitor.worked(Policy.totalWork * 50 / 100);
+(1419) <-> (904)
+	} finally {
+	} finally {
+(1420) <-> (905)
+	if (!wasImmutable)
+	if (!wasImmutable)
+(1421) <-> (906)
+	workspace.newWorkingTree();
+	workspace.newWorkingTree();
+(1422) <-> (907)
+	}
+	}
+(1423) <-> (908)
+	} finally {
+	} finally {
+(1424) <-> (909)
+	monitor.done();
+	monitor.done();
+(1425) <-> (1122)
+	}
+	}
+(1426) <-> (911)
+	}
+	}
+(1427) <-> (912)
+	protected void writeTree(Project project, int depth) throws CoreException {
+	protected void writeTree(Project project, int depth) throws CoreException {
+(1428) <-> (913)
+	IPath treeLocation = workspace.getMetaArea().getTreeLocationFor(project, true);
+	IPath treeLocation = workspace.getMetaArea().getTreeLocationFor(project, true);
+(1429) <-> (914)
+	IPath tempLocation = workspace.getMetaArea().getBackupLocationFor(treeLocation);
+	IPath tempLocation = workspace.getMetaArea().getBackupLocationFor(treeLocation);
+(1430) <-> (915)
+	try {
+	try {
+(1431) <-> (916)
+	SafeFileOutputStream safe = new SafeFileOutputStream(treeLocation.toOSString(), tempLocation.toOSString());
+	SafeFileOutputStream safe = new SafeFileOutputStream(treeLocation.toOSString(), tempLocation.toOSString());
+(1432) <-> (917)
+	try {
+	try {
+(1433) <-> (918)
+	ElementTreeWriter writer = new ElementTreeWriter(this);
+	ElementTreeWriter writer = new ElementTreeWriter(this);
+(1434) <-> (919)
+	DataOutputStream output = new DataOutputStream(safe);
+	DataOutputStream output = new DataOutputStream(safe);
+(1436) <-> (921)
+	writeTree(project, output, null);
+	writeTree(project, output, null);
+(1437) <-> (922)
+	} finally {
+	} finally {
+(1438) <-> (923)
+	safe.close();
+	safe.close();
+(1439) <-> (924)
+	}
+	}
+(1440) <-> (925)
+	} catch (IOException e) {
+	} catch (IOException e) {
+(1441) <-> (926)
+	String msg = Policy.bind("writeMeta", new String[] { project.getFullPath().toString()});
+	String msg = Policy.bind("writeMeta", new String[] { project.getFullPath().toString()});
+(1442) <-> (927)
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, treeLocation, msg, e);
+	throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, treeLocation, msg, e);
+(1443) <-> (928)
+	}
+	}
+(1444) <-> (929)
+	}
+	}
+(1445) <-> (942)
+	/**
+	/**
+(1446) <-> (931)
+	* Attempts to save all the trees for this project (the current tree
+	* Attempts to save all the trees for this project (the current tree
+(1447) <-> (932)
+	* plus a tree for each builder with a previously built state). Throws
+	* plus a tree for each builder with a previously built state). Throws
+(1448) <-> (933)
+	* an IOException if anything went wrong during save. Attempts to close
+	* an IOException if anything went wrong during save. Attempts to close
+(1449) <-> (934)
+	* the provided stream at all costs.
+	* the provided stream at all costs.
+(1450) <-> (935)
+	*/
+	*/
+(1451) <-> (936)
+	protected void writeTree(Project project, DataOutputStream output, IProgressMonitor monitor) throws IOException, CoreException {
+	protected void writeTree(Project project, DataOutputStream output, IProgressMonitor monitor) throws IOException, CoreException {
+(1452) <-> (1321)
+	monitor = Policy.monitorFor(monitor);
+	monitor = Policy.monitorFor(monitor);
+(1453) <-> (1322)
+	try {
+	try {
+(1454) <-> (939)
+	monitor.beginTask("", 10);
+	monitor.beginTask("", 10);
+(1455) <-> (940)
+	boolean wasImmutable = false;
+	boolean wasImmutable = false;
+(1456) <-> (941)
+	try {
+	try {
+(1457) <-> (1124)
+	/**
+	/**
+(1458) <-> (943)
+	* Obtain a table of String(builder name) -> ElementTree
+	* Obtain a table of String(builder name) -> BuilderPersistentInfo.
+(1459) <-> (944)
+	* This includes builders that have never been instantiated
+	* This includes builders that have never been instantiated
+(1460) <-> (945)
+	* but already had a last built state.
+	* but already had a last built state.
+(1461) <-> (946)
+	*/
+	*/
+(1462) <-> (947)
+	Hashtable namesToBuilderTrees = workspace.getBuildManager().createBuilderMap(project);
+	Map builderInfos = workspace.getBuildManager().createBuildersPersistentInfo(project);
+(1464) <-> (950)
+	monitor.worked(1);
+	monitor.worked(1);
+(1467) <-> (1324)
+	output.writeInt(numBuilders);
+	output.writeInt(builders.size());
+(1470) <-> (952)
+	/* Make sure the most recent tree is in the array */
+	/* Make sure the most recent tree is in the array */
+(1471) <-> (953)
+	ElementTree current = workspace.getElementTree();
+	ElementTree current = workspace.getElementTree();
+(1472) <-> (954)
+	wasImmutable = current.isImmutable();
+	wasImmutable = current.isImmutable();
+(1473) <-> (955)
+	current.immutable();
+	current.immutable();
+(1476) <-> (957)
+	/* add the tree for each builder to the array */
+	/* add the tree for each builder to the array */
+(1484) <-> (1327)
+	output.writeUTF(builderName);
+	output.writeUTF(info.getProjectName());
+(1489) <-> (899)
+	/* save the forest! */
+	/* save the forest! */
+(1490) <-> (901)
+	ElementTreeWriter writer = new ElementTreeWriter(this);
+	ElementTree[] treesToSave = (ElementTree[]) trees.toArray(new ElementTree[trees.size()]);
+(1491) <-> (902)
+	writer.writeDeltaChain(trees, project.getFullPath(), writer.D_INFINITE, output, ResourceComparator.getComparator());
+	writer.writeDeltaChain(treesToSave, Path.ROOT, writer.D_INFINITE, output, ResourceComparator.getComparator());
+(1492) <-> (965)
+	monitor.worked(8);
+	monitor.worked(8);
+(1493) <-> (966)
+	} finally {
+	} finally {
+(1494) <-> (967)
+	if (output != null)
+	if (output != null)
+(1495) <-> (968)
+	output.close();
+	output.close();
+(1496) <-> (969)
+	if (!wasImmutable)
+	if (!wasImmutable)
+(1497) <-> (970)
+	workspace.newWorkingTree();
+	workspace.newWorkingTree();
+(1498) <-> (971)
+	}
+	}
+(1499) <-> (972)
+	} finally {
+	} finally {
+(1500) <-> (973)
+	monitor.done();
+	monitor.done();
+(1501) <-> (974)
+	}
+	}
+(1504) <-> (920)
+	output.writeInt(ICoreConstants.WORKSPACE_VERSION);
+	output.writeInt(ICoreConstants.WORKSPACE_TREE_VERSION_2);
+(1505) <-> (1335)
+	}
+	}
+(1506) <-> (976)
+	protected void writeWorkspaceFields(DataOutputStream output, IProgressMonitor monitor) throws IOException, CoreException {
+	protected void writeWorkspaceFields(DataOutputStream output, IProgressMonitor monitor) throws IOException, CoreException {
+(1507) <-> (977)
+	monitor = Policy.monitorFor(monitor);
+	monitor = Policy.monitorFor(monitor);
+(1508) <-> (978)
+	try {
+	try {
+(1509) <-> (979)
+	// save the next node id
+	// save the next node id
+(1510) <-> (980)
+	output.writeLong(workspace.nextNodeId);
+	output.writeLong(workspace.nextNodeId);
+(1511) <-> (981)
+	// save the modification stamp
+	// save the modification stamp
+(1512) <-> (982)
+	output.writeLong(workspace.nextModificationStamp);
+	output.writeLong(workspace.nextModificationStamp);
+(1513) <-> (983)
+	// save the marker id counter
+	// save the marker id counter
+(1514) <-> (984)
+	output.writeLong(workspace.nextMarkerId);
+	output.writeLong(workspace.nextMarkerId);
+(1515) <-> (985)
+	// save the registered sync partners in the synchronizer
+	// save the registered sync partners in the synchronizer
+(1516) <-> (986)
+	((Synchronizer) workspace.getSynchronizer()).savePartners(output);
+	((Synchronizer) workspace.getSynchronizer()).savePartners(output);
+(1517) <-> (1336)
+	} finally {
+	} finally {
+(1518) <-> (1337)
+	monitor.done();
+	monitor.done();
+(1519) <-> (1338)
+	}
+	}
+(1520) <-> (1339)
+	}
+	}
+(1521) <-> (1340)
+	}
+	}
+Number of lines in left file: 1460
+Number of lines in right file: 1297
+Number of lines matched: 1270

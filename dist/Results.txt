@@ -1,0 +1,7 @@
+Total time to compute dataset: 1 minute, 40seconds
+Total number of files in data set: 23
+Average time per to compute file: 4.35 seconds
+Average Accuracy: 1.16
+Matched: 90.46%
+Total matches: 503
+Total lines: 556

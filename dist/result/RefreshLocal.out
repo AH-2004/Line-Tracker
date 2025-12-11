@@ -1,0 +1,196 @@
+Diff: ./reference/dataset/RefreshLocal_1.java ./reference/dataset/RefreshLocal_2.java
+(1) <-> (1)
+	package org.eclipse.ant.core;
+	package org.eclipse.ant.core;
+(3) <-> (8)
+	import org.eclipse.core.resources.*;
+	import org.eclipse.core.resources.*;
+(4) <-> (9)
+	import org.eclipse.core.runtime.CoreException;
+	import org.eclipse.core.runtime.CoreException;
+(5) <-> (10)
+	import org.eclipse.core.runtime.Path;
+	import org.eclipse.core.runtime.Path;
+(6) <-> (11)
+	import java.util.Vector;
+	import java.util.Vector;
+(7) <-> (12)
+	import org.apache.tools.ant.*;
+	import org.apache.tools.ant.*;
+(8) <-> (13)
+	import org.apache.tools.ant.types.PatternSet;
+	import org.apache.tools.ant.types.PatternSet;
+(10) <-> (15)
+	public class RefreshLocal extends Task {
+	public class RefreshLocal extends Task {
+(11) <-> (16)
+	protected IResource resource;
+	protected IResource resource;
+(12) <-> (17)
+	protected int depth= IResource.DEPTH_INFINITE;
+	protected int depth = IResource.DEPTH_INFINITE;
+(15) <-> (18)
+	private IWorkspaceRoot root= ResourcesPlugin.getWorkspace().getRoot();
+	private IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+(16) <-> (20)
+	public RefreshLocal() {
+	public RefreshLocal() {
+(17) <-> (21)
+	super();
+	super();
+(18) <-> (22)
+	}
+	}
+(19) <-> (24)
+	/**
+	/**
+(27) <-> (6)
+	*/
+	*/
+(31) <-> (3)
+	/**
+	/*
+(32) <-> (25)
+	* Performs the copy operation.
+	* Performs the refresh operation.
+(33) <-> (26)
+	*/
+	*/
+(34) <-> (27)
+	public void execute() throws BuildException {
+	public void execute() throws BuildException {
+(35) <-> (28)
+	// make sure we don't have an illegal set of options
+	// make sure we don't have an illegal set of options
+(36) <-> (29)
+	validateAttributes();
+	validateAttributes();
+(38) <-> (31)
+	// deal with the single resource
+	// deal with the single resource
+(39) <-> (32)
+	if (resource != null) {
+	if (resource != null) {
+(40) <-> (33)
+	if (!resource.exists())
+	if (!resource.exists())
+(41) <-> (34)
+	throw new BuildException("Resource " + resource + " not found");
+	throw new BuildException("Resource " + resource + " not found");
+(42) <-> (35)
+	try {
+	try {
+(43) <-> (36)
+	resource.refreshLocal(depth, null);
+	resource.refreshLocal(depth, null);
+(44) <-> (37)
+	return;
+	return;
+(45) <-> (38)
+	} catch (CoreException e) {
+	} catch (CoreException e) {
+(46) <-> (39)
+	throw new BuildException(e);
+	throw new BuildException(e);
+(47) <-> (40)
+	}
+	}
+(48) <-> (41)
+	}
+	}
+(54) <-> (42)
+	}
+	}
+(55) <-> (72)
+	/**
+	/**
+(57) <-> (74)
+	*/
+	*/
+(67) <-> (44)
+	protected void refreshResources(String[] resources) throws BuildException {
+	protected void refreshResources(String[] resources) throws BuildException {
+(68) <-> (45)
+	for (int i= 0; i < resources.length; i++) {
+	for (int i = 0; i < resources.length; i++) {
+(69) <-> (46)
+	IResource target= root.findMember(resources[i]);
+	IResource target = root.findMember(resources[i]);
+(70) <-> (47)
+	if (target == null)
+	if (target == null)
+(71) <-> (48)
+	throw new BuildException("Resource " + resources[i] + " not found");
+	throw new BuildException("Resource " + resources[i] + " not found");
+(72) <-> (49)
+	try {
+	try {
+(73) <-> (50)
+	target.refreshLocal(depth, null);
+	target.refreshLocal(depth, null);
+(74) <-> (51)
+	} catch (CoreException e) {
+	} catch (CoreException e) {
+(75) <-> (52)
+	throw new BuildException(e);
+	throw new BuildException(e);
+(76) <-> (53)
+	}
+	}
+(77) <-> (54)
+	}
+	}
+(78) <-> (55)
+	}
+	}
+(79) <-> (57)
+	/**
+	/**
+(85) <-> (60)
+	*/
+	*/
+(89) <-> (61)
+	public void setDepth(String value) {
+	public void setDepth(String value) {
+(90) <-> (62)
+	if ("zero".equalsIgnoreCase(value))
+	if ("zero".equalsIgnoreCase(value))
+(91) <-> (63)
+	depth= IResource.DEPTH_ZERO;
+	depth = IResource.DEPTH_ZERO;
+(92) <-> (65)
+	else if ("one".equalsIgnoreCase(value))
+	if ("one".equalsIgnoreCase(value))
+(93) <-> (66)
+	depth= IResource.DEPTH_ONE;
+	depth = IResource.DEPTH_ONE;
+(94) <-> (68)
+	else if ("infinite".equalsIgnoreCase(value))
+	if ("infinite".equalsIgnoreCase(value))
+(95) <-> (69)
+	depth= IResource.DEPTH_INFINITE;
+	depth = IResource.DEPTH_INFINITE;
+(96) <-> (70)
+	}
+	}
+(97) <-> (75)
+	public void setResource(String value) {
+	public void setResource(String value) {
+(98) <-> (76)
+	resource= ResourcesPlugin.getWorkspace().getRoot().findMember(new Path(value));
+	resource = ResourcesPlugin.getWorkspace().getRoot().findMember(new Path(value));
+(99) <-> (77)
+	}
+	}
+(100) <-> (79)
+	protected void validateAttributes() throws BuildException {
+	protected void validateAttributes() throws BuildException {
+(101) <-> (80)
+	}
+	}
+(102) <-> (81)
+	}
+	}
+Number of lines in left file: 98
+Number of lines in right file: 71
+Number of lines matched: 64

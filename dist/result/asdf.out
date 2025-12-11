@@ -1,0 +1,25 @@
+Diff: ./reference/dataset/asdf_1.java ./reference/dataset/asdf_2.java
+(1) <-> (1)
+	public class asdf
+	public class asdf
+(2) <-> (2)
+	{
+	{
+(3) <-> (3)
+	public void f();
+	public void f();
+(7) <-> (5)
+	public void h();
+	public void g3333333333333333333();
+(9) <-> (7)
+	integerthisthingisawesome x;
+	integerthisthingisawesomenotit y;
+(11) <-> (9)
+	String s1;
+	String s1;
+(12) <-> (11)
+	}
+	}
+Number of lines in left file: 8
+Number of lines in right file: 8
+Number of lines matched: 7

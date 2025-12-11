@@ -1,0 +1,43 @@
+Diff: ./reference/dataset/BaseTypes_1.java ./reference/dataset/BaseTypes_2.java
+(1) <-> (1)
+	package org.eclipse.jdt.internal.compiler.lookup;
+	package org.eclipse.jdt.internal.compiler.lookup;
+(3) <-> (3)
+	public interface BaseTypes {
+	public interface BaseTypes {
+(4) <-> (4)
+	final BaseTypeBinding IntBinding = new BaseTypeBinding(TypeIds.T_int, "int".toCharArray(), new char[] {'I'});
+	final BaseTypeBinding IntBinding = new BaseTypeBinding(TypeIds.T_int, "int"/*nonNLS*/.toCharArray(), new char[] {'I'});
+(5) <-> (5)
+	final BaseTypeBinding ByteBinding = new BaseTypeBinding(TypeIds.T_byte, "byte".toCharArray(), new char[] {'B'});
+	final BaseTypeBinding ByteBinding = new BaseTypeBinding(TypeIds.T_byte, "byte"/*nonNLS*/.toCharArray(), new char[] {'B'});
+(6) <-> (6)
+	final BaseTypeBinding ShortBinding = new BaseTypeBinding(TypeIds.T_short, "short".toCharArray(), new char[] {'S'});
+	final BaseTypeBinding ShortBinding = new BaseTypeBinding(TypeIds.T_short, "short"/*nonNLS*/.toCharArray(), new char[] {'S'});
+(7) <-> (7)
+	final BaseTypeBinding CharBinding = new BaseTypeBinding(TypeIds.T_char, "char".toCharArray(), new char[] {'C'});
+	final BaseTypeBinding CharBinding = new BaseTypeBinding(TypeIds.T_char, "char"/*nonNLS*/.toCharArray(), new char[] {'C'});
+(8) <-> (8)
+	final BaseTypeBinding LongBinding = new BaseTypeBinding(TypeIds.T_long, "long".toCharArray(), new char[] {'J'});
+	final BaseTypeBinding LongBinding = new BaseTypeBinding(TypeIds.T_long, "long"/*nonNLS*/.toCharArray(), new char[] {'J'});
+(9) <-> (9)
+	final BaseTypeBinding FloatBinding = new BaseTypeBinding(TypeIds.T_float, "float".toCharArray(), new char[] {'F'});
+	final BaseTypeBinding FloatBinding = new BaseTypeBinding(TypeIds.T_float, "float"/*nonNLS*/.toCharArray(), new char[] {'F'});
+(10) <-> (10)
+	final BaseTypeBinding DoubleBinding = new BaseTypeBinding(TypeIds.T_double, "double".toCharArray(), new char[] {'D'});
+	final BaseTypeBinding DoubleBinding = new BaseTypeBinding(TypeIds.T_double, "double"/*nonNLS*/.toCharArray(), new char[] {'D'});
+(11) <-> (11)
+	final BaseTypeBinding BooleanBinding = new BaseTypeBinding(TypeIds.T_boolean, "boolean".toCharArray(), new char[] {'Z'});
+	final BaseTypeBinding BooleanBinding = new BaseTypeBinding(TypeIds.T_boolean, "boolean"/*nonNLS*/.toCharArray(), new char[] {'Z'});
+(12) <-> (12)
+	final BaseTypeBinding NullBinding = new BaseTypeBinding(TypeIds.T_null, "null".toCharArray(), new char[] {'N'}); //N stands for null even if it is never internally used
+	final BaseTypeBinding NullBinding = new BaseTypeBinding(TypeIds.T_null, "null"/*nonNLS*/.toCharArray(), new char[] {'N'}); //N stands for null even if it is never internally used
+(13) <-> (13)
+	final BaseTypeBinding VoidBinding = new BaseTypeBinding(TypeIds.T_void, "void".toCharArray(), new char[] {'V'});
+	final BaseTypeBinding VoidBinding = new BaseTypeBinding(TypeIds.T_void, "void"/*nonNLS*/.toCharArray(), new char[] {'V'});
+(14) <-> (14)
+	}
+	}
+Number of lines in left file: 13
+Number of lines in right file: 13
+Number of lines matched: 13

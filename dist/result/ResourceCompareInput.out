@@ -1,0 +1,337 @@
+Diff: ./reference/dataset/ResourceCompareInput_1.java ./reference/dataset/ResourceCompareInput_2.java
+(1) <-> (1)
+	/*
+	/*
+(2) <-> (2)
+	* Licensed Materials - Property of IBM,
+	* Licensed Materials - Property of IBM,
+(3) <-> (3)
+	* WebSphere Studio Workbench
+	* WebSphere Studio Workbench
+(4) <-> (4)
+	* (c) Copyright IBM Corp 2001
+	* (c) Copyright IBM Corp 2001
+(5) <-> (5)
+	*/
+	*/
+(6) <-> (6)
+	package org.eclipse.compare.internal;
+	package org.eclipse.compare.internal;
+(8) <-> (8)
+	import org.eclipse.jface.viewers.ISelection;
+	import org.eclipse.jface.viewers.ISelection;
+(10) <-> (10)
+	import org.eclipse.core.resources.*;
+	import org.eclipse.core.resources.*;
+(11) <-> (11)
+	import org.eclipse.core.runtime.IProgressMonitor;
+	import org.eclipse.core.runtime.IProgressMonitor;
+(13) <-> (13)
+	import org.eclipse.compare.*;
+	import org.eclipse.compare.*;
+(14) <-> (14)
+	import org.eclipse.compare.structuremergeviewer.*;
+	import org.eclipse.compare.structuremergeviewer.*;
+(17) <-> (17)
+	/**
+	/**
+(18) <-> (18)
+	* A two-way or three-way compare for arbitrary IResources.
+	* A two-way or three-way compare for arbitrary IResources.
+(19) <-> (19)
+	*/
+	*/
+(20) <-> (20)
+	class ResourceCompareInput extends CompareEditorInput {
+	class ResourceCompareInput extends CompareEditorInput {
+(22) <-> (53)
+	private ISelection fSelection;
+	boolean setSelection(ISelection s) {
+(24) <-> (33)
+	private class MyDiffNode extends DiffNode {
+	private class MyDiffNode extends DiffNode {
+(25) <-> (34)
+	public MyDiffNode(IDiffContainer parent, int description, ITypedElement ancestor, ITypedElement left, ITypedElement right) {
+	public MyDiffNode(IDiffContainer parent, int description, ITypedElement ancestor, ITypedElement left, ITypedElement right) {
+(26) <-> (35)
+	super(parent, description, ancestor, left, right);
+	super(parent, description, ancestor, left, right);
+(27) <-> (36)
+	}
+	}
+(28) <-> (37)
+	protected void fireChange() {
+	protected void fireChange() {
+(29) <-> (38)
+	super.fireChange();
+	super.fireChange();
+(30) <-> (39)
+	setDirty(true);
+	setDirty(true);
+(31) <-> (40)
+	}
+	}
+(32) <-> (41)
+	}
+	}
+(34) <-> (43)
+	/**
+	/**
+(35) <-> (44)
+	* Creates an compare editor input for the given selection.
+	* Creates an compare editor input for the given selection.
+(36) <-> (45)
+	*/
+	*/
+(37) <-> (46)
+	ResourceCompareInput(CompareConfiguration config, ISelection selection) {
+	ResourceCompareInput(CompareConfiguration config) {
+(38) <-> (47)
+	super(config);
+	super(config);
+(39) <-> (61)
+	fSelection= selection;
+	fLeftResource= selection[0];
+(40) <-> (48)
+	}
+	}
+(42) <-> (50)
+	/**
+	/**
+(43) <-> (128)
+	* Performs a two-way or three-way diff on the current selection.
+	* Performs a two-way or three-way diff on the current selection.
+(44) <-> (52)
+	*/
+	*/
+(45) <-> (130)
+	public Object prepareInput(IProgressMonitor pm) {
+	public Object prepareInput(IProgressMonitor pm) {
+(47) <-> (157)
+	try {
+	try {
+(48) <-> (158)
+	pm.beginTask("Comparing:", IProgressMonitor.UNKNOWN);
+	pm.beginTask("Comparing:", IProgressMonitor.UNKNOWN);
+(50) <-> (55)
+	IResource[] selection= Utilities.getResources(fSelection);
+	IResource[] selection= Utilities.getResources(s);
+(52) <-> (56)
+	if (selection.length < 2 || selection.length > 3) {
+	if (selection.length < 2 || selection.length > 3)
+(54) <-> (103)
+	return null;
+	return false;
+(55) <-> (66)
+	}
+	}
+(57) <-> (59)
+	boolean threeWay= selection.length == 3;
+	fThreeWay= selection.length == 3;
+(59) <-> (62)
+	IResource lr= selection[0];
+	fRightResource= selection[1];
+(60) <-> (65)
+	IResource rr= selection[1];
+	fRightResource= selection[2];
+(61) <-> (75)
+	if (threeWay) {
+	if (fThreeWay) {
+(62) <-> (64)
+	lr= selection[1];
+	fLeftResource= selection[1];
+(64) <-> (81)
+	}
+	}
+(66) <-> (25)
+	IStructureComparator ancestor= null;
+	private IStructureComparator fAncestor;
+(70) <-> (90)
+	if (right == null || left == null) {
+	if (c1 == null || c2 == null)
+(72) <-> (124)
+	return null;
+	return null;
+(73) <-> (125)
+	}
+	}
+(75) <-> (132)
+	CompareConfiguration cc= (CompareConfiguration) getCompareConfiguration();
+	CompareConfiguration cc= (CompareConfiguration) getCompareConfiguration();
+(77) <-> (134)
+	String leftLabel= lr.getName();
+	String leftLabel= fLeftResource.getName();
+(78) <-> (135)
+	cc.setLeftLabel(leftLabel);
+	cc.setLeftLabel(leftLabel);
+(79) <-> (136)
+	cc.setLeftImage(CompareUIPlugin.getImage(lr));
+	cc.setLeftImage(CompareUIPlugin.getImage(fLeftResource));
+(81) <-> (138)
+	String rightLabel= rr.getName();
+	String rightLabel= fRightResource.getName();
+(82) <-> (139)
+	cc.setRightLabel(rightLabel);
+	cc.setRightLabel(rightLabel);
+(83) <-> (140)
+	cc.setRightImage(CompareUIPlugin.getImage(rr));
+	cc.setRightImage(CompareUIPlugin.getImage(fRightResource));
+(85) <-> (142)
+	StringBuffer title= new StringBuffer();
+	StringBuffer title= new StringBuffer();
+(86) <-> (143)
+	title.append("Compare (");
+	title.append("Compare (");
+(87) <-> (144)
+	if (threeWay) {
+	if (fThreeWay) {
+(88) <-> (76)
+	IResource ar= selection[0];
+	fAncestorResource= selection[0];
+(89) <-> (77)
+	ancestor= getStructure(ar);
+	fAncestor= getStructure(fAncestorResource);
+(90) <-> (145)
+	String ancestorLabel= ar.getName();
+	String ancestorLabel= fAncestorResource.getName();
+(91) <-> (146)
+	cc.setAncestorLabel(ancestorLabel);
+	cc.setAncestorLabel(ancestorLabel);
+(92) <-> (147)
+	cc.setAncestorImage(CompareUIPlugin.getImage(ar));
+	cc.setAncestorImage(CompareUIPlugin.getImage(fAncestorResource));
+(93) <-> (148)
+	title.append(ancestorLabel);
+	title.append(ancestorLabel);
+(94) <-> (149)
+	title.append("-");
+	title.append("-");
+(95) <-> (150)
+	}
+	}
+(96) <-> (151)
+	title.append(leftLabel);
+	title.append(leftLabel);
+(97) <-> (152)
+	title.append("-");
+	title.append("-");
+(98) <-> (153)
+	title.append(rightLabel);
+	title.append(rightLabel);
+(99) <-> (154)
+	title.append(")");
+	title.append(")");
+(100) <-> (155)
+	setTitle(title.toString());
+	setTitle(title.toString());
+(102) <-> (160)
+	Differencer d= new Differencer() {
+	Differencer d= new Differencer() {
+(103) <-> (161)
+	protected Object visit(Object parent, int description, Object ancestor, Object left, Object right) {
+	protected Object visit(Object parent, int description, Object ancestor, Object left, Object right) {
+(104) <-> (162)
+	return new MyDiffNode((IDiffContainer) parent, description, (ITypedElement)ancestor, (ITypedElement)left, (ITypedElement)right);
+	return new MyDiffNode((IDiffContainer) parent, description, (ITypedElement)ancestor, (ITypedElement)left, (ITypedElement)right);
+(105) <-> (163)
+	}
+	}
+(106) <-> (164)
+	};
+	};
+(108) <-> (166)
+	return d.findDifferences(threeWay, pm, null, ancestor, left, right);
+	return d.findDifferences(fThreeWay, pm, null, fAncestor, fLeft, fRight);
+(110) <-> (168)
+	} finally {
+	} finally {
+(111) <-> (169)
+	pm.done();
+	pm.done();
+(112) <-> (170)
+	}
+	}
+(113) <-> (171)
+	}
+	}
+(115) <-> (127)
+	/**
+	/**
+(116) <-> (107)
+	* Creates a <code>IStructureComparator</code> for the given input.
+	* Creates a <code>IStructureComparator</code> for the given input.
+(117) <-> (108)
+	* Returns <code>null</code> if no <code>IStructureComparator</code>
+	* Returns <code>null</code> if no <code>IStructureComparator</code>
+(118) <-> (109)
+	* can be found for the <code>IResource</code>.
+	* can be found for the <code>IResource</code>.
+(119) <-> (129)
+	*/
+	*/
+(120) <-> (111)
+	private IStructureComparator getStructure(IResource input) {
+	private IStructureComparator getStructure(IResource input) {
+(122) <-> (113)
+	if (input instanceof IContainer)
+	if (input instanceof IContainer)
+(123) <-> (114)
+	return new ResourceNode(input);
+	return new ResourceNode(input);
+(125) <-> (116)
+	if (input instanceof IFile) {
+	if (input instanceof IFile) {
+(126) <-> (117)
+	ResourceNode rn= new ResourceNode(input);
+	ResourceNode rn= new ResourceNode(input);
+(127) <-> (118)
+	IFile file= (IFile) input;
+	IFile file= (IFile) input;
+(128) <-> (119)
+	String type= normalizeCase(file.getFileExtension());
+	String type= normalizeCase(file.getFileExtension());
+(129) <-> (120)
+	if ("JAR".equals(type) || "ZIP".equals(type)) { // FIXME
+	if ("JAR".equals(type) || "ZIP".equals(type))
+(131) <-> (121)
+	return new ZipStructureCreator().getStructure(rn);
+	return new ZipStructureCreator().getStructure(rn);
+(139) <-> (123)
+	}
+	}
+(140) <-> (122)
+	return rn;
+	return rn;
+(141) <-> (104)
+	}
+	}
+(142) <-> (91)
+	return null;
+	return true;
+(143) <-> (102)
+	}
+	}
+(145) <-> (22)
+	private static final boolean NORMALIZE_CASE= true;
+	private static final boolean NORMALIZE_CASE= true;
+(147) <-> (173)
+	private static String normalizeCase(String s) {
+	private static String normalizeCase(String s) {
+(148) <-> (174)
+	if (NORMALIZE_CASE && s != null)
+	if (NORMALIZE_CASE && s != null)
+(149) <-> (175)
+	return s.toUpperCase();
+	return s.toUpperCase();
+(150) <-> (176)
+	return s;
+	return s;
+(151) <-> (177)
+	}
+	}
+(152) <-> (178)
+	}
+	}
+Number of lines in left file: 122
+Number of lines in right file: 144
+Number of lines matched: 111

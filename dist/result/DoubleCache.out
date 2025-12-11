@@ -1,0 +1,385 @@
+Diff: ./reference/dataset/DoubleCache_1.java ./reference/dataset/DoubleCache_2.java
+(1) <-> (1)
+	package org.eclipse.jdt.internal.compiler.codegen;
+	package org.eclipse.jdt.internal.compiler.codegen;
+(3) <-> (3)
+	public class DoubleCache {
+	public class DoubleCache {
+(4) <-> (4)
+	private double keyTable[];
+	private double keyTable[];
+(5) <-> (5)
+	private int valueTable[];
+	private int valueTable[];
+(6) <-> (6)
+	private int elementSize;
+	private int elementSize;
+(7) <-> (7)
+	/**
+	/**
+(8) <-> (8)
+	* Constructs a new, empty hashtable. A default capacity and
+	* Constructs a new, empty hashtable. A default capacity and
+(9) <-> (9)
+	* load factor is used. Note that the hashtable will automatically
+	* load factor is used. Note that the hashtable will automatically
+(10) <-> (10)
+	* grow when it gets full.
+	* grow when it gets full.
+(11) <-> (11)
+	*/
+	*/
+(12) <-> (12)
+	public DoubleCache() {
+	public DoubleCache() {
+(13) <-> (13)
+	this(13);
+	this(13);
+(14) <-> (14)
+	}
+	}
+(16) <-> (15)
+	/**
+	/**
+(17) <-> (16)
+	* Constructs a new, empty hashtable with the specified initial
+	* Constructs a new, empty hashtable with the specified initial
+(18) <-> (17)
+	* capacity.
+	* capacity.
+(19) <-> (18)
+	* @param initialCapacity int
+	* @param initialCapacity int
+(20) <-> (19)
+	* the initial number of buckets
+	* the initial number of buckets
+(21) <-> (20)
+	*/
+	*/
+(22) <-> (21)
+	public DoubleCache(int initialCapacity) {
+	public DoubleCache(int initialCapacity) {
+(23) <-> (22)
+	elementSize = 0;
+	elementSize = 0;
+(24) <-> (23)
+	keyTable = new double[initialCapacity];
+	keyTable = new double[initialCapacity];
+(25) <-> (24)
+	valueTable = new int[initialCapacity];
+	valueTable = new int[initialCapacity];
+(26) <-> (25)
+	}
+	}
+(28) <-> (26)
+	/**
+	/**
+(29) <-> (27)
+	* Clears the hash table so that it has no more elements in it.
+	* Clears the hash table so that it has no more elements in it.
+(30) <-> (28)
+	*/
+	*/
+(31) <-> (29)
+	public void clear() {
+	public void clear() {
+(32) <-> (30)
+	for (int i = keyTable.length; --i >= 0;) {
+	for (int i = keyTable.length; --i >= 0;) {
+(33) <-> (31)
+	keyTable[i] = 0.0;
+	keyTable[i] = 0.0;
+(34) <-> (32)
+	valueTable[i] = 0;
+	valueTable[i] = 0;
+(35) <-> (33)
+	}
+	}
+(36) <-> (34)
+	elementSize = 0;
+	elementSize = 0;
+(37) <-> (35)
+	}
+	}
+(39) <-> (36)
+	/** Returns true if the collection contains an element for the key.
+	/** Returns true if the collection contains an element for the key.
+(40) <-> (37)
+	*
+	*
+(41) <-> (38)
+	* @param key <CODE>double</CODE> the key that we are looking for
+	* @param key <CODE>double</CODE> the key that we are looking for
+(42) <-> (39)
+	* @return boolean
+	* @return boolean
+(43) <-> (40)
+	* @see ConstantPoolCache#contains
+	* @see ConstantPoolCache#contains
+(44) <-> (41)
+	*/
+	*/
+(45) <-> (42)
+	public boolean containsKey(double key) {
+	public boolean containsKey(double key) {
+(46) <-> (43)
+	if (key == 0.0) {
+	if (key == 0.0) {
+(47) <-> (44)
+	for (int i = 0, max = elementSize; i < max; i++) {
+	for (int i = 0, max = elementSize; i < max; i++) {
+(48) <-> (45)
+	if (keyTable[i] == 0.0) {
+	if (keyTable[i] == 0.0) {
+(49) <-> (46)
+	long value1 = Double.doubleToLongBits(key);
+	long value1 = Double.doubleToLongBits(key);
+(50) <-> (47)
+	long value2 = Double.doubleToLongBits(keyTable[i]);
+	long value2 = Double.doubleToLongBits(keyTable[i]);
+(51) <-> (48)
+	if (value1 == -9223372036854775808L && value2 == -9223372036854775808L)
+	if (value1 == -9223372036854775808L && value2 == -9223372036854775808L)
+(52) <-> (49)
+	return true;
+	return true;
+(53) <-> (50)
+	if (value1 == 0 && value2 == 0)
+	if (value1 == 0 && value2 == 0)
+(54) <-> (51)
+	return true;
+	return true;
+(55) <-> (52)
+	}
+	}
+(56) <-> (53)
+	}
+	}
+(57) <-> (54)
+	} else {
+	} else {
+(58) <-> (55)
+	for (int i = 0, max = elementSize; i < max; i++) {
+	for (int i = 0, max = elementSize; i < max; i++) {
+(59) <-> (56)
+	if (keyTable[i] == key) {
+	if (keyTable[i] == key) {
+(60) <-> (57)
+	return true;
+	return true;
+(61) <-> (58)
+	}
+	}
+(62) <-> (59)
+	}
+	}
+(63) <-> (60)
+	}
+	}
+(64) <-> (61)
+	return false;
+	return false;
+(65) <-> (62)
+	}
+	}
+(67) <-> (63)
+	/** Gets the object associated with the specified key in the
+	/** Gets the object associated with the specified key in the
+(68) <-> (64)
+	* hashtable.
+	* hashtable.
+(69) <-> (65)
+	* @param key <CODE>double</CODE> the specified key
+	* @param key <CODE>double</CODE> the specified key
+(70) <-> (66)
+	* @return int the element for the key or -1 if the key is not
+	* @return int the element for the key or -1 if the key is not
+(71) <-> (67)
+	* defined in the hash table.
+	* defined in the hash table.
+(72) <-> (68)
+	* @see ConstantPoolCache#put
+	* @see ConstantPoolCache#put
+(73) <-> (69)
+	*/
+	*/
+(74) <-> (70)
+	public int get(double key) {
+	public int get(double key) {
+(75) <-> (71)
+	if (key == 0.0) {
+	if (key == 0.0) {
+(76) <-> (72)
+	for (int i = 0, max = elementSize; i < max; i++) {
+	for (int i = 0, max = elementSize; i < max; i++) {
+(77) <-> (73)
+	if (keyTable[i] == 0.0) {
+	if (keyTable[i] == 0.0) {
+(78) <-> (74)
+	long value1 = Double.doubleToLongBits(key);
+	long value1 = Double.doubleToLongBits(key);
+(79) <-> (75)
+	long value2 = Double.doubleToLongBits(keyTable[i]);
+	long value2 = Double.doubleToLongBits(keyTable[i]);
+(80) <-> (76)
+	if (value1 == -9223372036854775808L && value2 == -9223372036854775808L)
+	if (value1 == -9223372036854775808L && value2 == -9223372036854775808L)
+(81) <-> (77)
+	return valueTable[i];
+	return valueTable[i];
+(82) <-> (78)
+	if (value1 == 0 && value2 == 0)
+	if (value1 == 0 && value2 == 0)
+(83) <-> (79)
+	return valueTable[i];
+	return valueTable[i];
+(84) <-> (80)
+	}
+	}
+(85) <-> (81)
+	}
+	}
+(86) <-> (82)
+	} else {
+	} else {
+(87) <-> (83)
+	for (int i = 0, max = elementSize; i < max; i++) {
+	for (int i = 0, max = elementSize; i < max; i++) {
+(88) <-> (84)
+	if (keyTable[i] == key) {
+	if (keyTable[i] == key) {
+(89) <-> (85)
+	return valueTable[i];
+	return valueTable[i];
+(90) <-> (86)
+	}
+	}
+(91) <-> (87)
+	}
+	}
+(92) <-> (88)
+	}
+	}
+(93) <-> (89)
+	return -1;
+	return -1;
+(94) <-> (90)
+	}
+	}
+(96) <-> (91)
+	/**
+	/**
+(97) <-> (92)
+	* Puts the specified element into the hashtable, using the specified
+	* Puts the specified element into the hashtable, using the specified
+(98) <-> (93)
+	* key. The element may be retrieved by doing a get() with the same key.
+	* key. The element may be retrieved by doing a get() with the same key.
+(99) <-> (94)
+	*
+	*
+(100) <-> (95)
+	* @param key <CODE>double</CODE> the specified key in the hashtable
+	* @param key <CODE>double</CODE> the specified key in the hashtable
+(101) <-> (96)
+	* @param value <CODE>int</CODE> the specified element
+	* @param value <CODE>int</CODE> the specified element
+(102) <-> (97)
+	* @return int value
+	* @return int value
+(103) <-> (98)
+	*/
+	*/
+(104) <-> (99)
+	public int put(double key, int value) {
+	public int put(double key, int value) {
+(105) <-> (100)
+	if (elementSize == keyTable.length) {
+	if (elementSize == keyTable.length) {
+(106) <-> (101)
+	// resize
+	// resize
+(119) <-> (104)
+	}
+	}
+(120) <-> (105)
+	keyTable[elementSize] = key;
+	keyTable[elementSize] = key;
+(121) <-> (106)
+	valueTable[elementSize] = value;
+	valueTable[elementSize] = value;
+(122) <-> (107)
+	elementSize++;
+	elementSize++;
+(123) <-> (108)
+	return value;
+	return value;
+(124) <-> (109)
+	}
+	}
+(126) <-> (110)
+	/**
+	/**
+(127) <-> (111)
+	* Converts to a rather lengthy String.
+	* Converts to a rather lengthy String.
+(128) <-> (112)
+	*
+	*
+(129) <-> (113)
+	* return String the ascii representation of the receiver
+	* return String the ascii representation of the receiver
+(130) <-> (114)
+	*/
+	*/
+(131) <-> (115)
+	public String toString() {
+	public String toString() {
+(132) <-> (116)
+	int max = elementSize;
+	int max = elementSize;
+(133) <-> (117)
+	StringBuffer buf = new StringBuffer();
+	StringBuffer buf = new StringBuffer();
+(134) <-> (118)
+	buf.append("{");
+	buf.append("{");
+(135) <-> (119)
+	for (int i = 0; i < max; ++i) {
+	for (int i = 0; i < max; ++i) {
+(136) <-> (120)
+	if ((keyTable[i] != 0) || ((keyTable[i] == 0) && (valueTable[i] != 0))) {
+	if ((keyTable[i] != 0) || ((keyTable[i] == 0) &&(valueTable[i] != 0))) {
+(137) <-> (121)
+	buf.append(keyTable[i]).append("->").append(valueTable[i]);
+	buf.append(keyTable[i]).append("->").append(valueTable[i]);
+(138) <-> (122)
+	}
+	}
+(139) <-> (123)
+	if (i < max) {
+	if (i < max) {
+(140) <-> (124)
+	buf.append(", ");
+	buf.append(", ");
+(141) <-> (125)
+	}
+	}
+(142) <-> (126)
+	}
+	}
+(143) <-> (127)
+	buf.append("}");
+	buf.append("}");
+(144) <-> (128)
+	return buf.toString();
+	return buf.toString();
+(145) <-> (129)
+	}
+	}
+(147) <-> (130)
+	}
+	}
+Number of lines in left file: 139
+Number of lines in right file: 129
+Number of lines matched: 127

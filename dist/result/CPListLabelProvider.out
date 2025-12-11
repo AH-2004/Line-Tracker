@@ -1,0 +1,472 @@
+Diff: ./reference/dataset/CPListLabelProvider_1.java ./reference/dataset/CPListLabelProvider_2.java
+(1) <-> (1)
+	/*
+	/*
+(2) <-> (2)
+	* (c) Copyright IBM Corp. 2000, 2001.
+	* (c) Copyright IBM Corp. 2000, 2001.
+(3) <-> (3)
+	* All Rights Reserved.
+	* All Rights Reserved.
+(4) <-> (4)
+	*/
+	*/
+(5) <-> (5)
+	package org.eclipse.jdt.internal.ui.wizards.buildpaths;
+	package org.eclipse.jdt.internal.ui.wizards.buildpaths;
+(7) <-> (26)
+	import org.eclipse.swt.graphics.Image;
+	import org.eclipse.jdt.ui.JavaElementImageDescriptor;
+(9) <-> (7)
+	import org.eclipse.core.resources.IFile;
+	import org.eclipse.core.resources.IFile;
+(10) <-> (8)
+	import org.eclipse.core.resources.IFolder;
+	import org.eclipse.core.resources.IFolder;
+(11) <-> (30)
+	import org.eclipse.core.resources.IProject;
+	import org.eclipse.jdt.internal.ui.viewsupport.ImageDescriptorRegistry;
+(12) <-> (9)
+	import org.eclipse.core.resources.IResource;
+	import org.eclipse.core.resources.IResource;
+(13) <-> (10)
+	import org.eclipse.core.runtime.IPath;
+	import org.eclipse.core.runtime.IPath;
+(15) <-> (15)
+	import org.eclipse.jface.resource.ImageRegistry;
+	import org.eclipse.jface.resource.ImageRegistry;
+(16) <-> (31)
+	import org.eclipse.jface.util.Assert;
+	import org.eclipse.jdt.internal.ui.viewsupport.ImageImageDescriptor;
+(17) <-> (16)
+	import org.eclipse.jface.viewers.LabelProvider;
+	import org.eclipse.jface.viewers.LabelProvider;
+(19) <-> (18)
+	import org.eclipse.ui.ISharedImages;
+	import org.eclipse.ui.ISharedImages;
+(20) <-> (19)
+	import org.eclipse.ui.IWorkbench;
+	import org.eclipse.ui.IWorkbench;
+(22) <-> (21)
+	import org.eclipse.jdt.core.IClasspathContainer;
+	import org.eclipse.jdt.core.IClasspathContainer;
+(23) <-> (22)
+	import org.eclipse.jdt.core.IClasspathEntry;
+	import org.eclipse.jdt.core.IClasspathEntry;
+(24) <-> (32)
+	import org.eclipse.jdt.core.IJavaProject;
+	import org.eclipse.jdt.internal.ui.viewsupport.JavaElementImageProvider;
+(25) <-> (23)
+	import org.eclipse.jdt.core.JavaCore;
+	import org.eclipse.jdt.core.JavaCore;
+(26) <-> (24)
+	import org.eclipse.jdt.core.JavaModelException;
+	import org.eclipse.jdt.core.JavaModelException;
+(28) <-> (28)
+	import org.eclipse.jdt.internal.ui.JavaPlugin;
+	import org.eclipse.jdt.internal.ui.JavaPlugin;
+(29) <-> (29)
+	import org.eclipse.jdt.internal.ui.JavaPluginImages;
+	import org.eclipse.jdt.internal.ui.JavaPluginImages;
+(30) <-> (33)
+	import org.eclipse.jdt.internal.ui.wizards.NewWizardMessages;
+	import org.eclipse.jdt.internal.ui.wizards.NewWizardMessages;
+(32) <-> (35)
+	class CPListLabelProvider extends LabelProvider {
+	class CPListLabelProvider extends LabelProvider {
+(34) <-> (37)
+	private String fNewLabel, fClassLabel, fCreateLabel;
+	private String fNewLabel, fClassLabel, fCreateLabel;
+(35) <-> (38)
+	private Image fJarIcon, fExtJarIcon, fJarWSrcIcon, fExtJarWSrcIcon;
+	private ImageDescriptor fJarIcon, fExtJarIcon, fJarWSrcIcon, fExtJarWSrcIcon;
+(36) <-> (39)
+	private Image fFolderImage, fProjectImage, fVariableImage, fContainerImage;
+	private ImageDescriptor fFolderImage, fProjectImage, fVariableImage, fContainerImage;
+(37) <-> (41)
+	private Image fMissingLibaryImage, fMissingVariableImage;
+	private ImageDescriptorRegistry fRegistry;
+(40) <-> (43)
+	public CPListLabelProvider() {
+	public CPListLabelProvider() {
+(41) <-> (44)
+	fNewLabel= NewWizardMessages.getString("CPListLabelProvider.new"); //$NON-NLS-1$
+	fNewLabel= NewWizardMessages.getString("CPListLabelProvider.new"); //$NON-NLS-1$
+(42) <-> (45)
+	fClassLabel= NewWizardMessages.getString("CPListLabelProvider.classcontainer"); //$NON-NLS-1$
+	fClassLabel= NewWizardMessages.getString("CPListLabelProvider.classcontainer"); //$NON-NLS-1$
+(43) <-> (46)
+	fCreateLabel= NewWizardMessages.getString("CPListLabelProvider.willbecreated"); //$NON-NLS-1$
+	fCreateLabel= NewWizardMessages.getString("CPListLabelProvider.willbecreated"); //$NON-NLS-1$
+(44) <-> (49)
+	ImageRegistry reg= JavaPlugin.getDefault().getImageRegistry();
+	fJarIcon= JavaPluginImages.DESC_OBJS_JAR;
+(46) <-> (50)
+	fJarIcon= reg.get(JavaPluginImages.IMG_OBJS_JAR);
+	fExtJarIcon= JavaPluginImages.DESC_OBJS_EXTJAR;
+(47) <-> (51)
+	fExtJarIcon= reg.get(JavaPluginImages.IMG_OBJS_EXTJAR);
+	fJarWSrcIcon= JavaPluginImages.DESC_OBJS_JAR_WSRC;
+(48) <-> (52)
+	fJarWSrcIcon= reg.get(JavaPluginImages.IMG_OBJS_JAR_WSRC);
+	fExtJarWSrcIcon= JavaPluginImages.DESC_OBJS_EXTJAR_WSRC;
+(49) <-> (53)
+	fExtJarWSrcIcon= reg.get(JavaPluginImages.IMG_OBJS_EXTJAR_WSRC);
+	fFolderImage= JavaPluginImages.DESC_OBJS_PACKFRAG_ROOT;
+(50) <-> (54)
+	fFolderImage= reg.get(JavaPluginImages.IMG_OBJS_PACKFRAG_ROOT);
+	fContainerImage= JavaPluginImages.DESC_OBJS_LIBRARY;
+(52) <-> (55)
+	fVariableImage= reg.get(JavaPluginImages.IMG_OBJS_ENV_VAR);
+	fVariableImage= JavaPluginImages.DESC_OBJS_ENV_VAR;
+(56) <-> (57)
+	IWorkbench workbench= JavaPlugin.getDefault().getWorkbench();
+	IWorkbench workbench= JavaPlugin.getDefault().getWorkbench();
+(57) <-> (58)
+	fProjectImage= workbench.getSharedImages().getImage(ISharedImages.IMG_OBJ_PROJECT);
+	fProjectImage= workbench.getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJ_PROJECT);
+(66) <-> (59)
+	}
+	}
+(68) <-> (61)
+	public String getText(Object element) {
+	public String getText(Object element) {
+(69) <-> (62)
+	if (element instanceof CPListElement) {
+	if (element instanceof CPListElement) {
+(70) <-> (63)
+	CPListElement cpentry= (CPListElement)element;
+	CPListElement cpentry= (CPListElement)element;
+(71) <-> (64)
+	IPath path= cpentry.getPath();
+	IPath path= cpentry.getPath();
+(72) <-> (65)
+	switch (cpentry.getEntryKind()) {
+	switch (cpentry.getEntryKind()) {
+(73) <-> (66)
+	case IClasspathEntry.CPE_LIBRARY: {
+	case IClasspathEntry.CPE_LIBRARY: {
+(74) <-> (67)
+	IResource resource= cpentry.getResource();
+	IResource resource= cpentry.getResource();
+(75) <-> (68)
+	if (resource instanceof IFolder) {
+	if (resource instanceof IFolder) {
+(76) <-> (69)
+	StringBuffer buf= new StringBuffer(path.makeRelative().toString());
+	StringBuffer buf= new StringBuffer(path.makeRelative().toString());
+(77) <-> (70)
+	buf.append(' ');
+	buf.append(' ');
+(78) <-> (71)
+	buf.append(fClassLabel);
+	buf.append(fClassLabel);
+(79) <-> (72)
+	if (!resource.exists()) {
+	if (!resource.exists()) {
+(80) <-> (73)
+	buf.append(' ');
+	buf.append(' ');
+(81) <-> (74)
+	if (cpentry.isMissing()) {
+	if (cpentry.isMissing()) {
+(82) <-> (75)
+	buf.append(fCreateLabel);
+	buf.append(fCreateLabel);
+(83) <-> (76)
+	} else {
+	} else {
+(84) <-> (77)
+	buf.append(fNewLabel);
+	buf.append(fNewLabel);
+(85) <-> (78)
+	}
+	}
+(86) <-> (79)
+	}
+	}
+(87) <-> (80)
+	return buf.toString();
+	return buf.toString();
+(88) <-> (81)
+	} else if (resource instanceof IFile) {
+	} else if (resource instanceof IFile) {
+(89) <-> (82)
+	if (ArchiveFileFilter.isArchivePath(path)) {
+	if (ArchiveFileFilter.isArchivePath(path)) {
+(90) <-> (83)
+	String[] args= new String[] { path.lastSegment(), path.removeLastSegments(1).makeRelative().toString() };
+	String[] args= new String[] { path.lastSegment(), path.removeLastSegments(1).makeRelative().toString() };
+(91) <-> (84)
+	return NewWizardMessages.getFormattedString("CPListLabelProvider.twopart", args); //$NON-NLS-1$
+	return NewWizardMessages.getFormattedString("CPListLabelProvider.twopart", args); //$NON-NLS-1$
+(92) <-> (85)
+	}
+	}
+(93) <-> (86)
+	} else {
+	} else {
+(94) <-> (87)
+	if (ArchiveFileFilter.isArchivePath(path)) {
+	if (ArchiveFileFilter.isArchivePath(path)) {
+(95) <-> (88)
+	String[] args= new String[] { path.lastSegment(), path.removeLastSegments(1).toOSString() };
+	String[] args= new String[] { path.lastSegment(), path.removeLastSegments(1).toOSString() };
+(96) <-> (89)
+	return NewWizardMessages.getFormattedString("CPListLabelProvider.twopart", args); //$NON-NLS-1$
+	return NewWizardMessages.getFormattedString("CPListLabelProvider.twopart", args); //$NON-NLS-1$
+(97) <-> (90)
+	}
+	}
+(98) <-> (91)
+	}
+	}
+(99) <-> (92)
+	// should not come here
+	// should not come here
+(100) <-> (93)
+	return path.makeRelative().toString();
+	return path.makeRelative().toString();
+(101) <-> (94)
+	}
+	}
+(102) <-> (95)
+	case IClasspathEntry.CPE_VARIABLE: {
+	case IClasspathEntry.CPE_VARIABLE: {
+(103) <-> (96)
+	String name= path.makeRelative().toString();
+	String name= path.makeRelative().toString();
+(104) <-> (97)
+	StringBuffer buf= new StringBuffer(name);
+	StringBuffer buf= new StringBuffer(name);
+(105) <-> (98)
+	IPath entryPath= JavaCore.getClasspathVariable(path.segment(0));
+	IPath entryPath= JavaCore.getClasspathVariable(path.segment(0));
+(106) <-> (99)
+	if (entryPath != null) {
+	if (entryPath != null) {
+(107) <-> (100)
+	buf.append(" - "); //$NON-NLS-1$
+	buf.append(" - "); //$NON-NLS-1$
+(108) <-> (101)
+	buf.append(entryPath.append(path.removeFirstSegments(1)).toOSString());
+	buf.append(entryPath.append(path.removeFirstSegments(1)).toOSString());
+(109) <-> (102)
+	}
+	}
+(110) <-> (103)
+	return buf.toString();
+	return buf.toString();
+(111) <-> (104)
+	}
+	}
+(112) <-> (105)
+	case IClasspathEntry.CPE_PROJECT:
+	case IClasspathEntry.CPE_PROJECT:
+(113) <-> (106)
+	return path.lastSegment();
+	return path.lastSegment();
+(114) <-> (107)
+	case IClasspathEntry.CPE_CONTAINER:
+	case IClasspathEntry.CPE_CONTAINER:
+(115) <-> (108)
+	try {
+	try {
+(116) <-> (109)
+	IClasspathContainer container= JavaCore.getClasspathContainer(cpentry.getPath(), cpentry.getJavaProject());
+	IClasspathContainer container= JavaCore.getClasspathContainer(cpentry.getPath(), cpentry.getJavaProject());
+(117) <-> (110)
+	if (container != null) {
+	if (container != null) {
+(118) <-> (111)
+	return container.getDescription();
+	return container.getDescription();
+(119) <-> (112)
+	}
+	}
+(120) <-> (113)
+	} catch (JavaModelException e) {
+	} catch (JavaModelException e) {
+(122) <-> (115)
+	}
+	}
+(123) <-> (116)
+	return path.toString();
+	return path.toString();
+(124) <-> (117)
+	case IClasspathEntry.CPE_SOURCE: {
+	case IClasspathEntry.CPE_SOURCE: {
+(125) <-> (118)
+	StringBuffer buf= new StringBuffer(path.makeRelative().toString());
+	StringBuffer buf= new StringBuffer(path.makeRelative().toString());
+(126) <-> (119)
+	IResource resource= cpentry.getResource();
+	IResource resource= cpentry.getResource();
+(127) <-> (120)
+	if (resource != null && !resource.exists()) {
+	if (resource != null && !resource.exists()) {
+(128) <-> (121)
+	buf.append(' ');
+	buf.append(' ');
+(129) <-> (122)
+	if (cpentry.isMissing()) {
+	if (cpentry.isMissing()) {
+(130) <-> (123)
+	buf.append(fCreateLabel);
+	buf.append(fCreateLabel);
+(131) <-> (124)
+	} else {
+	} else {
+(132) <-> (125)
+	buf.append(fNewLabel);
+	buf.append(fNewLabel);
+(133) <-> (126)
+	}
+	}
+(134) <-> (127)
+	}
+	}
+(135) <-> (128)
+	return buf.toString();
+	return buf.toString();
+(136) <-> (129)
+	}
+	}
+(137) <-> (130)
+	default:
+	default:
+(138) <-> (131)
+	// pass
+	// pass
+(139) <-> (132)
+	}
+	}
+(140) <-> (133)
+	}
+	}
+(141) <-> (134)
+	return super.getText(element);
+	return super.getText(element);
+(142) <-> (135)
+	}
+	}
+(144) <-> (169)
+	public Image getImage(Object element) {
+	public Image getImage(Object element) {
+(145) <-> (170)
+	if (element instanceof CPListElement) {
+	if (element instanceof CPListElement) {
+(146) <-> (171)
+	CPListElement cpentry= (CPListElement)element;
+	CPListElement cpentry= (CPListElement) element;
+(147) <-> (138)
+	switch (cpentry.getEntryKind()) {
+	switch (cpentry.getEntryKind()) {
+(148) <-> (139)
+	case IClasspathEntry.CPE_SOURCE:
+	case IClasspathEntry.CPE_SOURCE:
+(149) <-> (174)
+	if (!cpentry.isMissing()) {
+	if (cpentry.isMissing()) {
+(150) <-> (140)
+	return fFolderImage;
+	return fFolderImage;
+(154) <-> (141)
+	case IClasspathEntry.CPE_LIBRARY:
+	case IClasspathEntry.CPE_LIBRARY:
+(156) <-> (142)
+	IResource res= cpentry.getResource();
+	IResource res= cpentry.getResource();
+(157) <-> (143)
+	if (res == null) {
+	if (res == null) {
+(158) <-> (144)
+	if (cpentry.getSourceAttachmentPath() == null) {
+	if (cpentry.getSourceAttachmentPath() == null) {
+(159) <-> (145)
+	return fExtJarIcon;
+	return fExtJarIcon;
+(160) <-> (146)
+	} else {
+	} else {
+(161) <-> (147)
+	return fExtJarWSrcIcon;
+	return fExtJarWSrcIcon;
+(162) <-> (148)
+	}
+	}
+(163) <-> (149)
+	} else if (res instanceof IFile) {
+	} else if (res instanceof IFile) {
+(164) <-> (150)
+	if (cpentry.getSourceAttachmentPath() == null) {
+	if (cpentry.getSourceAttachmentPath() == null) {
+(165) <-> (151)
+	return fJarIcon;
+	return fJarIcon;
+(166) <-> (152)
+	} else {
+	} else {
+(167) <-> (153)
+	return fJarWSrcIcon;
+	return fJarWSrcIcon;
+(168) <-> (154)
+	}
+	}
+(169) <-> (155)
+	} else {
+	} else {
+(170) <-> (156)
+	return fFolderImage;
+	return fFolderImage;
+(171) <-> (157)
+	}
+	}
+(175) <-> (158)
+	case IClasspathEntry.CPE_PROJECT:
+	case IClasspathEntry.CPE_PROJECT:
+(177) <-> (159)
+	return fProjectImage;
+	return fProjectImage;
+(180) <-> (178)
+	}
+	}
+(181) <-> (160)
+	case IClasspathEntry.CPE_VARIABLE:
+	case IClasspathEntry.CPE_VARIABLE:
+(183) <-> (161)
+	return fVariableImage;
+	return fVariableImage;
+(186) <-> (176)
+	}
+	}
+(187) <-> (162)
+	case IClasspathEntry.CPE_CONTAINER:
+	case IClasspathEntry.CPE_CONTAINER:
+(189) <-> (163)
+	return fContainerImage;
+	return fContainerImage;
+(192) <-> (179)
+	}
+	}
+(193) <-> (164)
+	default:
+	default:
+(195) <-> (166)
+	}
+	}
+(196) <-> (167)
+	}
+	}
+(197) <-> (180)
+	return null;
+	return null;
+(198) <-> (181)
+	}
+	}
+(201) <-> (184)
+	}
+	}
+Number of lines in left file: 180
+Number of lines in right file: 165
+Number of lines matched: 156

@@ -1,0 +1,1927 @@
+Diff: ./reference/dataset/DialogCustomize_1.java ./reference/dataset/DialogCustomize_2.java
+(1) <-> (1)
+	/*
+	/*
+(2) <-> (2)
+	Copyright (c) 2000, 2001, 2002 IBM Corp.
+	Copyright (c) 2000, 2001, 2002 IBM Corp.
+(3) <-> (3)
+	All rights reserved. This program and the accompanying materials
+	All rights reserved. This program and the accompanying materials
+(4) <-> (4)
+	are made available under the terms of the Common Public License v1.0
+	are made available under the terms of the Common Public License v1.0
+(5) <-> (5)
+	which accompanies this distribution, and is available at
+	which accompanies this distribution, and is available at
+(6) <-> (6)
+	http://www.eclipse.org/legal/cpl-v10.html
+	http://www.eclipse.org/legal/cpl-v10.html
+(7) <-> (7)
+	Contributors:
+	Contributors:
+(8) <-> (8)
+	Sebastian Davids <sdavids@gmx.de> - Fix for bug 19346 - Dialog font should be
+	Sebastian Davids <sdavids@gmx.de> - Fix for bug 19346 - Dialog font should be
+(9) <-> (9)
+	activated and used by other components.
+	activated and used by other components.
+(10) <-> (10)
+	*/
+	*/
+(12) <-> (12)
+	package org.eclipse.ui.internal.actions.keybindings;
+	package org.eclipse.ui.internal.actions.keybindings;
+(14) <-> (14)
+	import java.text.Collator;
+	import java.text.Collator;
+(15) <-> (15)
+	import java.util.ArrayList;
+	import java.util.ArrayList;
+(16) <-> (16)
+	import java.util.Arrays;
+	import java.util.Arrays;
+(17) <-> (17)
+	import java.util.Collection;
+	import java.util.Collection;
+(18) <-> (18)
+	import java.util.Collections;
+	import java.util.Collections;
+(19) <-> (19)
+	import java.util.HashMap;
+	import java.util.HashMap;
+(20) <-> (21)
+	import java.util.Iterator;
+	import java.util.Iterator;
+(21) <-> (22)
+	import java.util.List;
+	import java.util.List;
+(22) <-> (23)
+	import java.util.Map;
+	import java.util.Map;
+(23) <-> (24)
+	import java.util.Set;
+	import java.util.Set;
+(24) <-> (25)
+	import java.util.SortedMap;
+	import java.util.SortedMap;
+(25) <-> (26)
+	import java.util.SortedSet;
+	import java.util.SortedSet;
+(26) <-> (27)
+	import java.util.TreeMap;
+	import java.util.TreeMap;
+(27) <-> (28)
+	import java.util.TreeSet;
+	import java.util.TreeSet;
+(29) <-> (30)
+	import org.eclipse.jface.dialogs.Dialog;
+	import org.eclipse.jface.dialogs.Dialog;
+(30) <-> (32)
+	import org.eclipse.swt.SWT;
+	import org.eclipse.swt.SWT;
+(31) <-> (33)
+	import org.eclipse.swt.events.ModifyEvent;
+	import org.eclipse.swt.events.ModifyEvent;
+(32) <-> (34)
+	import org.eclipse.swt.events.ModifyListener;
+	import org.eclipse.swt.events.ModifyListener;
+(33) <-> (37)
+	import org.eclipse.swt.events.SelectionAdapter;
+	import org.eclipse.swt.events.SelectionAdapter;
+(34) <-> (38)
+	import org.eclipse.swt.events.SelectionEvent;
+	import org.eclipse.swt.events.SelectionEvent;
+(35) <-> (40)
+	import org.eclipse.swt.graphics.Font;
+	import org.eclipse.swt.graphics.Font;
+(36) <-> (41)
+	import org.eclipse.swt.graphics.Image;
+	import org.eclipse.swt.graphics.Image;
+(37) <-> (43)
+	import org.eclipse.swt.layout.GridData;
+	import org.eclipse.swt.layout.GridData;
+(38) <-> (44)
+	import org.eclipse.swt.layout.GridLayout;
+	import org.eclipse.swt.layout.GridLayout;
+(39) <-> (45)
+	import org.eclipse.swt.widgets.Button;
+	import org.eclipse.swt.widgets.Button;
+(40) <-> (46)
+	import org.eclipse.swt.widgets.Combo;
+	import org.eclipse.swt.widgets.Combo;
+(41) <-> (47)
+	import org.eclipse.swt.widgets.Composite;
+	import org.eclipse.swt.widgets.Composite;
+(42) <-> (48)
+	import org.eclipse.swt.widgets.Control;
+	import org.eclipse.swt.widgets.Control;
+(43) <-> (49)
+	import org.eclipse.swt.widgets.Group;
+	import org.eclipse.swt.widgets.Group;
+(44) <-> (50)
+	import org.eclipse.swt.widgets.Label;
+	import org.eclipse.swt.widgets.Label;
+(45) <-> (51)
+	import org.eclipse.swt.widgets.Shell;
+	import org.eclipse.swt.widgets.Shell;
+(46) <-> (52)
+	import org.eclipse.swt.widgets.Table;
+	import org.eclipse.swt.widgets.Table;
+(47) <-> (53)
+	import org.eclipse.swt.widgets.TableColumn;
+	import org.eclipse.swt.widgets.TableColumn;
+(48) <-> (54)
+	import org.eclipse.swt.widgets.TableItem;
+	import org.eclipse.swt.widgets.TableItem;
+(49) <-> (55)
+	import org.eclipse.swt.widgets.Text;
+	import org.eclipse.swt.widgets.Text;
+(50) <-> (56)
+	import org.eclipse.ui.internal.actions.Action;
+	import org.eclipse.ui.internal.actions.Action;
+(51) <-> (57)
+	import org.eclipse.ui.internal.actions.Util;
+	import org.eclipse.ui.internal.actions.Util;
+(53) <-> (59)
+	final class DialogCustomize extends Dialog {
+	final class DialogCustomize extends Dialog {
+(55) <-> (66)
+	private final static int DOUBLE_SPACE = 16;
+	private final static int DIFFERENCE_NONE = 3;
+(56) <-> (73)
+	private final static int HALF_SPACE = 4;
+	private final static int SPACE = 8;
+(57) <-> (76)
+	private final static int SPACE = 8;
+	private final class ActionRecord {
+(58) <-> (61)
+	private final static String ACTION_CONFLICT = Messages.getString("DialogCustomize.ActionConflict"); //$NON-NLS-1$
+	private final static String ACTION_CONFLICT = Messages.getString("DialogCustomize.ActionConflict"); //$NON-NLS-1$
+(59) <-> (62)
+	private final static String ACTION_UNDEFINED = Messages.getString("DialogCustomize.ActionUndefined"); //$NON-NLS-1$
+	private final static String ACTION_UNDEFINED = Messages.getString("DialogCustomize.ActionUndefined"); //$NON-NLS-1$
+(60) <-> (74)
+	private final static String ZERO_LENGTH_STRING = ""; //$NON-NLS-1$
+	private final static String ZERO_LENGTH_STRING = ""; //$NON-NLS-1$
+(62) <-> (103)
+	private final class Record {
+	private final class KeySequenceRecord {
+(64) <-> (80)
+	String scopeId;
+	String scopeId;
+(65) <-> (81)
+	String configurationId;
+	String configurationId;
+(67) <-> (100)
+	}
+	}
+(69) <-> (128)
+	private String defaultConfigurationId;
+	private String defaultConfigurationId;
+(70) <-> (129)
+	private String defaultScopeId;
+	private String defaultScopeId;
+(71) <-> (130)
+	private SortedSet preferenceBindingSet;
+	private SortedSet preferenceBindingSet;
+(73) <-> (132)
+	private KeyManager keyManager;
+	private KeyManager keyManager;
+(74) <-> (133)
+	private KeyMachine keyMachine;
+	private KeyMachine keyMachine;
+(75) <-> (134)
+	private SortedMap registryActionMap;
+	private SortedMap registryActionMap;
+(76) <-> (135)
+	private SortedSet registryBindingSet;
+	private SortedSet registryBindingSet;
+(77) <-> (136)
+	private SortedMap registryConfigurationMap;
+	private SortedMap registryConfigurationMap;
+(78) <-> (137)
+	private SortedMap registryScopeMap;
+	private SortedMap registryScopeMap;
+(80) <-> (139)
+	private List actions;
+	private List actions;
+(81) <-> (140)
+	private List configurations;
+	private List configurations;
+(82) <-> (141)
+	private List scopes;
+	private List scopes;
+(84) <-> (143)
+	private String[] actionNames;
+	private String[] actionNames;
+(85) <-> (144)
+	private String[] configurationNames;
+	private String[] configurationNames;
+(86) <-> (145)
+	private String[] scopeNames;
+	private String[] scopeNames;
+(88) <-> (163)
+	private Button buttonCustom;
+	private Button buttonCustom;
+(89) <-> (161)
+	private Button buttonDefault;
+	private Button buttonDefault;
+(90) <-> (159)
+	private Combo comboConfiguration;
+	private Combo comboConfiguration;
+(91) <-> (164)
+	private Combo comboCustom;
+	private Combo comboCustom;
+(92) <-> (152)
+	private Combo comboKeySequence;
+	private Combo comboKeySequence;
+(93) <-> (157)
+	private Combo comboScope;
+	private Combo comboScope;
+(94) <-> (158)
+	private Label labelConfiguration;
+	private Label labelConfiguration;
+(95) <-> (872)
+	private Label labelKeySequence;
+	selectedTableKeySequence();
+(96) <-> (160)
+	private Label labelPromptImage;
+	private Group groupAction;
+(97) <-> (155)
+	private Label labelPromptText;
+	private Group groupState;
+(98) <-> (156)
+	private Label labelScope;
+	private Label labelScope;
+(99) <-> (153)
+	private Table table;
+	private Table tableKeySequence;
+(100) <-> (162)
+	private Text textDefault;
+	private Text textDefault;
+(102) <-> (166)
+	private SortedMap tree;
+	private SortedMap tree;
+(103) <-> (167)
+	private Map nameToKeySequenceMap;
+	private Map nameToKeySequenceMap;
+(104) <-> (169)
+	private List records = new ArrayList();
+	private List keySequenceRecords = new ArrayList();
+(106) <-> (171)
+	public DialogCustomize(Shell parentShell, String defaultConfigurationId, String defaultScopeId, SortedSet preferenceBindingSet)
+	public DialogCustomize(Shell parentShell, String defaultConfigurationId, String defaultScopeId, SortedSet preferenceBindingSet)
+(107) <-> (172)
+	throws IllegalArgumentException {
+	throws IllegalArgumentException {
+(108) <-> (173)
+	super(parentShell);
+	super(parentShell);
+(109) <-> (175)
+	if (defaultConfigurationId == null || defaultScopeId == null || preferenceBindingSet == null)
+	if (defaultConfigurationId == null || defaultScopeId == null || preferenceBindingSet == null)
+(110) <-> (176)
+	throw new IllegalArgumentException();
+	throw new IllegalArgumentException();
+(112) <-> (178)
+	this.defaultConfigurationId = defaultConfigurationId;
+	this.defaultConfigurationId = defaultConfigurationId;
+(113) <-> (179)
+	this.defaultScopeId = defaultScopeId;
+	this.defaultScopeId = defaultScopeId;
+(114) <-> (180)
+	preferenceBindingSet = new TreeSet(preferenceBindingSet);
+	preferenceBindingSet = new TreeSet(preferenceBindingSet);
+(115) <-> (181)
+	Iterator iterator = preferenceBindingSet.iterator();
+	Iterator iterator = preferenceBindingSet.iterator();
+(117) <-> (183)
+	while (iterator.hasNext())
+	while (iterator.hasNext())
+(118) <-> (184)
+	if (!(iterator.next() instanceof Binding))
+	if (!(iterator.next() instanceof Binding))
+(119) <-> (185)
+	throw new IllegalArgumentException();
+	throw new IllegalArgumentException();
+(121) <-> (187)
+	this.preferenceBindingSet = preferenceBindingSet;
+	this.preferenceBindingSet = preferenceBindingSet;
+(123) <-> (189)
+	keyManager = KeyManager.getInstance();
+	keyManager = KeyManager.getInstance();
+(124) <-> (190)
+	keyMachine = keyManager.getKeyMachine();
+	keyMachine = keyManager.getKeyMachine();
+(126) <-> (192)
+	registryActionMap = org.eclipse.ui.internal.actions.Registry.getInstance().getActionMap();
+	registryActionMap = org.eclipse.ui.internal.actions.Registry.getInstance().getActionMap();
+(127) <-> (193)
+	actions = new ArrayList();
+	actions = new ArrayList();
+(128) <-> (194)
+	actions.addAll(registryActionMap.values());
+	actions.addAll(registryActionMap.values());
+(129) <-> (195)
+	Collections.sort(actions, Action.nameComparator());
+	Collections.sort(actions, Action.nameComparator());
+(131) <-> (197)
+	registryBindingSet = keyManager.getRegistryBindingSet();
+	registryBindingSet = keyManager.getRegistryBindingSet();
+(133) <-> (199)
+	registryConfigurationMap = keyManager.getRegistryConfigurationMap();
+	registryConfigurationMap = keyManager.getRegistryConfigurationMap();
+(134) <-> (200)
+	configurations = new ArrayList();
+	configurations = new ArrayList();
+(135) <-> (201)
+	configurations.addAll(registryConfigurationMap.values());
+	configurations.addAll(registryConfigurationMap.values());
+(136) <-> (202)
+	Collections.sort(configurations, Configuration.nameComparator());
+	Collections.sort(configurations, Configuration.nameComparator());
+(138) <-> (204)
+	registryScopeMap = keyManager.getRegistryScopeMap();
+	registryScopeMap = keyManager.getRegistryScopeMap();
+(139) <-> (205)
+	scopes = new ArrayList();
+	scopes = new ArrayList();
+(140) <-> (206)
+	scopes.addAll(registryScopeMap.values());
+	scopes.addAll(registryScopeMap.values());
+(141) <-> (207)
+	Collections.sort(scopes, Scope.nameComparator());
+	Collections.sort(scopes, Scope.nameComparator());
+(143) <-> (209)
+	actionNames = new String[1 + actions.size()];
+	actionNames = new String[1 + actions.size()];
+(144) <-> (210)
+	actionNames[0] = ACTION_UNDEFINED;
+	actionNames[0] = ACTION_UNDEFINED;
+(146) <-> (212)
+	for (int i = 0; i < actions.size(); i++)
+	for (int i = 0; i < actions.size(); i++)
+(147) <-> (213)
+	actionNames[i + 1] = ((Action) actions.get(i)).getLabel().getName();
+	actionNames[i + 1] = ((Action) actions.get(i)).getLabel().getName();
+(149) <-> (215)
+	configurationNames = new String[configurations.size()];
+	configurationNames = new String[configurations.size()];
+(151) <-> (217)
+	for (int i = 0; i < configurations.size(); i++)
+	for (int i = 0; i < configurations.size(); i++)
+(152) <-> (218)
+	configurationNames[i] = ((Configuration) configurations.get(i)).getLabel().getName();
+	configurationNames[i] = ((Configuration) configurations.get(i)).getLabel().getName();
+(154) <-> (220)
+	scopeNames = new String[scopes.size()];
+	scopeNames = new String[scopes.size()];
+(156) <-> (222)
+	for (int i = 0; i < scopes.size(); i++)
+	for (int i = 0; i < scopes.size(); i++)
+(157) <-> (223)
+	scopeNames[i] = ((Scope) scopes.get(i)).getLabel().getName();
+	scopeNames[i] = ((Scope) scopes.get(i)).getLabel().getName();
+(159) <-> (225)
+	tree = new TreeMap();
+	tree = new TreeMap();
+(160) <-> (226)
+	SortedSet bindingSet = new TreeSet();
+	SortedSet bindingSet = new TreeSet();
+(161) <-> (227)
+	bindingSet.addAll(preferenceBindingSet);
+	bindingSet.addAll(preferenceBindingSet);
+(162) <-> (228)
+	bindingSet.addAll(registryBindingSet);
+	bindingSet.addAll(registryBindingSet);
+(163) <-> (229)
+	iterator = bindingSet.iterator();
+	iterator = bindingSet.iterator();
+(165) <-> (231)
+	while (iterator.hasNext()) {
+	while (iterator.hasNext()) {
+(166) <-> (232)
+	Binding binding = (Binding) iterator.next();
+	Binding binding = (Binding) iterator.next();
+(167) <-> (233)
+	set(tree, binding, false);
+	set(tree, binding, false);
+(168) <-> (234)
+	}
+	}
+(170) <-> (236)
+	nameToKeySequenceMap = new HashMap();
+	nameToKeySequenceMap = new HashMap();
+(171) <-> (237)
+	Collection keySequences = tree.keySet();
+	Collection keySequences = tree.keySet();
+(172) <-> (238)
+	iterator = keySequences.iterator();
+	iterator = keySequences.iterator();
+(174) <-> (240)
+	while (iterator.hasNext()) {
+	while (iterator.hasNext()) {
+(175) <-> (241)
+	KeySequence keySequence = (KeySequence) iterator.next();
+	KeySequence keySequence = (KeySequence) iterator.next();
+(176) <-> (242)
+	String name = keyManager.getTextForKeySequence(keySequence);
+	String name = keyManager.getTextForKeySequence(keySequence);
+(178) <-> (244)
+	if (!nameToKeySequenceMap.containsKey(name))
+	if (!nameToKeySequenceMap.containsKey(name))
+(179) <-> (245)
+	nameToKeySequenceMap.put(name, keySequence);
+	nameToKeySequenceMap.put(name, keySequence);
+(180) <-> (246)
+	}
+	}
+(181) <-> (249)
+	}
+	}
+(183) <-> (251)
+	public SortedSet getPreferenceBindingSet() {
+	public SortedSet getPreferenceBindingSet() {
+(184) <-> (252)
+	return Collections.unmodifiableSortedSet(preferenceBindingSet);
+	return Collections.unmodifiableSortedSet(preferenceBindingSet);
+(185) <-> (253)
+	}
+	}
+(187) <-> (255)
+	protected void configureShell(Shell shell) {
+	protected void configureShell(Shell shell) {
+(188) <-> (256)
+	super.configureShell(shell);
+	super.configureShell(shell);
+(189) <-> (684)
+	shell.setText(Messages.getString("DialogCustomize.Title"));
+	buttonDetails.setText(Messages.getString("DialogCustomize.ButtonDetails")); //$NON-NLS-1$
+(190) <-> (258)
+	}
+	}
+(192) <-> (260)
+	protected Control createDialogArea(Composite parent) {
+	protected Control createDialogArea(Composite parent) {
+(193) <-> (261)
+	Composite composite = (Composite) super.createDialogArea(parent);
+	Composite composite = (Composite) super.createDialogArea(parent);
+(194) <-> (262)
+	createUI(composite);
+	createUI(composite);
+(195) <-> (263)
+	return composite;
+	return composite;
+(196) <-> (264)
+	}
+	}
+(198) <-> (266)
+	protected void okPressed() {
+	protected void okPressed() {
+(199) <-> (267)
+	preferenceBindingSet = solve(tree);
+	preferenceBindingSet = solve(tree);
+(200) <-> (268)
+	super.okPressed();
+	super.okPressed();
+(201) <-> (269)
+	}
+	}
+(203) <-> (980)
+	private void clear(SortedMap tree, KeySequence keySequence, String scope, String configuration) {
+	private void clear(SortedMap tree, KeySequence keySequence, String scope, String configuration) {
+(204) <-> (981)
+	Map scopeMap = (Map) tree.get(keySequence);
+	Map scopeMap = (Map) tree.get(keySequence);
+(206) <-> (283)
+	if (scopeMap != null) {
+	if (scopeMap != null) {
+(207) <-> (984)
+	Map configurationMap = (Map) scopeMap.get(scope);
+	Map configurationMap = (Map) scopeMap.get(scope);
+(209) <-> (989)
+	if (configurationMap != null) {
+	if (pluginMap != null) {
+(210) <-> (993)
+	Map pluginMap = (Map) configurationMap.get(configuration);
+	configurationMap.remove(configuration);
+(212) <-> (992)
+	if (pluginMap != null) {
+	if (pluginMap.isEmpty()) {
+(213) <-> (990)
+	pluginMap.remove(null);
+	pluginMap.remove(null);
+(215) <-> (998)
+	if (pluginMap.isEmpty()) {
+	if (scopeMap.isEmpty()) {
+(216) <-> (1236)
+	configurationMap.remove(configuration);
+	setConfigurationId(actionRecord.configurationId);
+(218) <-> (995)
+	if (configurationMap.isEmpty()) {
+	if (configurationMap.isEmpty()) {
+(219) <-> (996)
+	scopeMap.remove(scope);
+	scopeMap.remove(scope);
+(221) <-> (1171)
+	if (scopeMap.isEmpty()) {
+	if (!customSet.isEmpty()) {
+(222) <-> (999)
+	tree.remove(keySequence);
+	tree.remove(keySequence);
+(223) <-> (1248)
+	}
+	}
+(224) <-> (1187)
+	}
+	}
+(225) <-> (1164)
+	}
+	}
+(226) <-> (1163)
+	}
+	}
+(227) <-> (1306)
+	}
+	}
+(228) <-> (310)
+	}
+	}
+(229) <-> (311)
+	}
+	}
+(231) <-> (1008)
+	private void set(SortedMap tree, Binding binding, boolean consolidate) {
+	private void set(SortedMap tree, Binding binding, boolean consolidate) {
+(232) <-> (1009)
+	Map scopeMap = (Map) tree.get(binding.getKeySequence());
+	Map scopeMap = (Map) tree.get(binding.getKeySequence());
+(234) <-> (1094)
+	if (scopeMap == null) {
+	if (scopeId != null)
+(235) <-> (1012)
+	scopeMap = new TreeMap();
+	scopeMap = new TreeMap();
+(236) <-> (1013)
+	tree.put(binding.getKeySequence(), scopeMap);
+	tree.put(binding.getKeySequence(), scopeMap);
+(237) <-> (312)
+	}
+	}
+(239) <-> (1016)
+	Map configurationMap = (Map) scopeMap.get(binding.getScope());
+	Map configurationMap = (Map) scopeMap.get(binding.getScope());
+(241) <-> (1018)
+	if (configurationMap == null) {
+	if (configurationMap == null) {
+(242) <-> (1019)
+	configurationMap = new TreeMap();
+	configurationMap = new TreeMap();
+(243) <-> (1020)
+	scopeMap.put(binding.getScope(), configurationMap);
+	scopeMap.put(binding.getScope(), configurationMap);
+(244) <-> (313)
+	}
+	}
+(246) <-> (1023)
+	Map pluginMap = (Map) configurationMap.get(binding.getConfiguration());
+	Map pluginMap = (Map) configurationMap.get(binding.getConfiguration());
+(248) <-> (1025)
+	if (pluginMap == null) {
+	if (pluginMap == null) {
+(249) <-> (1026)
+	pluginMap = new HashMap();
+	pluginMap = new HashMap();
+(250) <-> (1027)
+	configurationMap.put(binding.getConfiguration(), pluginMap);
+	configurationMap.put(binding.getConfiguration(), pluginMap);
+(251) <-> (314)
+	}
+	}
+(253) <-> (1030)
+	Map actionMap = consolidate ? null : (Map) pluginMap.get(binding.getPlugin());
+	Map actionMap = consolidate ? null : (Map) pluginMap.get(binding.getPlugin());
+(255) <-> (1032)
+	if (actionMap == null) {
+	if (actionMap == null) {
+(256) <-> (1033)
+	actionMap = new HashMap();
+	actionMap = new HashMap();
+(257) <-> (1034)
+	pluginMap.put(binding.getPlugin(), actionMap);
+	pluginMap.put(binding.getPlugin(), actionMap);
+(258) <-> (315)
+	}
+	}
+(260) <-> (1037)
+	Set bindingSet = (Set) actionMap.get(binding.getAction());
+	Set bindingSet = (Set) actionMap.get(binding.getAction());
+(262) <-> (1039)
+	if (bindingSet == null) {
+	if (bindingSet == null) {
+(263) <-> (1040)
+	bindingSet = new TreeSet();
+	bindingSet = new TreeSet();
+(264) <-> (1041)
+	actionMap.put(binding.getAction(), bindingSet);
+	actionMap.put(binding.getAction(), bindingSet);
+(265) <-> (316)
+	}
+	}
+(267) <-> (1044)
+	if (consolidate)
+	if (consolidate)
+(268) <-> (1045)
+	bindingSet.clear();
+	bindingSet.clear();
+(270) <-> (1047)
+	bindingSet.add(binding);
+	bindingSet.add(binding);
+(271) <-> (317)
+	}
+	}
+(273) <-> (1050)
+	private SortedSet solve(SortedMap tree) {
+	private SortedSet solve(SortedMap tree) {
+(274) <-> (1051)
+	SortedSet bindingSet = new TreeSet();
+	SortedSet bindingSet = new TreeSet();
+(275) <-> (1052)
+	Iterator iterator = tree.values().iterator();
+	Iterator iterator = tree.values().iterator();
+(277) <-> (329)
+	while (iterator.hasNext()) {
+	while (iterator.hasNext()) {
+(278) <-> (1055)
+	Map scopeMap = (Map) iterator.next();
+	Map scopeMap = (Map) iterator.next();
+(279) <-> (1056)
+	Iterator iterator2 = scopeMap.values().iterator();
+	Iterator iterator2 = scopeMap.values().iterator();
+(281) <-> (335)
+	while (iterator2.hasNext()) {
+	while (iterator2.hasNext()) {
+(282) <-> (1059)
+	Map configurationMap = (Map) iterator2.next();
+	Map configurationMap = (Map) iterator2.next();
+(283) <-> (1060)
+	Iterator iterator3 = configurationMap.values().iterator();
+	Iterator iterator3 = configurationMap.values().iterator();
+(285) <-> (1062)
+	while (iterator3.hasNext()) {
+	while (iterator3.hasNext()) {
+(286) <-> (1063)
+	Map pluginMap = (Map) iterator3.next();
+	Map pluginMap = (Map) iterator3.next();
+(287) <-> (1064)
+	Map actionMap = (Map) pluginMap.get(null);
+	Map actionMap = (Map) pluginMap.get(null);
+(289) <-> (1066)
+	if (actionMap != null) {
+	if (actionMap != null) {
+(290) <-> (1067)
+	Iterator iterator4 = actionMap.values().iterator();
+	Iterator iterator4 = actionMap.values().iterator();
+(292) <-> (1069)
+	while (iterator4.hasNext())
+	while (iterator4.hasNext())
+(293) <-> (1070)
+	bindingSet.addAll((Set) iterator4.next());
+	bindingSet.addAll((Set) iterator4.next());
+(294) <-> (1239)
+	}
+	}
+(295) <-> (1206)
+	}
+	}
+(296) <-> (1188)
+	}
+	}
+(297) <-> (1209)
+	}
+	}
+(299) <-> (1076)
+	return bindingSet;
+	return bindingSet;
+(300) <-> (1302)
+	}
+	}
+(303) <-> (1105)
+	private String getActionId() {
+	private String getConfigurationId() {
+(304) <-> (1335)
+	int selection = comboCustom.getSelectionIndex();
+	int selection = comboCustom.getSelectionIndex();
+(306) <-> (1337)
+	if (selection == 0)
+	if (selection < 0)
+(307) <-> (930)
+	return null;
+	return null;
+(308) <-> (1155)
+	else {
+	else {
+(309) <-> (1203)
+	selection--;
+	if (selection > 0) {
+(311) <-> (1200)
+	if (selection >= 0 && selection < actions.size()) {
+	if (selection >= 0 && selection <= actions.size() && tree != null) {
+(312) <-> (1204)
+	Action action = (Action) actions.get(selection);
+	Action action = (Action) actions.get(selection - 1);
+(313) <-> (1205)
+	return action.getLabel().getId();
+	actionId = action.getLabel().getId();
+(314) <-> (1244)
+	}
+	}
+(315) <-> (1310)
+	}
+	}
+(317) <-> (1296)
+	return null;
+	return;
+(318) <-> (347)
+	}
+	}
+(320) <-> (1106)
+	private String getConfigurationId() {
+	int selection = comboConfiguration.getSelectionIndex();
+(321) <-> (1198)
+	int selection = comboConfiguration.getSelectionIndex();
+	int selection = comboAction.getSelectionIndex();
+(323) <-> (1108)
+	if (selection >= 0 && selection < configurations.size()) {
+	if (selection >= 0 && selection < configurations.size()) {
+(324) <-> (1109)
+	Configuration configuration = (Configuration) configurations.get(selection);
+	Configuration configuration = (Configuration) configurations.get(selection);
+(325) <-> (1110)
+	return configuration.getLabel().getId();
+	return configuration.getLabel().getId();
+(326) <-> (348)
+	}
+	}
+(328) <-> (1113)
+	return null;
+	return null;
+(329) <-> (349)
+	}
+	}
+(331) <-> (1190)
+	private String[] getKeySequences() {
+	private String[] getKeySequences() {
+(332) <-> (1191)
+	String[] items = (String[]) nameToKeySequenceMap.keySet().toArray(new String[nameToKeySequenceMap.size()]);
+	String[] items = (String[]) nameToKeySequenceMap.keySet().toArray(new String[nameToKeySequenceMap.size()]);
+(333) <-> (1192)
+	Arrays.sort(items, Collator.getInstance());
+	Arrays.sort(items, Collator.getInstance());
+(334) <-> (1193)
+	return items;
+	return items;
+(335) <-> (350)
+	}
+	}
+(337) <-> (1196)
+	private String getScopeId() {
+	private void selectedComboAction() {
+(338) <-> (1338)
+	int selection = comboScope.getSelectionIndex();
+	comboCustom.select(comboAction.getSelectionIndex());
+(340) <-> (1082)
+	if (selection >= 0 && selection < scopes.size()) {
+	if (selection >= 0 && selection < scopes.size()) {
+(341) <-> (1083)
+	Scope scope = (Scope) scopes.get(selection);
+	Scope scope = (Scope) scopes.get(selection);
+(342) <-> (1084)
+	return scope.getLabel().getId();
+	return scope.getLabel().getId();
+(343) <-> (351)
+	}
+	}
+(345) <-> (1087)
+	return null;
+	return null;
+(346) <-> (352)
+	}
+	}
+(348) <-> (1334)
+	private void change(boolean custom) {
+	private void change(boolean custom) {
+(349) <-> (1340)
+	KeySequence keySequence = null;
+	KeySequence keySequence = null;
+(350) <-> (1341)
+	String name = comboKeySequence.getText();
+	String name = comboKeySequence.getText();
+(352) <-> (1343)
+	if (name != null || name.length() > 0) {
+	if (name != null || name.length() > 0) {
+(353) <-> (1344)
+	keySequence = (KeySequence) nameToKeySequenceMap.get(name);
+	keySequence = (KeySequence) nameToKeySequenceMap.get(name);
+(355) <-> (1346)
+	if (keySequence == null)
+	if (keySequence == null)
+(356) <-> (1347)
+	keySequence = KeyManager.parseKeySequenceStrict(name);
+	keySequence = KeyManager.parseKeySequenceStrict(name);
+(357) <-> (370)
+	}
+	}
+(359) <-> (1316)
+	if (keySequence != null) {
+	if (keySequenceRecord != null) {
+(360) <-> (1262)
+	String scopeId = getScopeId();
+	String scopeId = getScopeId();
+(361) <-> (1263)
+	String configurationId = getConfigurationId();
+	String configurationId = getConfigurationId();
+(364) <-> (1313)
+	clear(tree, keySequence, scopeId, configurationId);
+	selectTableKeySequence(getScopeId(), getConfigurationId());
+(365) <-> (952)
+	else {
+	else
+(367) <-> (1285)
+	/*
+	/*
+(368) <-> (1225)
+	name = keyManager.getTextForKeySequence(keySequence);
+	String name = keyManager.getTextForKeySequence(actionRecord.keySequence);
+(371) <-> (1228)
+	nameToKeySequenceMap.put(name, keySequence);
+	comboKeySequence.setText(name);
+(373) <-> (1251)
+	comboKeySequence.setItems(getKeySequences());
+	KeySequence keySequence = null;
+(374) <-> (1301)
+	*/
+	*/
+(375) <-> (371)
+	}
+	}
+(376) <-> (372)
+	}
+	}
+(379) <-> (391)
+	}
+	}
+(381) <-> (1250)
+	private void modifiedComboKeySequence() {
+	private void selectedComboKeySequence() {
+(383) <-> (398)
+	}
+	}
+(385) <-> (1326)
+	private void selectedButtonCustom() {
+	private void selectedButtonCustom() {
+(386) <-> (1327)
+	change(true);
+	change(true);
+(387) <-> (413)
+	}
+	}
+(389) <-> (1322)
+	private void selectedButtonDefault() {
+	private void selectedButtonDefault() {
+(390) <-> (1323)
+	change(false);
+	change(false);
+(391) <-> (414)
+	}
+	}
+(393) <-> (1308)
+	private void selectedComboConfiguration() {
+	private void selectedComboConfiguration() {
+(395) <-> (415)
+	}
+	}
+(397) <-> (1330)
+	private void selectedComboCustom() {
+	private void selectedComboCustom() {
+(398) <-> (1331)
+	change(true);
+	change(true);
+(399) <-> (416)
+	}
+	}
+(401) <-> (1304)
+	private void selectedComboKeySequence() {
+	private void selectedComboScope() {
+(403) <-> (435)
+	}
+	}
+(405) <-> (1312)
+	private void selectedComboScope() {
+	private void selectedComboState() {
+(406) <-> (1305)
+	update();
+	selectedComboState();
+(407) <-> (459)
+	}
+	}
+(409) <-> (1273)
+	private void selectedTable() {
+	private void selectedTableKeySequence() {
+(411) <-> (481)
+	}
+	}
+(417) <-> (489)
+	}
+	}
+(419) <-> (374)
+	private void update() {
+	private void buildTableAction() {
+(420) <-> (1255)
+	KeySequence keySequence = null;
+	if (keySequence == null)
+(421) <-> (1252)
+	String name = comboKeySequence.getText();
+	String name = comboKeySequence.getText();
+(425) <-> (929)
+	else {
+	else
+(427) <-> (1253)
+	keySequence = (KeySequence) nameToKeySequenceMap.get(name);
+	keySequence = (KeySequence) nameToKeySequenceMap.get(name);
+(429) <-> (1288)
+	if (keySequence == null) {
+	if (keySequenceRecord != null) {
+(430) <-> (1256)
+	// TBD: review! still not strict enough! convertAccelerator says 'Ctrl+Ax' is valid!
+	// TBD review. still not strict enough. convertAccelerator says 'Ctrl+Ax' is valid.
+(431) <-> (1257)
+	keySequence = KeyManager.parseKeySequenceStrict(name);
+	keySequence = KeyManager.parseKeySequenceStrict(name);
+(433) <-> (1267)
+	if (keySequence == null)
+	if (keySequenceRecord != null)
+(435) <-> (504)
+	}
+	}
+(436) <-> (505)
+	}
+	}
+(438) <-> (508)
+	String scopeId = getScopeId();
+	String scopeId = getScopeId();
+(439) <-> (509)
+	String configurationId = getConfigurationId();
+	String configurationId = getConfigurationId();
+(441) <-> (518)
+	boolean setPluginMap = false;
+	boolean alternateActionConflict = false;
+(442) <-> (1259)
+	records.clear();
+	keySequenceRecords.clear();
+(444) <-> (1224)
+	if (tree != null && keySequence != null) {
+	if (actionRecord.keySequence != null) {
+(445) <-> (332)
+	Map scopeMap = (Map) tree.get(keySequence);
+	Map configurationMap = (Map) entry.getValue();
+(447) <-> (1011)
+	if (scopeMap != null) {
+	if (scopeMap == null) {
+(448) <-> (355)
+	Iterator iterator = scopeMap.entrySet().iterator();
+	Iterator iterator = pluginMap.entrySet().iterator();
+(450) <-> (1054)
+	while (iterator.hasNext()) {
+	while (iterator.hasNext()) {
+(451) <-> (358)
+	Map.Entry entry = (Map.Entry) iterator.next();
+	Map.Entry entry = (Map.Entry) iterator.next();
+(452) <-> (359)
+	String scopeId2 = (String) entry.getKey();
+	String pluginId = (String) entry.getKey();
+(453) <-> (360)
+	Map configurationMap = (Map) entry.getValue();
+	Map actionMap = (Map) entry.getValue();
+(454) <-> (361)
+	Iterator iterator2 = configurationMap.entrySet().iterator();
+	Iterator iterator2 = actionMap.keySet().iterator();
+(456) <-> (1058)
+	while (iterator2.hasNext()) {
+	while (iterator2.hasNext()) {
+(457) <-> (364)
+	Map.Entry entry2 = (Map.Entry) iterator2.next();
+	String actionId = (String) iterator2.next();
+(458) <-> (337)
+	String configurationId2 = (String) entry2.getKey();
+	String configurationId2 = (String) entry2.getKey();
+(459) <-> (338)
+	Map pluginMap = (Map) entry2.getValue();
+	Map pluginMap = (Map) entry2.getValue();
+(460) <-> (339)
+	Record record = new Record();
+	KeySequenceRecord keySequenceRecord = new KeySequenceRecord();
+(461) <-> (340)
+	record.scopeId = scopeId2;
+	keySequenceRecord.scopeId = scopeId2;
+(462) <-> (341)
+	record.configurationId = configurationId2;
+	keySequenceRecord.configurationId = configurationId2;
+(465) <-> (939)
+	if (Util.equals(scopeId, record.scopeId) && Util.equals(configurationId, record.configurationId)) {
+	if (Util.equals(scopeId, actionRecord.scopeId) && Util.equals(configurationId, actionRecord.configurationId) &&
+(467) <-> (941)
+	setPluginMap = true;
+	selection = i;
+(468) <-> (1238)
+	}
+	}
+(470) <-> (309)
+	records.add(record);
+	actionRecords.add(actionRecord);
+(471) <-> (1298)
+	}
+	}
+(472) <-> (1165)
+	}
+	}
+(473) <-> (1240)
+	}
+	}
+(474) <-> (1194)
+	}
+	}
+(479) <-> (1092)
+	table.removeAll();
+	comboScope.deselectAll();
+(480) <-> (958)
+	int select = -1;
+	int selection = -1;
+(482) <-> (960)
+	for (int i = 0; i < records.size(); i++) {
+	for (int i = 0; i < keySequenceRecords.size(); i++) {
+(483) <-> (961)
+	Record record = (Record) records.get(i);
+	KeySequenceRecord keySequenceRecord = (KeySequenceRecord) keySequenceRecords.get(i);
+(485) <-> (963)
+	if (Util.equals(scopeId, record.scopeId) && Util.equals(configurationId, record.configurationId))
+	if (Util.equals(scopeId, keySequenceRecord.scopeId) && Util.equals(configurationId, keySequenceRecord.configurationId)) {
+(486) <-> (964)
+	select = i;
+	selection = i;
+(488) <-> (599)
+	Scope scope = (Scope) registryScopeMap.get(record.scopeId);
+	Scope scope = (Scope) registryScopeMap.get(keySequenceRecord.scopeId);
+(489) <-> (601)
+	Configuration configuration = (Configuration) registryConfigurationMap.get(record.configurationId);
+	Configuration configuration = (Configuration) registryConfigurationMap.get(keySequenceRecord.configurationId);
+(490) <-> (657)
+	TableItem tableItem = new TableItem(table, SWT.NULL);
+	TableColumn tableColumn = new TableColumn(tableAction, SWT.NULL, 0);
+(491) <-> (600)
+	tableItem.setText(1, scope != null ? scope.getLabel().getName() : "(" + record.scopeId + ")");
+	tableItem.setText(2, scope != null ? scope.getLabel().getName() : "[" + keySequenceRecord.scopeId + "]");
+(492) <-> (602)
+	tableItem.setText(2, configuration != null ? configuration.getLabel().getName() : "(" + record.configurationId + ")");
+	tableItem.setText(3, configuration != null ? configuration.getLabel().getName() : "[" + keySequenceRecord.configurationId + "]");
+(495) <-> (1132)
+	boolean customConflict = false;
+	boolean customConflict = false;
+(496) <-> (1201)
+	String customAction = null;
+	String actionId = null;
+(498) <-> (987)
+	Map actionMap = (Map) pluginMap.get(null);
+	Map pluginMap = (Map) configurationMap.get(configuration);
+(500) <-> (986)
+	if (actionMap != null) {
+	if (configurationMap != null) {
+(504) <-> (1138)
+	customConflict = true;
+	customConflict = true;
+(506) <-> (523)
+	} else {
+	} else {
+(507) <-> (119)
+	Binding binding = (Binding) bindingSet.iterator().next();
+	customActionId = (String) customSet.iterator().next();
+(508) <-> (557)
+	String actionId = binding.getAction();
+	String actionName = null;
+(510) <-> (983)
+	if (actionId == null)
+	if (scopeMap != null) {
+(511) <-> (560)
+	customAction = ACTION_UNDEFINED;
+	actionName = ACTION_UNDEFINED;
+(512) <-> (975)
+	else
+	else
+(513) <-> (512)
+	for (int j = 0; j < actions.size(); j++) {
+	for (int i = 0; i < keySequenceRecords.size(); i++) {
+(514) <-> (937)
+	Action action = (Action) actions.get(j);
+	ActionRecord actionRecord = (ActionRecord) actionRecords.get(i);
+(517) <-> (565)
+	customAction = action.getLabel().getName();
+	actionName = action.getLabel().getName();
+(518) <-> (965)
+	break;
+	break;
+(519) <-> (1212)
+	}
+	}
+(520) <-> (533)
+	}
+	}
+(521) <-> (534)
+	}
+	}
+(522) <-> (553)
+	}
+	}
+(524) <-> (1134)
+	boolean defaultConflict = false;
+	boolean defaultConflict = false;
+(525) <-> (1135)
+	String defaultAction = null;
+	String defaultActionId = null;
+(530) <-> (1137)
+	if (pluginMap.size() > 0) {
+	if (customSet.size() > 1)
+(532) <-> (94)
+	Set bindingSet = (Set) actionMap.values().iterator().next();
+	customActionId = (String) customSet.iterator().next();
+(535) <-> (1143)
+	defaultConflict = true;
+	defaultConflict = true;
+(537) <-> (581)
+	} else {
+	else {
+(538) <-> (1145)
+	Binding binding = (Binding) bindingSet.iterator().next();
+	defaultActionId = (String) defaultSet.iterator().next();
+(539) <-> (577)
+	String actionId = binding.getAction();
+	String alternateActionName = null;
+(541) <-> (559)
+	if (actionId == null)
+	if (actionId == null)
+(542) <-> (580)
+	defaultAction = ACTION_UNDEFINED;
+	alternateActionName = ACTION_UNDEFINED;
+(543) <-> (566)
+	else
+	else
+(544) <-> (936)
+	for (int j = 0; j < actions.size(); j++) {
+	for (int i = 0; i < actionRecords.size(); i++) {
+(545) <-> (1157)
+	Action action = (Action) actions.get(j);
+	Action action = (Action) actions.get(j);
+(548) <-> (585)
+	defaultAction = action.getLabel().getName();
+	alternateActionName = action.getLabel().getName();
+(549) <-> (942)
+	break;
+	break;
+(550) <-> (1229)
+	}
+	}
+(551) <-> (568)
+	}
+	}
+(552) <-> (588)
+	}
+	}
+(553) <-> (596)
+	}
+	}
+(560) <-> (1133)
+	if (customAction != null) {
+	String customActionId = null;
+(561) <-> (953)
+	tableItem.setText(3, customAction);
+	tableAction.select(selection);
+(563) <-> (1290)
+	if (customConflict)
+	if (!actionConflict) {
+(565) <-> (584)
+	} else if (defaultAction != null) {
+	if (action != null)
+(566) <-> (598)
+	tableItem.setText(3, defaultAction);
+	tableItem.setText(1, stringBuffer.toString());
+(568) <-> (1172)
+	if (defaultConflict)
+	if (customConflict)
+(570) <-> (611)
+	}
+	}
+(571) <-> (612)
+	}
+	}
+(574) <-> (976)
+	table.select(select);
+	tableKeySequence.select(selection);
+(575) <-> (621)
+	}
+	}
+(577) <-> (623)
+	private void createUI(Composite composite) {
+	private void createUI(Composite composite) {
+(578) <-> (624)
+	Font font = composite.getFont();
+	Font font = composite.getFont();
+(579) <-> (691)
+	GridLayout gridLayoutComposite = new GridLayout();
+	gridLayout = createGridLayout();
+(580) <-> (752)
+	gridLayoutComposite.marginHeight = SPACE;
+	gridLayout.marginHeight = 0;
+(581) <-> (626)
+	composite.setLayout(gridLayoutComposite);
+	composite.setLayout(gridLayout);
+(583) <-> (689)
+	Composite compositeKeySequence = new Composite(composite, SWT.NULL);
+	Group groupBrowseKeySequence = new Group(composite, SWT.NULL);
+(584) <-> (615)
+	GridLayout gridLayoutCompositeKeySequence = new GridLayout();
+	GridLayout gridLayout = new GridLayout();
+(585) <-> (692)
+	gridLayoutCompositeKeySequence.numColumns = 3;
+	gridLayout.numColumns = 3;
+(588) <-> (755)
+	compositeKeySequence.setLayout(gridLayoutCompositeKeySequence);
+	compositeStateAndAction.setLayout(gridLayout);
+(590) <-> (707)
+	labelKeySequence = new Label(compositeKeySequence, SWT.LEFT);
+	spacer = new Label(groupBrowseKeySequence, SWT.NULL);
+(591) <-> (698)
+	labelKeySequence.setFont(font);
+	labelKeySequence.setFont(font);
+(592) <-> (699)
+	labelKeySequence.setText(Messages.getString("DialogCustomize.LabelKeySequence"));
+	labelKeySequence.setText(Messages.getString("DialogCustomize.LabelKeySequence")); //$NON-NLS-1$
+(594) <-> (701)
+	comboKeySequence = new Combo(compositeKeySequence, SWT.NULL);
+	comboKeySequence = new Combo(groupBrowseKeySequence, SWT.NULL);
+(595) <-> (702)
+	comboKeySequence.setFont(font);
+	comboKeySequence.setFont(font);
+(596) <-> (703)
+	GridData gridDataComboKeySequence = new GridData();
+	gridData = new GridData();
+(597) <-> (704)
+	gridDataComboKeySequence.widthHint = 200;
+	gridData.widthHint = 250;
+(598) <-> (705)
+	comboKeySequence.setLayoutData(gridDataComboKeySequence);
+	comboKeySequence.setLayoutData(gridData);
+(601) <-> (751)
+	GridLayout gridLayoutCompositePrompt = new GridLayout();
+	gridLayout = createGridLayout();
+(602) <-> (754)
+	gridLayoutCompositePrompt.numColumns = 2;
+	gridLayout.numColumns = 2;
+(603) <-> (753)
+	gridLayoutCompositePrompt.marginWidth = 0;
+	gridLayout.marginWidth = 0;
+(609) <-> (636)
+	labelPromptImage = new Label(compositePrompt, SWT.LEFT);
+	labelAction = new Label(groupBrowseAction, SWT.LEFT);
+(610) <-> (690)
+	labelPromptImage.setFont(font);
+	groupBrowseKeySequence.setFont(font);
+(611) <-> (642)
+	GridData gridDataPromptImage = new GridData();
+	GridData gridData = new GridData();
+(612) <-> (713)
+	gridDataPromptImage.widthHint = 16;
+	gridData.heightHint = 75;
+(613) <-> (654)
+	labelPromptImage.setLayoutData(gridDataPromptImage);
+	tableAction.setLayoutData(gridData);
+(615) <-> (697)
+	labelPromptText = new Label(compositePrompt, SWT.LEFT);
+	labelKeySequence = new Label(groupBrowseKeySequence, SWT.LEFT);
+(616) <-> (655)
+	labelPromptText.setFont(font);
+	tableAction.setFont(font);
+(618) <-> (750)
+	Composite compositeStateAndAction = new Composite(composite, SWT.NULL);
+	Composite compositeStateAndAction = new Composite(groupBrowseKeySequence, SWT.NULL);
+(619) <-> (625)
+	GridLayout gridLayoutCompositeStateAndAction = new GridLayout();
+	GridLayout gridLayout = createGridLayout();
+(621) <-> (757)
+	gridLayoutCompositeStateAndAction.horizontalSpacing = SPACE;
+	gridData.horizontalSpan = 3;
+(622) <-> (758)
+	compositeStateAndAction.setLayout(gridLayoutCompositeStateAndAction);
+	compositeStateAndAction.setLayoutData(gridData);
+(624) <-> (760)
+	Group groupState = new Group(compositeStateAndAction, SWT.NULL);
+	groupState = new Group(compositeStateAndAction, SWT.NULL);
+(625) <-> (761)
+	groupState.setFont(font);
+	groupState.setFont(font);
+(626) <-> (762)
+	GridLayout gridLayoutGroupState = new GridLayout();
+	gridLayout = createGridLayout();
+(627) <-> (763)
+	gridLayoutGroupState.numColumns = 2;
+	gridLayout.numColumns = 2;
+(628) <-> (618)
+	gridLayoutGroupState.marginWidth = SPACE;
+	gridLayout.marginWidth = SPACE;
+(629) <-> (617)
+	gridLayoutGroupState.marginHeight = SPACE;
+	gridLayout.marginHeight = SPACE;
+(630) <-> (743)
+	gridLayoutGroupState.horizontalSpacing = SPACE;
+	gridData.horizontalSpan = 3;
+(631) <-> (619)
+	gridLayoutGroupState.verticalSpacing = SPACE;
+	gridLayout.verticalSpacing = SPACE;
+(632) <-> (764)
+	groupState.setLayout(gridLayoutGroupState);
+	groupState.setLayout(gridLayout);
+(633) <-> (765)
+	groupState.setLayoutData(new GridData(GridData.FILL_BOTH));
+	groupState.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+(634) <-> (766)
+	groupState.setText(Messages.getString("DialogCustomize.GroupState"));
+	groupState.setText(Messages.getString("DialogCustomize.GroupState")); //$NON-NLS-1$
+(636) <-> (768)
+	labelScope = new Label(groupState, SWT.LEFT);
+	labelScope = new Label(groupState, SWT.LEFT);
+(637) <-> (769)
+	labelScope.setFont(font);
+	labelScope.setFont(font);
+(638) <-> (770)
+	labelScope.setText(Messages.getString("DialogCustomize.LabelScope"));
+	labelScope.setText(Messages.getString("DialogCustomize.LabelScope")); //$NON-NLS-1$
+(640) <-> (772)
+	comboScope = new Combo(groupState, SWT.READ_ONLY);
+	comboScope = new Combo(groupState, SWT.READ_ONLY);
+(641) <-> (773)
+	comboScope.setFont(font);
+	comboScope.setFont(font);
+(642) <-> (774)
+	GridData gridDataComboScope = new GridData();
+	gridData = new GridData(GridData.FILL_HORIZONTAL);
+(643) <-> (775)
+	gridDataComboScope.widthHint = 100;
+	gridData.widthHint = 100;
+(644) <-> (776)
+	comboScope.setLayoutData(gridDataComboScope);
+	comboScope.setLayoutData(gridData);
+(646) <-> (778)
+	labelConfiguration = new Label(groupState, SWT.LEFT);
+	labelConfiguration = new Label(groupState, SWT.LEFT);
+(647) <-> (779)
+	labelConfiguration.setFont(font);
+	labelConfiguration.setFont(font);
+(648) <-> (780)
+	labelConfiguration.setText(Messages.getString("DialogCustomize.LabelConfiguration"));
+	labelConfiguration.setText(Messages.getString("DialogCustomize.LabelConfiguration")); //$NON-NLS-1$
+(650) <-> (782)
+	comboConfiguration = new Combo(groupState, SWT.READ_ONLY);
+	comboConfiguration = new Combo(groupState, SWT.READ_ONLY);
+(651) <-> (783)
+	comboConfiguration.setFont(font);
+	comboConfiguration.setFont(font);
+(652) <-> (784)
+	GridData gridDataComboConfiguration = new GridData(GridData.FILL_HORIZONTAL);
+	gridData = new GridData(GridData.FILL_HORIZONTAL);
+(653) <-> (785)
+	gridDataComboConfiguration.widthHint = 100;
+	gridData.widthHint = 100;
+(654) <-> (786)
+	comboConfiguration.setLayoutData(gridDataComboConfiguration);
+	comboConfiguration.setLayoutData(gridData);
+(656) <-> (788)
+	Group groupAction = new Group(compositeStateAndAction, SWT.NULL);
+	groupAction = new Group(compositeStateAndAction, SWT.NULL);
+(657) <-> (789)
+	groupAction.setFont(font);
+	groupAction.setFont(font);
+(658) <-> (790)
+	GridLayout gridLayoutGroupAction = new GridLayout();
+	gridLayout = createGridLayout();
+(659) <-> (791)
+	gridLayoutGroupAction.numColumns = 2;
+	gridLayout.numColumns = 2;
+(660) <-> (616)
+	gridLayoutGroupAction.marginWidth = SPACE;
+	gridLayout.horizontalSpacing = SPACE;
+(662) <-> (653)
+	gridLayoutGroupAction.horizontalSpacing = SPACE;
+	gridData.horizontalSpan = 3;
+(663) <-> (631)
+	gridLayoutGroupAction.verticalSpacing = SPACE;
+	gridLayout.numColumns = 3;
+(664) <-> (792)
+	groupAction.setLayout(gridLayoutGroupAction);
+	groupAction.setLayout(gridLayout);
+(665) <-> (793)
+	groupAction.setLayoutData(new GridData(GridData.FILL_BOTH));
+	groupAction.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+(666) <-> (794)
+	groupAction.setText(Messages.getString("DialogCustomize.GroupAction"));
+	groupAction.setText(Messages.getString("DialogCustomize.GroupAction")); //$NON-NLS-1$
+(668) <-> (796)
+	buttonDefault = new Button(groupAction, SWT.LEFT | SWT.RADIO);
+	buttonDefault = new Button(groupAction, SWT.LEFT | SWT.RADIO);
+(669) <-> (797)
+	buttonDefault.setFont(font);
+	buttonDefault.setFont(font);
+(670) <-> (798)
+	buttonDefault.setText(Messages.getString("DialogCustomize.ButtonDefault"));
+	buttonDefault.setText(Messages.getString("DialogCustomize.ButtonDefault")); //$NON-NLS-1$
+(672) <-> (800)
+	textDefault = new Text(groupAction, SWT.BORDER | SWT.READ_ONLY);
+	textDefault = new Text(groupAction, SWT.BORDER | SWT.READ_ONLY);
+(673) <-> (801)
+	textDefault.setFont(font);
+	textDefault.setFont(font);
+(674) <-> (802)
+	GridData gridDataTextDefault = new GridData(GridData.FILL_HORIZONTAL);
+	gridData = new GridData(GridData.FILL_HORIZONTAL);
+(675) <-> (803)
+	gridDataTextDefault.widthHint = 150;
+	gridData.widthHint = 250;
+(676) <-> (804)
+	textDefault.setLayoutData(gridDataTextDefault);
+	textDefault.setLayoutData(gridData);
+(678) <-> (806)
+	buttonCustom = new Button(groupAction, SWT.LEFT | SWT.RADIO);
+	buttonCustom = new Button(groupAction, SWT.LEFT | SWT.RADIO);
+(679) <-> (807)
+	buttonCustom.setFont(font);
+	buttonCustom.setFont(font);
+(680) <-> (808)
+	buttonCustom.setText(Messages.getString("DialogCustomize.ButtonCustom"));
+	buttonCustom.setText(Messages.getString("DialogCustomize.ButtonCustom")); //$NON-NLS-1$
+(682) <-> (810)
+	comboCustom = new Combo(groupAction, SWT.READ_ONLY);
+	comboCustom = new Combo(groupAction, SWT.READ_ONLY);
+(683) <-> (811)
+	comboCustom.setFont(font);
+	comboCustom.setFont(font);
+(684) <-> (812)
+	GridData gridDataComboCustom = new GridData(GridData.FILL_HORIZONTAL);
+	gridData = new GridData(GridData.FILL_HORIZONTAL);
+(685) <-> (813)
+	gridDataComboCustom.widthHint = 150;
+	gridData.widthHint = 250;
+(686) <-> (814)
+	comboCustom.setLayoutData(gridDataComboCustom);
+	comboCustom.setLayoutData(gridData);
+(688) <-> (628)
+	Composite compositeTable = new Composite(composite, SWT.NULL);
+	Group groupBrowseAction = new Group(composite, SWT.NULL);
+(689) <-> (630)
+	GridLayout gridLayoutCompositeTable = new GridLayout();
+	gridLayout = createGridLayout();
+(690) <-> (644)
+	compositeTable.setLayout(gridLayoutCompositeTable);
+	comboAction.setLayoutData(gridData);
+(691) <-> (712)
+	compositeTable.setLayoutData(new GridData(GridData.FILL_BOTH));
+	gridData = new GridData(GridData.FILL_BOTH);
+(693) <-> (710)
+	table = new Table(compositeTable, SWT.BORDER | SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
+	tableKeySequence = new Table(groupBrowseKeySequence, SWT.BORDER | SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
+(694) <-> (711)
+	table.setHeaderVisible(true);
+	tableKeySequence.setHeaderVisible(true);
+(695) <-> (756)
+	GridData gridDataTable = new GridData(GridData.FILL_BOTH);
+	gridData = new GridData(GridData.FILL_HORIZONTAL);
+(696) <-> (714)
+	gridDataTable.heightHint = 100;
+	gridData.horizontalSpan = 3;
+(697) <-> (715)
+	table.setLayoutData(gridDataTable);
+	tableKeySequence.setLayoutData(gridData);
+(698) <-> (716)
+	table.setFont(font);
+	tableKeySequence.setFont(font);
+(700) <-> (718)
+	TableColumn tableColumn = new TableColumn(table, SWT.NULL, 0);
+	tableColumn = new TableColumn(tableKeySequence, SWT.NULL, 0);
+(701) <-> (719)
+	tableColumn.setResizable(false);
+	tableColumn.setResizable(false);
+(702) <-> (720)
+	tableColumn.setText(ZERO_LENGTH_STRING);
+	tableColumn.setText(ZERO_LENGTH_STRING);
+(703) <-> (726)
+	tableColumn.setWidth(20);
+	tableColumn.setWidth(350);
+(705) <-> (723)
+	tableColumn = new TableColumn(table, SWT.NULL, 1);
+	tableColumn = new TableColumn(tableKeySequence, SWT.NULL, 1);
+(706) <-> (724)
+	tableColumn.setResizable(true);
+	tableColumn.setResizable(true);
+(707) <-> (730)
+	tableColumn.setText(Messages.getString("DialogCustomize.HeaderScope"));
+	tableColumn.setText(Messages.getString("DialogCustomize.HeaderScope")); //$NON-NLS-1$
+(708) <-> (731)
+	tableColumn.setWidth(100);
+	tableColumn.setWidth(100);
+(710) <-> (733)
+	tableColumn = new TableColumn(table, SWT.NULL, 2);
+	tableColumn = new TableColumn(tableKeySequence, SWT.NULL, 3);
+(711) <-> (734)
+	tableColumn.setResizable(true);
+	tableColumn.setResizable(true);
+(712) <-> (735)
+	tableColumn.setText(Messages.getString("DialogCustomize.HeaderConfiguration"));
+	tableColumn.setText(Messages.getString("DialogCustomize.HeaderConfiguration")); //$NON-NLS-1$
+(713) <-> (736)
+	tableColumn.setWidth(100);
+	tableColumn.setWidth(100);
+(715) <-> (728)
+	tableColumn = new TableColumn(table, SWT.NULL, 3);
+	tableColumn = new TableColumn(tableKeySequence, SWT.NULL, 2);
+(716) <-> (729)
+	tableColumn.setResizable(true);
+	tableColumn.setResizable(true);
+(717) <-> (725)
+	tableColumn.setText(Messages.getString("DialogCustomize.HeaderAction"));
+	tableColumn.setText(Messages.getString("DialogCustomize.HeaderAction")); //$NON-NLS-1$
+(718) <-> (721)
+	tableColumn.setWidth(250);
+	tableColumn.setWidth(20);
+(720) <-> (817)
+	comboKeySequence.setItems(getKeySequences());
+	comboKeySequence.setItems(getKeySequences());
+(721) <-> (818)
+	comboScope.setItems(scopeNames);
+	comboScope.setItems(scopeNames);
+(722) <-> (819)
+	comboConfiguration.setItems(configurationNames);
+	comboConfiguration.setItems(configurationNames);
+(723) <-> (820)
+	comboCustom.setItems(actionNames);
+	comboCustom.setItems(actionNames);
+(725) <-> (822)
+	setConfigurationId(defaultConfigurationId);
+	setConfigurationId(defaultConfigurationId);
+(726) <-> (823)
+	setScopeId(defaultScopeId);
+	setScopeId(defaultScopeId);
+(728) <-> (852)
+	comboKeySequence.addModifyListener(new ModifyListener() {
+	comboKeySequence.addModifyListener(new ModifyListener() {
+(729) <-> (853)
+	public void modifyText(ModifyEvent e) {
+	public void modifyText(ModifyEvent e) {
+(730) <-> (854)
+	modifiedComboKeySequence();
+	modifiedComboKeySequence();
+(731) <-> (855)
+	}
+	}
+(732) <-> (856)
+	});
+	});
+(734) <-> (858)
+	comboKeySequence.addSelectionListener(new SelectionAdapter() {
+	comboKeySequence.addSelectionListener(new SelectionAdapter() {
+(735) <-> (859)
+	public void widgetSelected(SelectionEvent e) {
+	public void widgetSelected(SelectionEvent e) {
+(736) <-> (860)
+	selectedComboKeySequence();
+	selectedComboKeySequence();
+(737) <-> (861)
+	}
+	}
+(738) <-> (862)
+	});
+	});
+(740) <-> (884)
+	comboScope.addSelectionListener(new SelectionAdapter() {
+	comboScope.addSelectionListener(new SelectionAdapter() {
+(741) <-> (885)
+	public void widgetSelected(SelectionEvent e) {
+	public void widgetSelected(SelectionEvent e) {
+(742) <-> (886)
+	selectedComboScope();
+	selectedComboScope();
+(743) <-> (887)
+	}
+	}
+(744) <-> (888)
+	});
+	});
+(746) <-> (890)
+	comboConfiguration.addSelectionListener(new SelectionAdapter() {
+	comboConfiguration.addSelectionListener(new SelectionAdapter() {
+(747) <-> (891)
+	public void widgetSelected(SelectionEvent e) {
+	public void widgetSelected(SelectionEvent e) {
+(748) <-> (892)
+	selectedComboConfiguration();
+	selectedComboConfiguration();
+(749) <-> (893)
+	}
+	}
+(750) <-> (894)
+	});
+	});
+(752) <-> (896)
+	buttonDefault.addSelectionListener(new SelectionAdapter() {
+	buttonDefault.addSelectionListener(new SelectionAdapter() {
+(753) <-> (897)
+	public void widgetSelected(SelectionEvent e) {
+	public void widgetSelected(SelectionEvent e) {
+(754) <-> (898)
+	selectedButtonDefault();
+	selectedButtonDefault();
+(755) <-> (899)
+	}
+	}
+(756) <-> (900)
+	});
+	});
+(758) <-> (902)
+	buttonCustom.addSelectionListener(new SelectionAdapter() {
+	buttonCustom.addSelectionListener(new SelectionAdapter() {
+(759) <-> (903)
+	public void widgetSelected(SelectionEvent e) {
+	public void widgetSelected(SelectionEvent e) {
+(760) <-> (904)
+	selectedButtonCustom();
+	selectedButtonCustom();
+(761) <-> (905)
+	}
+	}
+(762) <-> (906)
+	});
+	});
+(764) <-> (908)
+	comboCustom.addSelectionListener(new SelectionAdapter() {
+	comboCustom.addSelectionListener(new SelectionAdapter() {
+(765) <-> (909)
+	public void widgetSelected(SelectionEvent e) {
+	public void widgetSelected(SelectionEvent e) {
+(766) <-> (910)
+	selectedComboCustom();
+	selectedComboCustom();
+(767) <-> (911)
+	}
+	}
+(768) <-> (912)
+	});
+	});
+(770) <-> (877)
+	table.addSelectionListener(new SelectionAdapter() {
+	buttonBrowseSelectedAction.addSelectionListener(new SelectionAdapter() {
+(771) <-> (1214)
+	public void widgetSelected(SelectionEvent e) {
+	private void selectedTableAction() {
+(772) <-> (1215)
+	int i = table.getSelectionIndex();
+	int i = tableAction.getSelectionIndex();
+(774) <-> (1217)
+	if (i >= 0) {
+	if (i >= 0) {
+(775) <-> (1274)
+	Record record = (Record) records.get(i);
+	KeySequenceRecord keySequenceRecord = (KeySequenceRecord) getSelectedKeySequenceRecord();
+(777) <-> (1276)
+	if (record != null) {
+	if (keySequenceRecord != null) {
+(778) <-> (1277)
+	setScopeId(record.scopeId);
+	setScopeId(keySequenceRecord.scopeId);
+(779) <-> (1278)
+	setConfigurationId(record.configurationId);
+	setConfigurationId(keySequenceRecord.configurationId);
+(780) <-> (913)
+	}
+	}
+(781) <-> (922)
+	}
+	}
+(783) <-> (1309)
+	selectedTable();
+	selectedComboState();
+(784) <-> (931)
+	}
+	}
+(785) <-> (881)
+	});
+	});
+(788) <-> (943)
+	}
+	}
+(791) <-> (1116)
+	private void setConfigurationId(String configurationId) {
+	private void setConfigurationId(String configurationId) {
+(792) <-> (1117)
+	comboConfiguration.clearSelection();
+	comboConfiguration.clearSelection();
+(793) <-> (1118)
+	comboConfiguration.deselectAll();
+	comboConfiguration.deselectAll();
+(795) <-> (1120)
+	if (configurationId != null)
+	if (configurationId != null)
+(796) <-> (1121)
+	for (int i = 0; i < configurations.size(); i++) {
+	for (int i = 0; i < configurations.size(); i++) {
+(797) <-> (1122)
+	Configuration configuration = (Configuration) configurations.get(i);
+	Configuration configuration = (Configuration) configurations.get(i);
+(799) <-> (1124)
+	if (configuration.getLabel().getId().equals(configurationId)) {
+	if (configuration.getLabel().getId().equals(configurationId)) {
+(800) <-> (1125)
+	comboConfiguration.select(i);
+	comboConfiguration.select(i);
+(801) <-> (1126)
+	break;
+	break;
+(802) <-> (1127)
+	}
+	}
+(803) <-> (1128)
+	}
+	}
+(804) <-> (1129)
+	}
+	}
+(806) <-> (1090)
+	private void setPluginMap(Map pluginMap) {
+	private void setScopeId(String scopeId) {
+(807) <-> (1091)
+	//textDefault.clearSelection();
+	comboScope.clearSelection();
+(808) <-> (1221)
+	//comboCustom.clearSelection();
+	comboKeySequence.clearSelection();
+(809) <-> (1168)
+	comboCustom.deselectAll();
+	comboCustom.deselectAll();
+(811) <-> (281)
+	Map actionMap = (Map) pluginMap.get(null);
+	Map scopeMap = (Map) entry.getValue();
+(812) <-> (1147)
+	buttonDefault.setSelection(actionMap == null);
+	buttonDefault.setSelection(customSet.isEmpty());
+(813) <-> (1167)
+	buttonCustom.setSelection(!buttonDefault.getSelection());
+	buttonCustom.setSelection(!customSet.isEmpty());
+(815) <-> (1220)
+	if (actionMap != null) {
+	if (actionRecord != null) {
+(819) <-> (1173)
+	comboCustom.setText(ACTION_CONFLICT);
+	comboCustom.setText(ACTION_CONFLICT);
+(820) <-> (1174)
+	else {
+	else {
+(821) <-> (124)
+	Binding binding = (Binding) bindingSet.iterator().next();
+	defaultActionId = (String) defaultSet.iterator().next();
+(822) <-> (382)
+	String actionId = binding.getAction();
+	String actionId = null;
+(824) <-> (1175)
+	if (actionId == null)
+	if (customActionId == null)
+(825) <-> (1176)
+	comboCustom.select(0);
+	comboCustom.select(0);
+(826) <-> (1177)
+	else
+	else
+(827) <-> (1178)
+	for (int i = 0; i < actions.size(); i++) {
+	for (int i = 0; i < actions.size(); i++) {
+(828) <-> (1179)
+	Action action = (Action) actions.get(i);
+	Action action = (Action) actions.get(i);
+(830) <-> (1181)
+	if (action.getLabel().getId().equals(actionId)) {
+	if (action.getLabel().getId().equals(customActionId)) {
+(831) <-> (1182)
+	comboCustom.select(i + 1);
+	comboCustom.select(i + 1);
+(832) <-> (1183)
+	break;
+	break;
+(833) <-> (1184)
+	}
+	}
+(834) <-> (1185)
+	}
+	}
+(835) <-> (1186)
+	}
+	}
+(836) <-> (1280)
+	} else
+	} else
+(842) <-> (1142)
+	if (pluginMap.size() > 0) {
+	if (defaultSet.size() > 1)
+(847) <-> (1151)
+	textDefault.setText(ACTION_CONFLICT);
+	textDefault.setText(ACTION_CONFLICT);
+(848) <-> (1152)
+	else {
+	else {
+(849) <-> (1140)
+	Binding binding = (Binding) bindingSet.iterator().next();
+	customActionId = (String) customSet.iterator().next();
+(852) <-> (1153)
+	if (actionId == null)
+	if (defaultActionId == null)
+(853) <-> (1154)
+	textDefault.setText(ACTION_UNDEFINED);
+	textDefault.setText(ACTION_UNDEFINED);
+(854) <-> (1269)
+	else
+	else
+(855) <-> (1156)
+	for (int i = 0; i < actions.size(); i++) {
+	for (int j = 0; j < actions.size(); j++) {
+(856) <-> (1218)
+	Action action = (Action) actions.get(i);
+	ActionRecord actionRecord = (ActionRecord) actionRecords.get(i);
+(858) <-> (1159)
+	if (action.getLabel().getId().equals(actionId)) {
+	if (action.getLabel().getId().equals(defaultActionId)) {
+(859) <-> (1160)
+	textDefault.setText(action.getLabel().getName());
+	textDefault.setText(action.getLabel().getName());
+(860) <-> (1161)
+	break;
+	break;
+(861) <-> (1271)
+	}
+	}
+(862) <-> (1282)
+	}
+	}
+(863) <-> (1297)
+	}
+	}
+(864) <-> (1318)
+	} else
+	} else
+(866) <-> (1320)
+	}
+	}
+(868) <-> (1284)
+	private void setScopeId(String scopeId) {
+	private void selectedButtonBrowseSelectedAction() {
+(869) <-> (1222)
+	comboScope.clearSelection();
+	comboKeySequence.deselectAll();
+(870) <-> (1291)
+	comboScope.deselectAll();
+	comboAction.deselectAll();
+(872) <-> (1227)
+	if (scopeId != null)
+	if (name != null)
+(873) <-> (1095)
+	for (int i = 0; i < scopes.size(); i++) {
+	for (int i = 0; i < scopes.size(); i++) {
+(874) <-> (1096)
+	Scope scope = (Scope) scopes.get(i);
+	Scope scope = (Scope) scopes.get(i);
+(876) <-> (1098)
+	if (scope.getLabel().getId().equals(scopeId)) {
+	if (scope.getLabel().getId().equals(scopeId)) {
+(877) <-> (1099)
+	comboScope.select(i);
+	comboScope.select(i);
+(878) <-> (1100)
+	break;
+	break;
+(879) <-> (1324)
+	}
+	}
+(880) <-> (1328)
+	}
+	}
+(881) <-> (1332)
+	}
+	}
+(882) <-> (1348)
+	}
+	}
+Number of lines in left file: 700
+Number of lines in right file: 1145
+Number of lines matched: 641

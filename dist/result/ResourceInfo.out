@@ -1,0 +1,901 @@
+Diff: ./reference/dataset/ResourceInfo_1.java ./reference/dataset/ResourceInfo_2.java
+(1) <-> (1)
+	package org.eclipse.core.internal.resources;
+	package org.eclipse.core.internal.resources;
+(3) <-> (3)
+	/*
+	/*
+(4) <-> (4)
+	* (c) Copyright IBM Corp. 2000, 2001.
+	* (c) Copyright IBM Corp. 2000, 2001.
+(5) <-> (5)
+	* All Rights Reserved.
+	* All Rights Reserved.
+(6) <-> (6)
+	*/
+	*/
+(8) <-> (8)
+	import org.eclipse.core.resources.IResource;
+	import org.eclipse.core.resources.IResource;
+(9) <-> (9)
+	import org.eclipse.core.runtime.QualifiedName;
+	import org.eclipse.core.runtime.QualifiedName;
+(10) <-> (10)
+	import org.eclipse.core.internal.properties.PropertyStore;
+	import org.eclipse.core.internal.properties.PropertyStore;
+(11) <-> (11)
+	import org.eclipse.core.internal.utils.Assert;
+	import org.eclipse.core.internal.utils.Assert;
+(12) <-> (12)
+	import org.eclipse.core.internal.watson.IElementTreeData;
+	import org.eclipse.core.internal.watson.IElementTreeData;
+(13) <-> (13)
+	import java.io.*;
+	import java.io.*;
+(14) <-> (14)
+	import java.util.*;
+	import java.util.*;
+(16) <-> (16)
+	public class ResourceInfo implements IElementTreeData, ICoreConstants {
+	public class ResourceInfo implements IElementTreeData, ICoreConstants {
+(18) <-> (18)
+	/** Set of flags which reflect various states of the info (dirty, transient, ...). */
+	/** Set of flags which reflect various states of the info (dirty, transient, ...). */
+(19) <-> (19)
+	protected int flags = 0;
+	protected int flags = 0;
+(21) <-> (21)
+	/** Unique content identifier */
+	/** Unique content identifier */
+(22) <-> (22)
+	protected int contentId = 0;
+	protected int contentId = 0;
+(24) <-> (24)
+	/** Unique modification stamp */
+	/** Unique modification stamp */
+(25) <-> (25)
+	// thread safety: (Concurrency004)
+	// thread safety: (Concurrency004)
+(26) <-> (26)
+	protected volatile long modificationStamp = IResource.NULL_STAMP;
+	protected volatile long modificationStamp = IResource.NULL_STAMP;
+(28) <-> (28)
+	/** Unique node identifier */
+	/** Unique node identifier */
+(29) <-> (29)
+	// thread safety: (Concurrency004)
+	// thread safety: (Concurrency004)
+(30) <-> (30)
+	protected volatile long nodeId = 0;
+	protected volatile long nodeId = 0;
+(32) <-> (32)
+	/** Local sync info */
+	/** Local sync info */
+(33) <-> (33)
+	// thread safety: (Concurrency004)
+	// thread safety: (Concurrency004)
+(34) <-> (34)
+	protected volatile long localInfo = I_NULL_SYNC_INFO;
+	protected volatile long localInfo = I_NULL_SYNC_INFO;
+(36) <-> (36)
+	/** The generation count for sync info changes. */
+	/** The generation count for sync info changes. */
+(37) <-> (37)
+	protected int syncInfoGenerationCount = 0;
+	protected int syncInfoGenerationCount = 0;
+(39) <-> (39)
+	/** The table of sync infos */
+	/** The table of sync infos */
+(40) <-> (40)
+	protected HashMap syncInfo = null;
+	protected HashMap syncInfo = null;
+(42) <-> (42)
+	/** The properties which are maintained for the lifecycle of the workspace */
+	/** The properties which are maintained for the lifecycle of the workspace */
+(43) <-> (43)
+	protected HashMap sessionProperties = null;
+	protected HashMap sessionProperties = null;
+(45) <-> (45)
+	/** The generation count for marker changes. */
+	/** The generation count for marker changes. */
+(46) <-> (46)
+	protected int markerGenerationCount = 0;
+	protected int markerGenerationCount = 0;
+(48) <-> (48)
+	/** The collection of markers for this resource. */
+	/** The collection of markers for this resource. */
+(49) <-> (49)
+	protected MarkerSet markers = null;
+	protected MarkerSet markers = null;
+(50) <-> (50)
+	/**
+	/**
+(51) <-> (51)
+	* Clears all of the bits indicated by the mask.
+	* Clears all of the bits indicated by the mask.
+(52) <-> (52)
+	*/
+	*/
+(53) <-> (53)
+	public void clear(int mask) {
+	public void clear(int mask) {
+(54) <-> (54)
+	flags &= ~mask;
+	flags &= ~mask;
+(55) <-> (55)
+	}
+	}
+(56) <-> (56)
+	public synchronized void clearSessionProperties() {
+	public synchronized void clearSessionProperties() {
+(57) <-> (57)
+	sessionProperties = null;
+	sessionProperties = null;
+(58) <-> (58)
+	}
+	}
+(59) <-> (59)
+	public Object clone() {
+	public Object clone() {
+(60) <-> (60)
+	try {
+	try {
+(61) <-> (61)
+	return super.clone();
+	return super.clone();
+(62) <-> (62)
+	} catch (CloneNotSupportedException e) {
+	} catch (CloneNotSupportedException e) {
+(63) <-> (63)
+	return null; // never gets here.
+	return null; // never gets here.
+(64) <-> (64)
+	}
+	}
+(65) <-> (65)
+	}
+	}
+(66) <-> (66)
+	/**
+	/**
+(67) <-> (67)
+	* Returns the integer value stored in the indicated part of this info's flags.
+	* Returns the integer value stored in the indicated part of this info's flags.
+(68) <-> (68)
+	*/
+	*/
+(69) <-> (69)
+	protected static int getBits(int flags, int mask, int start) {
+	protected static int getBits(int flags, int mask, int start) {
+(70) <-> (70)
+	return (flags & mask) >> start;
+	return (flags & mask) >> start;
+(71) <-> (71)
+	}
+	}
+(72) <-> (72)
+	public int getContentId() {
+	public int getContentId() {
+(73) <-> (73)
+	return contentId;
+	return contentId;
+(74) <-> (74)
+	}
+	}
+(75) <-> (75)
+	/**
+	/**
+(76) <-> (76)
+	* Returns the set of flags for this info.
+	* Returns the set of flags for this info.
+(77) <-> (77)
+	*/
+	*/
+(78) <-> (78)
+	public int getFlags() {
+	public int getFlags() {
+(79) <-> (79)
+	return flags;
+	return flags;
+(80) <-> (80)
+	}
+	}
+(81) <-> (81)
+	/**
+	/**
+(82) <-> (82)
+	* Gets the local-relative sync information.
+	* Gets the local-relative sync information.
+(83) <-> (83)
+	*/
+	*/
+(84) <-> (84)
+	public long getLocalSyncInfo() {
+	public long getLocalSyncInfo() {
+(85) <-> (85)
+	return localInfo;
+	return localInfo;
+(86) <-> (86)
+	}
+	}
+(87) <-> (87)
+	/**
+	/**
+(88) <-> (88)
+	* Returns the marker generation count.
+	* Returns the marker generation count.
+(89) <-> (89)
+	* The count is incremented whenever markers on the resource change.
+	* The count is incremented whenever markers on the resource change.
+(90) <-> (90)
+	*/
+	*/
+(91) <-> (91)
+	public int getMarkerGenerationCount() {
+	public int getMarkerGenerationCount() {
+(92) <-> (92)
+	return markerGenerationCount;
+	return markerGenerationCount;
+(93) <-> (93)
+	}
+	}
+(94) <-> (94)
+	/**
+	/**
+(95) <-> (95)
+	* Returns the collection of makers on this resource.
+	* Returns the collection of makers on this resource.
+(96) <-> (96)
+	* <code>null</code> is returned if there are none.
+	* <code>null</code> is returned if there are none.
+(97) <-> (97)
+	*/
+	*/
+(98) <-> (98)
+	public MarkerSet getMarkers() {
+	public MarkerSet getMarkers() {
+(99) <-> (99)
+	return markers;
+	return markers;
+(100) <-> (100)
+	}
+	}
+(101) <-> (101)
+	public long getModificationStamp() {
+	public long getModificationStamp() {
+(102) <-> (102)
+	return modificationStamp;
+	return modificationStamp;
+(103) <-> (103)
+	}
+	}
+(104) <-> (104)
+	public long getNodeId() {
+	public long getNodeId() {
+(105) <-> (105)
+	return nodeId;
+	return nodeId;
+(106) <-> (106)
+	}
+	}
+(107) <-> (107)
+	/**
+	/**
+(108) <-> (108)
+	* Returns the property store associated with this info. The return value may be null.
+	* Returns the property store associated with this info. The return value may be null.
+(109) <-> (109)
+	*/
+	*/
+(110) <-> (110)
+	public PropertyStore getPropertyStore() {
+	public PropertyStore getPropertyStore() {
+(111) <-> (111)
+	return null;
+	return null;
+(112) <-> (112)
+	}
+	}
+(113) <-> (113)
+	/**
+	/**
+(114) <-> (114)
+	* Returns the value of the identified session property
+	* Returns the value of the identified session property
+(115) <-> (115)
+	*/
+	*/
+(116) <-> (116)
+	public Object getSessionProperty(QualifiedName name) {
+	public Object getSessionProperty(QualifiedName name) {
+(117) <-> (117)
+	// thread safety: (Concurrency001)
+	// thread safety: (Concurrency001)
+(118) <-> (118)
+	HashMap temp = sessionProperties;
+	HashMap temp = sessionProperties;
+(119) <-> (119)
+	if (temp == null)
+	if (temp == null)
+(120) <-> (120)
+	return null;
+	return null;
+(121) <-> (121)
+	return temp.get(name);
+	return temp.get(name);
+(122) <-> (122)
+	}
+	}
+(123) <-> (123)
+	public byte[] getSyncInfo(QualifiedName id, boolean makeCopy) {
+	public byte[] getSyncInfo(QualifiedName id, boolean makeCopy) {
+(124) <-> (124)
+	// thread safety: (Concurrency001)
+	// thread safety: (Concurrency001)
+(125) <-> (125)
+	HashMap temp = syncInfo;
+	HashMap temp = syncInfo;
+(126) <-> (126)
+	if (temp == null)
+	if (temp == null)
+(127) <-> (127)
+	return null;
+	return null;
+(128) <-> (128)
+	byte[] b = (byte[]) temp.get(id);
+	byte[] b = (byte[]) temp.get(id);
+(129) <-> (129)
+	return b == null ? null : (makeCopy ? (byte[]) b.clone() : b);
+	return b == null ? null : (makeCopy ? (byte[]) b.clone() : b);
+(130) <-> (130)
+	}
+	}
+(131) <-> (131)
+	public HashMap getSyncInfo(boolean makeCopy) {
+	public HashMap getSyncInfo(boolean makeCopy) {
+(132) <-> (132)
+	if (syncInfo == null)
+	if (syncInfo == null)
+(133) <-> (133)
+	return null;
+	return null;
+(134) <-> (134)
+	return makeCopy ? (HashMap) syncInfo.clone() : syncInfo;
+	return makeCopy ? (HashMap) syncInfo.clone() : syncInfo;
+(135) <-> (135)
+	}
+	}
+(136) <-> (136)
+	/**
+	/**
+(137) <-> (137)
+	* Returns the sync information generation count.
+	* Returns the sync information generation count.
+(138) <-> (138)
+	* The count is incremented whenever sync info on the resource changes.
+	* The count is incremented whenever sync info on the resource changes.
+(139) <-> (139)
+	*/
+	*/
+(140) <-> (140)
+	public int getSyncInfoGenerationCount() {
+	public int getSyncInfoGenerationCount() {
+(141) <-> (141)
+	return syncInfoGenerationCount;
+	return syncInfoGenerationCount;
+(142) <-> (142)
+	}
+	}
+(143) <-> (143)
+	/**
+	/**
+(144) <-> (144)
+	* Returns the type setting for this info. Valid values are
+	* Returns the type setting for this info. Valid values are
+(145) <-> (145)
+	* FILE, FOLDER, PROJECT,
+	* FILE, FOLDER, PROJECT,
+(146) <-> (146)
+	*/
+	*/
+(147) <-> (147)
+	public int getType() {
+	public int getType() {
+(148) <-> (148)
+	return getType(flags);
+	return getType(flags);
+(149) <-> (149)
+	}
+	}
+(150) <-> (150)
+	/**
+	/**
+(151) <-> (151)
+	* Returns the type setting for this info. Valid values are
+	* Returns the type setting for this info. Valid values are
+(152) <-> (152)
+	* FILE, FOLDER, PROJECT,
+	* FILE, FOLDER, PROJECT,
+(153) <-> (153)
+	*/
+	*/
+(154) <-> (154)
+	public static int getType(int flags) {
+	public static int getType(int flags) {
+(155) <-> (155)
+	return getBits(flags, M_TYPE, M_TYPE_START);
+	return getBits(flags, M_TYPE, M_TYPE_START);
+(156) <-> (156)
+	}
+	}
+(157) <-> (157)
+	/**
+	/**
+(158) <-> (158)
+	* Mark this resource info as having changed content
+	* Mark this resource info as having changed content
+(159) <-> (159)
+	*/
+	*/
+(160) <-> (160)
+	public void incrementContentId() {
+	public void incrementContentId() {
+(161) <-> (161)
+	contentId += 1;
+	contentId += 1;
+(162) <-> (162)
+	}
+	}
+(163) <-> (163)
+	/**
+	/**
+(164) <-> (164)
+	* Increments the marker generation count.
+	* Increments the marker generation count.
+(165) <-> (165)
+	* The count is incremented whenever markers on the resource change.
+	* The count is incremented whenever markers on the resource change.
+(166) <-> (166)
+	*/
+	*/
+(167) <-> (167)
+	public void incrementMarkerGenerationCount() {
+	public void incrementMarkerGenerationCount() {
+(168) <-> (168)
+	++markerGenerationCount;
+	++markerGenerationCount;
+(169) <-> (169)
+	}
+	}
+(170) <-> (170)
+	/**
+	/**
+(171) <-> (171)
+	* Increments the sync information generation count.
+	* Increments the sync information generation count.
+(172) <-> (172)
+	* The count is incremented whenever sync info on the resource changes.
+	* The count is incremented whenever sync info on the resource changes.
+(173) <-> (173)
+	*/
+	*/
+(174) <-> (174)
+	public void incrementSyncInfoGenerationCount() {
+	public void incrementSyncInfoGenerationCount() {
+(175) <-> (175)
+	++syncInfoGenerationCount;
+	++syncInfoGenerationCount;
+(176) <-> (176)
+	}
+	}
+(177) <-> (177)
+	/**
+	/**
+(178) <-> (178)
+	* Returns true if all of the bits indicated by the mask are set.
+	* Returns true if all of the bits indicated by the mask are set.
+(179) <-> (179)
+	*/
+	*/
+(180) <-> (180)
+	public boolean isSet(int mask) {
+	public boolean isSet(int mask) {
+(181) <-> (181)
+	return isSet(flags, mask);
+	return isSet(flags, mask);
+(182) <-> (182)
+	}
+	}
+(183) <-> (183)
+	/**
+	/**
+(184) <-> (184)
+	* Returns true if all of the bits indicated by the mask are set.
+	* Returns true if all of the bits indicated by the mask are set.
+(185) <-> (185)
+	*/
+	*/
+(186) <-> (186)
+	public static boolean isSet(int flags, int mask) {
+	public static boolean isSet(int flags, int mask) {
+(187) <-> (187)
+	return (flags & mask) != 0;
+	return (flags & mask) != 0;
+(188) <-> (188)
+	}
+	}
+(189) <-> (189)
+	public void readFrom(int flags, DataInput input) throws IOException {
+	public void readFrom(int flags, DataInput input) throws IOException {
+(190) <-> (190)
+	// The flags for this info are read by the visitor (flattener).
+	// The flags for this info are read by the visitor (flattener).
+(191) <-> (191)
+	// See Workspace.readElement(). This allows the reader to look ahead
+	// See Workspace.readElement(). This allows the reader to look ahead
+(192) <-> (192)
+	// and see what type of info is being loaded.
+	// and see what type of info is being loaded.
+(193) <-> (193)
+	this.flags = flags;
+	this.flags = flags;
+(194) <-> (194)
+	localInfo = input.readLong();
+	localInfo = input.readLong();
+(195) <-> (195)
+	nodeId = input.readLong();
+	nodeId = input.readLong();
+(196) <-> (196)
+	contentId = input.readInt();
+	contentId = input.readInt();
+(197) <-> (197)
+	modificationStamp = input.readLong();
+	modificationStamp = input.readLong();
+(198) <-> (198)
+	}
+	}
+(199) <-> (199)
+	/**
+	/**
+(200) <-> (200)
+	* Sets all of the bits indicated by the mask.
+	* Sets all of the bits indicated by the mask.
+(201) <-> (201)
+	*/
+	*/
+(202) <-> (202)
+	public void set(int mask) {
+	public void set(int mask) {
+(203) <-> (203)
+	flags |= mask;
+	flags |= mask;
+(204) <-> (204)
+	}
+	}
+(205) <-> (205)
+	/**
+	/**
+(206) <-> (206)
+	* Sets the value of the indicated bits to be the given value.
+	* Sets the value of the indicated bits to be the given value.
+(207) <-> (207)
+	*/
+	*/
+(208) <-> (208)
+	protected void setBits(int mask, int start, int value) {
+	protected void setBits(int mask, int start, int value) {
+(209) <-> (209)
+	int baseMask = mask >> start;
+	int baseMask = mask >> start;
+(210) <-> (210)
+	int newValue = (value & baseMask) << start;
+	int newValue = (value & baseMask) << start;
+(211) <-> (211)
+	// thread safety: (guarantee atomicity)
+	// thread safety: (guarantee atomicity)
+(212) <-> (212)
+	int temp = flags;
+	int temp = flags;
+(213) <-> (213)
+	temp &= ~mask;
+	temp &= ~mask;
+(214) <-> (214)
+	temp |= newValue;
+	temp |= newValue;
+(215) <-> (215)
+	flags = temp;
+	flags = temp;
+(216) <-> (216)
+	}
+	}
+(217) <-> (217)
+	/**
+	/**
+(218) <-> (218)
+	* Sets the flags for this info.
+	* Sets the flags for this info.
+(219) <-> (219)
+	*/
+	*/
+(220) <-> (220)
+	protected void setFlags(int value) {
+	protected void setFlags(int value) {
+(221) <-> (221)
+	flags = value;
+	flags = value;
+(222) <-> (222)
+	}
+	}
+(223) <-> (223)
+	/**
+	/**
+(224) <-> (224)
+	* Sets the local-relative sync information.
+	* Sets the local-relative sync information.
+(225) <-> (225)
+	*/
+	*/
+(226) <-> (226)
+	public void setLocalSyncInfo(long info) {
+	public void setLocalSyncInfo(long info) {
+(227) <-> (227)
+	localInfo = info;
+	localInfo = info;
+(228) <-> (228)
+	}
+	}
+(229) <-> (229)
+	/**
+	/**
+(230) <-> (230)
+	* Sets the collection of makers for this resource.
+	* Sets the collection of makers for this resource.
+(231) <-> (231)
+	* <code>null</code> is passed in if there are no markers.
+	* <code>null</code> is passed in if there are no markers.
+(232) <-> (232)
+	*/
+	*/
+(233) <-> (233)
+	public void setMarkers(MarkerSet value) {
+	public void setMarkers(MarkerSet value) {
+(234) <-> (234)
+	markers = value;
+	markers = value;
+(235) <-> (235)
+	}
+	}
+(236) <-> (236)
+	/**
+	/**
+(237) <-> (237)
+	*
+	*
+(238) <-> (238)
+	*/
+	*/
+(239) <-> (239)
+	public void setModificationStamp(long stamp) {
+	public void setModificationStamp(long stamp) {
+(240) <-> (240)
+	modificationStamp = stamp;
+	modificationStamp = stamp;
+(241) <-> (241)
+	}
+	}
+(242) <-> (242)
+	/**
+	/**
+(243) <-> (243)
+	*
+	*
+(244) <-> (244)
+	*/
+	*/
+(245) <-> (245)
+	public void setNodeId(long id) {
+	public void setNodeId(long id) {
+(246) <-> (246)
+	nodeId = id;
+	nodeId = id;
+(247) <-> (247)
+	}
+	}
+(248) <-> (248)
+	/**
+	/**
+(249) <-> (249)
+	* Sets the property store associated with this info. The value may be null.
+	* Sets the property store associated with this info. The value may be null.
+(250) <-> (250)
+	*/
+	*/
+(251) <-> (251)
+	public void setPropertyStore(PropertyStore value) {
+	public void setPropertyStore(PropertyStore value) {
+(252) <-> (252)
+	// needs to be implemented on subclasses
+	// needs to be implemented on subclasses
+(253) <-> (253)
+	}
+	}
+(254) <-> (254)
+	/**
+	/**
+(255) <-> (255)
+	* Sets the identified session property to the given value. If
+	* Sets the identified session property to the given value. If
+(256) <-> (256)
+	* the value is null, the property is removed.
+	* the value is null, the property is removed.
+(257) <-> (257)
+	*/
+	*/
+(258) <-> (258)
+	public synchronized void setSessionProperty(QualifiedName name, Object value) {
+	public synchronized void setSessionProperty(QualifiedName name, Object value) {
+(259) <-> (259)
+	// thread safety: (Concurrency001)
+	// thread safety: (Concurrency001)
+(260) <-> (260)
+	if (value == null) {
+	if (value == null) {
+(261) <-> (261)
+	if (sessionProperties == null)
+	if (sessionProperties == null)
+(262) <-> (262)
+	return;
+	return;
+(263) <-> (263)
+	HashMap temp = (HashMap) sessionProperties.clone();
+	HashMap temp = (HashMap) sessionProperties.clone();
+(264) <-> (264)
+	temp.remove(name);
+	temp.remove(name);
+(265) <-> (265)
+	if (temp.isEmpty())
+	if (temp.isEmpty())
+(266) <-> (266)
+	sessionProperties = null;
+	sessionProperties = null;
+(267) <-> (267)
+	else
+	else
+(268) <-> (268)
+	sessionProperties = temp;
+	sessionProperties = temp;
+(269) <-> (269)
+	} else {
+	} else {
+(270) <-> (270)
+	HashMap temp = sessionProperties;
+	HashMap temp = sessionProperties;
+(271) <-> (271)
+	if (temp == null)
+	if (temp == null)
+(272) <-> (272)
+	temp = new HashMap(5);
+	temp = new HashMap(5);
+(273) <-> (273)
+	else
+	else
+(274) <-> (274)
+	temp = (HashMap) sessionProperties.clone();
+	temp = (HashMap) sessionProperties.clone();
+(275) <-> (275)
+	temp.put(name, value);
+	temp.put(name, value);
+(276) <-> (276)
+	sessionProperties = temp;
+	sessionProperties = temp;
+(277) <-> (277)
+	}
+	}
+(278) <-> (278)
+	}
+	}
+(279) <-> (279)
+	protected void setSyncInfo(HashMap syncInfo) {
+	protected void setSyncInfo(HashMap syncInfo) {
+(280) <-> (280)
+	this.syncInfo = syncInfo;
+	this.syncInfo = syncInfo;
+(281) <-> (281)
+	}
+	}
+(282) <-> (282)
+	public synchronized void setSyncInfo(QualifiedName id, byte[] value) {
+	public synchronized void setSyncInfo(QualifiedName id, byte[] value) {
+(283) <-> (283)
+	// thread safety: (Concurrency001)
+	// thread safety: (Concurrency001)
+(284) <-> (284)
+	if (value == null) {
+	if (value == null) {
+(285) <-> (286)
+	if (syncInfo == null)
+	if (syncInfo == null)
+(286) <-> (287)
+	return;
+	return;
+(288) <-> (288)
+	temp.remove(id);
+	syncInfo.remove(id);
+(289) <-> (289)
+	if (temp.isEmpty())
+	if (syncInfo.isEmpty())
+(290) <-> (290)
+	syncInfo = null;
+	syncInfo = null;
+(293) <-> (291)
+	} else {
+	} else {
+(295) <-> (293)
+	if (temp == null)
+	if (syncInfo == null)
+(296) <-> (294)
+	temp = new HashMap(5);
+	syncInfo = new HashMap(5);
+(299) <-> (295)
+	temp.put(id, value.clone());
+	syncInfo.put(id, value.clone());
+(301) <-> (296)
+	}
+	}
+(302) <-> (297)
+	}
+	}
+(303) <-> (298)
+	/**
+	/**
+(304) <-> (299)
+	* Sets the type for this info to the given value. Valid values are
+	* Sets the type for this info to the given value. Valid values are
+(305) <-> (300)
+	* FILE, FOLDER, PROJECT
+	* FILE, FOLDER, PROJECT
+(306) <-> (301)
+	*/
+	*/
+(307) <-> (302)
+	public void setType(int value) {
+	public void setType(int value) {
+(308) <-> (303)
+	setBits(M_TYPE, M_TYPE_START, value);
+	setBits(M_TYPE, M_TYPE_START, value);
+(309) <-> (304)
+	}
+	}
+(310) <-> (305)
+	public void writeTo(DataOutput output) throws IOException {
+	public void writeTo(DataOutput output) throws IOException {
+(311) <-> (306)
+	// The flags for this info are written by the visitor (flattener).
+	// The flags for this info are written by the visitor (flattener).
+(312) <-> (307)
+	// See Workspace.writeElement(). This allows the reader to look ahead
+	// See Workspace.writeElement(). This allows the reader to look ahead
+(313) <-> (308)
+	// and see what type of info is being loaded.
+	// and see what type of info is being loaded.
+(314) <-> (309)
+	output.writeLong(localInfo);
+	output.writeLong(localInfo);
+(315) <-> (310)
+	output.writeLong(nodeId);
+	output.writeLong(nodeId);
+(316) <-> (311)
+	output.writeInt(contentId);
+	output.writeInt(contentId);
+(317) <-> (312)
+	output.writeLong(modificationStamp);
+	output.writeLong(modificationStamp);
+(318) <-> (313)
+	}
+	}
+(319) <-> (314)
+	}
+	}
+Number of lines in left file: 306
+Number of lines in right file: 301
+Number of lines matched: 299
